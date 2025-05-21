@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>2D Spacecraft Prototype - V8.1 (Builder UI Foundation)</title>
+    <style>
+        body { font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; margin: 0; background-color: #101010; color: #e0e0e0; user-select: none; overflow-x: hidden; /* Prevent horizontal scroll with new UI */ }
+        h1 {color: #e0e0e0;}
+        #gameAndUiContainer { display: flex; flex-direction: row; align-items: flex-start; gap: 10px; margin-top:10px; }
+        #leftPanel { display: flex; flex-direction: column; gap: 10px; align-items: center; }
+        #mainContainer { position: relative; }
+        #gameCanvas { border: 1px solid #444; touch-action: none; display: block; }
+        #insetCanvas { position: absolute; bottom: 10px; left: 10px; width: 150px; height: 150px; border: 1px solid #888; background-color: rgba(0,0,30,0.7); display: none; }
+        #uiOverlay { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 10px; z-index: 10; }
+        #stats { padding: 10px; background-color: rgba(51,51,51,0.8); border-radius: 5px; min-width: 300px; text-align: left; font-size: 0.9em; max-height: 130px; overflow-y: auto;}
+        .stat-item { margin-bottom: 3px;}
+        .stat-label { font-weight: bold; min-width: 100px; display: inline-block;}
+        #fuelGaugeContainer { width: 200px; height: 20px; background-color: #555; border: 1px solid #888; border-radius: 3px; overflow: hidden; position:relative; }
+        #fuelGaugeBar { width: 100%; height: 100%; background-color: lightgreen; transition: width 0.2s ease-out; }
+        #fuelText { position:absolute; top:0; left: 50%; transform: translateX(-50%); color: black; font-size: 0.8em; line-height:20px; pointer-events: none;}
+        #controls { margin-top: 10px; padding: 10px; background-color: #333; border-radius: 5px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; max-width: 1000px /* Match canvas width */ }
+        #designSelectorContainer { margin-bottom: 10px; }
+        button { padding: 8px 12px; font-size: 14px; cursor: pointer; background-color: #007bff; color: white; border: none; border-radius: 3px;}
+        button:hover { background-color: #0056b3; }
+        button:disabled { background-color: #555; color: #aaa; cursor: not-allowed;}
+        .control-group { display: flex; gap: 5px; align-items: center;}
+        #muteButton { background-color: #ffc107; color: black; }
+
+        /* Ship Builder UI Elements */
+        #shipBuilderPanel { width: 200px; padding: 10px; background-color: #2a2a2a; border: 1px solid #444; border-radius: 5px; display: flex; flex-direction: column; gap: 10px;}
+        #partPalette h3, #stagingArea h3 { margin-top: 0; margin-bottom: 5px; text-align: center; }
+        .part-category { margin-bottom: 10px; }
+        .part-button { display: block; width: 100%; padding: 8px; margin-bottom: 5px; background-color: #444; border: 1px solid #666; text-align: left; color: #ddd}
+        .part-button:hover { background-color: #555; }
+        #stagingCanvas { width: 180px; height: 300px; background-color: #383838; border: 1px solid #555; margin: 0 auto; display: block; }
+
+    </style>
+</head>
+<body>
+    <h1>2D Spacecraft - Builder UI Foundation (V8.1)</h1>
+    
+    <div id="gameAndUiContainer">
+        <div id="shipBuilderPanel">
+            <div id="partPalette">
+                <h3>Part Palette</h3>
+                <div class="part-category">
+                    <button class="part-button" data-part-type="pod">Command Pod</button>
+                    <button class="part-button" data-part-type="tank">Fuel Tank</button>
+                    <button class="part-button" data-part-type="engine">Engine</button>
+                    <button class="part-button" data-part-type="fairing">Fairing</button>
+                </div>
+            </div>
+            <div id="stagingArea">
+                <h3>Staging Area</h3>
+                <canvas id="stagingCanvas"></canvas>
+            </div>
+        </div>
+
+        <div id="leftPanel">
+            <div id="mainContainer">
+                <canvas id="gameCanvas"></canvas>
+                <canvas id="insetCanvas"></canvas>
+                <div id="uiOverlay">
+                    <div id="stats">
+                        <!-- Stats -->
+                        <div class="stat-item"><span class="stat-label">Time:</span> <span id="time">0.0</span> s</div>
+                        <div class="stat-item"><span class="stat-label">Altitude (AGL):</span> <span id="altitude">0.00</span> m</div>
+                        <div class="stat-item"><span class="stat-label">Apoapsis:</span> <span id="apoapsis">0.00</span> m</div>
+                        <div class="stat-item"><span class="stat-label">Periapsis:</span> <span id="periapsis">0.00</span> m</div>
+                        <div class="stat-item"><span class="stat-label">Speed:</span> <span id="speed">0.00</span> m/s</div>
+                        <div class="stat-item"><span class="stat-label">Angle (World):</span> <span id="angle">0.00</span> deg</div>
+                        <div class="stat-item"><span class="stat-label">Gimbal Angle:</span> <span id="gimbal">0.00</span> deg</div>
+                        <div class="stat-item"><span class="stat-label">Thrust:</span> <span id="thrust">0.00</span> N</div>
+                        <div class="stat-item"><span class="stat-label">Mass:</span> <span id="mass">0.00</span> kg</div>
+                        <div class="stat-item"><span class="stat-label">Zoom:</span> <span id="zoomLevel">0.1</span> PPM</div>
+                    </div>
+                    <div id="fuelGaugeContainer">
+                        <div id="fuelGaugeBar"></div> 
+                        <span id="fuelText">Fuel: 100%</span>
+                    </div>
+                </div>
+            </div>
+            <div id="designSelectorContainer">
+                <label for="designSelect">Select Design: </label>
+                <select id="designSelect"> </select>
+            </div>
+        </div>
+    </div>
+
+
+    <div id="controls">
+        <button id="launchButton">Launch!</button>
+        <button id="resetButton">Reset</button>
+        <button id="muteButton">Mute 🔇</button>
+        <div class="control-group">
+            <button id="rotateLeftButton" title="Gimbal Left (Q/←)">⬅️ Gimbal</button>
+            <button id="rotateRightButton" title="Gimbal Right (E/→)">Gimbal ➡️</button>
+        </div>
+         <div class="control-group">
+            <button id="zoomOutButton" title="Zoom Out (-)">➖ Zoom</button>
+            <button id="zoomInButton" title="Zoom In (+)">➕ Zoom</button>
+        </div>
+    </div>
+
+    <script>
+        // --- Constants (most same as V8) ---
+        const GRAVITATIONAL_CONSTANT_G = 6.67430e-11; const TIME_SCALE = 1; 
+        const EARTH_MASS_KG = 5.972e24; const EARTH_RADIUS_M = 6371000; 
+        const EARTH_SEA_LEVEL_AIR_DENSITY = 1.225; const EARTH_ATMOSPHERE_SCALE_HEIGHT = 8500; 
+        const EARTH_MAX_ATMOSPHERE_ALTITUDE = 100000;
+        const DRAG_COEFFICIENT = 0.5; 
+        const MAX_ANGULAR_VELOCITY = Math.PI / 2; const BASE_REACTION_WHEEL_TORQUE = 5000; 
+        const MAX_GIMBAL_ANGLE_DEG = 7; const GIMBAL_RATE_DEG_S = 15;   
+        const SKY_BLUE_COLOR = { r: 135, g: 206, b: 235 }; const SPACE_BLACK_COLOR = { r: 0, g: 0, b: 16 };
+        const MIN_CLOUD_ALTITUDE_M = 5000;  // *** INCREASED MIN CLOUD ALTITUDE ***
+        const MAX_CLOUD_ALTITUDE_M = 15000; // *** INCREASED MAX CLOUD ALTITUDE ***
+        const NUM_CLOUDS = 30;              // Reduced slightly for performance, can tune
+        const NUM_SURFACE_FEATURES = 200; const MAX_MOUNTAIN_HEIGHT_M = 1500; const MAX_TREE_HEIGHT_M = 30;
+        const SURFACE_FEATURE_VISIBILITY_PPM = 0.05; 
+        const ORBIT_PATH_VISIBILITY_ALTITUDE_M = 50000; const ORBIT_PATH_VISIBILITY_PPM = 0.001;       
+        const ORBIT_PATH_SEGMENTS = 100;
+        const SPACECRAFT_INDICATOR_PPM_THRESHOLD = 0.0005; 
+        const INSET_VIEW_PPM_THRESHOLD = 0.002;         
+        const INSET_VIEW_TARGET_SIZE_PX = 80; 
+        const SMOKE_PARTICLES_PER_SECOND_BASE = 5; const SMOKE_LIFETIME_S_MIN = 60; const SMOKE_LIFETIME_S_MAX = 180;         
+        const SMOKE_INITIAL_SIZE_M_MIN = 3; const SMOKE_INITIAL_SIZE_M_MAX = 8;
+        const SMOKE_EXHAUST_VELOCITY_FACTOR = 0.1; const MAX_SMOKE_PARTICLES = 300;          
+
+        const planet = { /* same as V8 */ 
+            mass_kg: EARTH_MASS_KG, radius_m: EARTH_RADIUS_M, color: '#3A8D3A', 
+            atmosphereColor: 'rgba(173, 216, 230, 0.15)', 
+            maxAtmosphereRadius_m: EARTH_RADIUS_M + EARTH_MAX_ATMOSPHERE_ALTITUDE
+        };
+
+        const canvas = document.getElementById('gameCanvas'); const ctx = canvas.getContext('2d');
+        const insetCanvas = document.getElementById('insetCanvas'); const insetCtx = insetCanvas.getContext('2d');
+        const stagingCanvas = document.getElementById('stagingCanvas'); const stagingCtx = stagingCanvas.getContext('2d'); // New
+        canvas.width = Math.min(window.innerWidth * 0.70, 800); // Adjusted width for builder panel
+        canvas.height = Math.min(window.innerHeight * 0.60, 600); 
+        
+        const dom = { /* same as V8 */ 
+            time: document.getElementById('time'), altitude: document.getElementById('altitude'),
+            apoapsis: document.getElementById('apoapsis'), periapsis: document.getElementById('periapsis'),
+            speed: document.getElementById('speed'), angle: document.getElementById('angle'), gimbal: document.getElementById('gimbal'),
+            mass: document.getElementById('mass'), thrust: document.getElementById('thrust'), 
+            zoomLevel: document.getElementById('zoomLevel'),
+            launchButton: document.getElementById('launchButton'), resetButton: document.getElementById('resetButton'),
+            muteButton: document.getElementById('muteButton'), 
+            designSelect: document.getElementById('designSelect'), 
+            rotateLeftButton: document.getElementById('rotateLeftButton'), rotateRightButton: document.getElementById('rotateRightButton'),
+            zoomInButton: document.getElementById('zoomInButton'), zoomOutButton: document.getElementById('zoomOutButton'),
+            fuelGaugeBar: document.getElementById('fuelGaugeBar'), fuelText: document.getElementById('fuelText'),
+            statsPanel: document.getElementById('stats') // For toggling
+        };
+
+        let spacecraft;
+        let simulationState = { /* same as V8 */ 
+            isLaunched: false, engineActive: false, timeElapsed: 0, lastTimestamp: 0,
+            cameraX_m: 0, cameraY_m: 0, currentPixelsPerMeter: 0.05, 
+            controlFlags: { rotateLeft: false, rotateRight: false }, landed: true,
+            soundMuted: false, currentDesignName: "DefaultOrbiter" 
+        };
+        let currentDragForceMagnitude = 0, currentAirDensityValue = EARTH_SEA_LEVEL_AIR_DENSITY;
+        let apoapsisAGL = 0, periapsisAGL = 0;
+        let smokeParticles = []; let clouds = []; let surfaceFeatures = [];
+
+        let audioCtx; let engineSoundOsc, engineSoundGain; let gimbalSoundOsc, gimbalSoundGain;
+        let soundInitialized = false; let lastGimbalInputTime = 0;
+
+        function initAudio() { /* same as V8 */ 
+            if (soundInitialized || !window.AudioContext || simulationState.soundMuted) return; 
+            try {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                engineSoundOsc = audioCtx.createOscillator(); engineSoundGain = audioCtx.createGain();
+                engineSoundOsc.type = 'sawtooth'; engineSoundOsc.frequency.setValueAtTime(50, audioCtx.currentTime); 
+                engineSoundGain.gain.setValueAtTime(0, audioCtx.currentTime); 
+                engineSoundOsc.connect(engineSoundGain).connect(audioCtx.destination); engineSoundOsc.start();
+                gimbalSoundOsc = audioCtx.createOscillator(); gimbalSoundGain = audioCtx.createGain();
+                gimbalSoundOsc.type = 'square'; gimbalSoundOsc.frequency.setValueAtTime(300, audioCtx.currentTime);
+                gimbalSoundGain.gain.setValueAtTime(0, audioCtx.currentTime);
+                gimbalSoundOsc.connect(gimbalSoundGain).connect(audioCtx.destination); gimbalSoundOsc.start();
+                soundInitialized = true; console.log("Audio Initialized");
+            } catch (e) { console.error("Web Audio API is not supported or could not be initialized.", e); }
+        }
+        function playEngineSound(active, thrustRatio = 1) { /* same as V8 */
+            if (!soundInitialized || !engineSoundGain || simulationState.soundMuted) { if(engineSoundGain) engineSoundGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.01); return; }
+            if (active) { engineSoundGain.gain.setTargetAtTime(0.1 * thrustRatio, audioCtx.currentTime, 0.01); engineSoundOsc.frequency.setTargetAtTime(40 + 60 * thrustRatio, audioCtx.currentTime, 0.1); }
+            else { engineSoundGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1); }
+        }
+        function playGimbalSound() { /* same as V8 */
+            if (!soundInitialized || !gimbalSoundGain || simulationState.soundMuted) return; const now = audioCtx.currentTime;
+            if (now - lastGimbalInputTime < 0.2) return; lastGimbalInputTime = now;
+            gimbalSoundGain.gain.setValueAtTime(0.05, now); gimbalSoundGain.gain.setTargetAtTime(0, now + 0.05, 0.02); 
+            gimbalSoundOsc.frequency.setValueAtTime(200 + Math.random() * 200, now); 
+        }
+        function toggleMute() { /* same as V8 */
+            simulationState.soundMuted = !simulationState.soundMuted;
+            dom.muteButton.textContent = simulationState.soundMuted ? "Unmute  स्पीकर" : "Mute 🔇";
+            if (simulationState.soundMuted) { if (soundInitialized && engineSoundGain) engineSoundGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.01); }
+            else { if (!soundInitialized) initAudio(); if (spacecraft) playEngineSound(simulationState.engineActive, spacecraft.currentThrust_N / spacecraft.maxThrust_N); }
+        }
+
+        class SmokeParticle { /* same as V8 */
+            constructor(x_m, y_m, vx_ms, vy_ms) { this.x_m = x_m; this.y_m = y_m; this.vx_ms = vx_ms; this.vy_ms = vy_ms; this.lifetime_s = SMOKE_LIFETIME_S_MIN + Math.random() * (SMOKE_LIFETIME_S_MAX - SMOKE_LIFETIME_S_MIN); this.age_s = 0; this.size_m = SMOKE_INITIAL_SIZE_M_MIN + Math.random() * (SMOKE_INITIAL_SIZE_M_MAX - SMOKE_INITIAL_SIZE_M_MIN); const grayScale = 150 + Math.random() * 55; this.initialOpacity = 0.1 + Math.random() * 0.2; this.color = `rgba(${grayScale},${grayScale},${grayScale},${this.initialOpacity.toFixed(2)})`; this.growthFactor = 1 + Math.random() * 2; }
+            update(deltaTime_s) { this.x_m += this.vx_ms * deltaTime_s; this.y_m += this.vy_ms * deltaTime_s; this.age_s += deltaTime_s; const altitude = Math.sqrt(this.x_m**2 + this.y_m**2) - planet.radius_m; if (altitude < EARTH_MAX_ATMOSPHERE_ALTITUDE / 2 && altitude > 0) { const particleDragFactor = 0.2 + Math.random() * 0.3; this.vx_ms *= (1 - particleDragFactor * deltaTime_s * (currentAirDensityValue / EARTH_SEA_LEVEL_AIR_DENSITY)); this.vy_ms *= (1 - particleDragFactor * deltaTime_s * (currentAirDensityValue / EARTH_SEA_LEVEL_AIR_DENSITY)); } }
+            draw(ctx, camX_m, camY_m, ppm) { if (this.age_s >= this.lifetime_s) return; const viewX_px = (this.x_m - camX_m) * ppm; const viewY_px = (this.y_m - camY_m) * ppm; const currentSize_m = this.size_m * (1 + (this.age_s / this.lifetime_s) * this.growthFactor); const radius_px = Math.max(0.5, (currentSize_m / 2) * ppm); const screenX_px = canvas.width / 2 + viewX_px; const screenY_px = canvas.height / 2 - viewY_px; if (screenX_px + radius_px < 0 || screenX_px - radius_px > canvas.width || screenY_px + radius_px < 0 || screenY_px - radius_px > canvas.height) return; let opacityFactor = 0; const fadeInDuration = this.lifetime_s * 0.1; const fadeOutStart = this.lifetime_s * 0.5; if (this.age_s < fadeInDuration) { opacityFactor = this.age_s / fadeInDuration; } else if (this.age_s > fadeOutStart) { opacityFactor = 1 - (this.age_s - fadeOutStart) / (this.lifetime_s - fadeOutStart); } else { opacityFactor = 1; } opacityFactor = Math.max(0, opacityFactor)**2; const opacity = this.initialOpacity * opacityFactor; if (opacity < 0.005) return; const colorParts = this.color.match(/\d+/g).slice(0,3).join(','); ctx.fillStyle = `rgba(${colorParts}, ${opacity.toFixed(3)})`; ctx.beginPath(); ctx.arc(screenX_px, screenY_px, radius_px, 0, 2 * Math.PI); ctx.fill(); }
+        }
+        class Part { /* same as V8 */ 
+            constructor(config) { this.type = config.type; this.dryMass_kg = config.dryMass_kg || 0; this.width_m = config.width_m || 1; this.height_m = config.height_m || 1; this.color = config.color || 'gray'; this.cost = config.cost || 0; this.relative_y_m = 0; }
+            get mass() { return this.dryMass_kg; }
+            draw(ctx, partStackCenter_x_px, spacecraftDrawBottomY_px, currentPPM) { const drawWidth_px = this.width_m * currentPPM; const drawHeight_px = this.height_m * currentPPM; const partBottomY_onCanvas_relative = spacecraftDrawBottomY_px - (this.relative_y_m * currentPPM); const partTopY_onCanvas_relative = partBottomY_onCanvas_relative - drawHeight_px; const partLeftX_onCanvas_relative = partStackCenter_x_px - drawWidth_px / 2; ctx.fillStyle = this.color; ctx.fillRect(partLeftX_onCanvas_relative, partTopY_onCanvas_relative, drawWidth_px, drawHeight_px); ctx.strokeStyle = 'black'; ctx.strokeRect(partLeftX_onCanvas_relative, partTopY_onCanvas_relative, drawWidth_px, drawHeight_px); }
+        }
+        class CommandPod extends Part { constructor(config) { super({...{type: 'pod', color: 'silver', width_m: 2, height_m: 1.5, dryMass_kg: 500}, ...config}); } }
+        class FuelTank extends Part { constructor(config) { super({...{type: 'tank', color: 'lightgreen', width_m: 1.8, height_m: 4, dryMass_kg: 150}, ...config}); this.fuelCapacity_kg = config.fuelCapacity_kg || 1000; this.currentFuel = this.fuelCapacity_kg; } get mass() { return this.dryMass_kg + this.currentFuel; } }
+        class Engine extends Part { constructor(config) { super({...{type: 'engine', color: 'darkgray', width_m: 2.2, height_m: 2, dryMass_kg: 200}, ...config}); this.thrust_N = config.thrust_N || 30000; this.fuelConsumptionRate_kg_s = config.fuelConsumptionRate_kg_s || 10; this.isActive = false; } }
+        class Fairing extends Part { constructor(config) { super({...{type: 'fairing', color: '#f0f0f0', width_m: 2.5, height_m: 3, dryMass_kg: 100}, ...config}); } }
+        
+        class Spacecraft { /* same as V8 */
+            constructor(partsConfigArray) { this.parts = []; this.position_x_m = 0; this.position_y_m = planet.radius_m; this.velocity_x_ms = 0; this.velocity_y_ms = 0; this.angle_rad = 0; this.angularVelocity_rad_s = 0; this.totalMass_kg = 0; this.currentFuel_kg = 0; this.currentThrust_N = 0; this.maxThrust_N = 0; this.logicalStackHeight_m = 0; this.maxWidth_m = 0; this.momentOfInertia_kg_m2 = 1000; this.altitudeAGL_m = 0; this.engineGimbalAngle_rad = 0; this.maxGimbalAngle_rad = MAX_GIMBAL_ANGLE_DEG * Math.PI / 180; this.gimbalRate_rad_s = GIMBAL_RATE_DEG_S * Math.PI / 180; this.initialFuel_kg = 0; partsConfigArray.forEach(partConfig => { let partInstance; switch(partConfig.type) { case 'pod': partInstance = new CommandPod(partConfig); break; case 'tank': partInstance = new FuelTank(partConfig); break; case 'engine': partInstance = new Engine(partConfig); break; case 'fairing': partInstance = new Fairing(partConfig); break; default: console.error("Unknown part type:", partConfig.type); return; } if (partInstance) this.parts.push(partInstance); }); this._reassemble(); }
+            _reassemble() { /* same as V8 */  this.totalMass_kg = 0; let tempCurrentFuel = 0; this.maxThrust_N = 0; this.logicalStackHeight_m = 0; this.maxWidth_m = 0; let currentStackOffset_m = 0; this.initialFuel_kg = 0; this.parts.forEach(p => { p.relative_y_m = currentStackOffset_m; currentStackOffset_m += p.height_m; this.totalMass_kg += p.mass; if (p.type === 'tank') { tempCurrentFuel += p.currentFuel; this.initialFuel_kg += p.fuelCapacity_kg; } if (p.type === 'engine') this.maxThrust_N += p.thrust_N; if (p.width_m > this.maxWidth_m) this.maxWidth_m = p.width_m; }); this.currentFuel_kg = tempCurrentFuel; if (this.initialFuel_kg === 0) this.initialFuel_kg = 1;  this.logicalStackHeight_m = currentStackOffset_m; this.momentOfInertia_kg_m2 = (this.totalMass_kg * (this.logicalStackHeight_m**2 + this.maxWidth_m**2)) / 12 ; if (this.momentOfInertia_kg_m2 < 100) this.momentOfInertia_kg_m2 = 100; }
+            getCrossSectionalArea(velocityAngle_rad) { /* same as V8 */ const spacecraftWorldAngle_rad = this.angle_rad; const aoa_rad = Math.atan2(Math.sin(spacecraftWorldAngle_rad - velocityAngle_rad), Math.cos(spacecraftWorldAngle_rad - velocityAngle_rad)); const frontalArea = Math.PI * (this.maxWidth_m / 2)**2; const profileArea = this.maxWidth_m * this.logicalStackHeight_m; return frontalArea * Math.abs(Math.cos(aoa_rad)) + profileArea * Math.abs(Math.sin(aoa_rad)); }
+            getCoMOffset_m() { /* same as V8 */ if (this.totalMass_kg === 0) return this.logicalStackHeight_m / 2; let weightedHeightSum = 0; this.parts.forEach(p => { const partCenterY = p.relative_y_m + p.height_m / 2; weightedHeightSum += p.mass * partCenterY; }); return weightedHeightSum / this.totalMass_kg; }
+            calculateOrbitalParameters() { /* same as V8 */ if (this.totalMass_kg <= 0) { apoapsisAGL = 0; periapsisAGL = 0; return; } const r_vec_x = this.position_x_m; const r_vec_y = this.position_y_m; const v_vec_x = this.velocity_x_ms; const v_vec_y = this.velocity_y_ms; const r_mag = Math.sqrt(r_vec_x**2 + r_vec_y**2); const v_mag_sq = v_vec_x**2 + v_vec_y**2; const mu = GRAVITATIONAL_CONSTANT_G * planet.mass_kg; const specificOrbitalEnergy = v_mag_sq / 2 - mu / r_mag; if (specificOrbitalEnergy >= -1e-3) { apoapsisAGL = Infinity; const h_vec_z = r_vec_x * v_vec_y - r_vec_y * v_vec_x; if (mu > 0 && (1 + 2 * specificOrbitalEnergy * h_vec_z**2 / mu**2) >=0 ) { periapsisAGL = (h_vec_z**2 / mu) / (1 + Math.sqrt(1 + 2 * specificOrbitalEnergy * h_vec_z**2 / mu**2)) - planet.radius_m; } else { periapsisAGL = this.altitudeAGL_m; } } else { const semiMajorAxis_a = -mu / (2 * specificOrbitalEnergy); const h_vec_z = r_vec_x * v_vec_y - r_vec_y * v_vec_x; const eccentricity_e_sq = 1 + (2 * specificOrbitalEnergy * h_vec_z**2) / (mu**2); const eccentricity_e = Math.sqrt(Math.max(0, eccentricity_e_sq)); apoapsisAGL = semiMajorAxis_a * (1 + eccentricity_e) - planet.radius_m; periapsisAGL = semiMajorAxis_a * (1 - eccentricity_e) - planet.radius_m; } if(isNaN(apoapsisAGL) || apoapsisAGL < periapsisAGL && apoapsisAGL !== Infinity ) apoapsisAGL = this.altitudeAGL_m > periapsisAGL ? this.altitudeAGL_m : periapsisAGL; if(isNaN(periapsisAGL)) periapsisAGL = this.altitudeAGL_m; }
+            draw(targetCtx, targetCanvasWidth, targetCanvasHeight, sfcScreenX_px, sfcScreenY_px, currentPPM, isInsetView = false) { /* same as V8 */ targetCtx.save(); targetCtx.translate(sfcScreenX_px, sfcScreenY_px); targetCtx.rotate(this.angle_rad); const comOffset_m = this.getCoMOffset_m(); const comOffset_px = comOffset_m * currentPPM; const partsOriginX_px_local = 0; const partsOriginY_px_local = -comOffset_px; this.parts.forEach(part => { part.draw(targetCtx, partsOriginX_px_local, -partsOriginY_px_local, currentPPM); }); if (this.currentThrust_N > 0) { this.parts.forEach(p => { if (p.type === 'engine' && p.isActive) { const engineBottomY_from_CoM_local_px = -(comOffset_m - p.relative_y_m) * currentPPM; const flameHeight_px = (10 + Math.random() * 15 + (this.currentThrust_N / this.maxThrust_N) * 20) * Math.max(0.1, currentPPM / (isInsetView ? 0.2 : 0.5) ); const flameWidth_px = p.width_m * currentPPM * 0.8; targetCtx.save(); targetCtx.translate(0, engineBottomY_from_CoM_local_px); targetCtx.rotate(this.engineGimbalAngle_rad); targetCtx.fillStyle = 'orange'; targetCtx.beginPath(); targetCtx.moveTo(-flameWidth_px / 2, 0); targetCtx.lineTo(flameWidth_px / 2, 0); targetCtx.lineTo(0, flameHeight_px); targetCtx.closePath(); targetCtx.fill(); targetCtx.fillStyle = 'yellow'; const iFW = flameWidth_px*0.5, iFH = flameHeight_px*0.6; targetCtx.beginPath(); targetCtx.moveTo(-iFW/2, 0); targetCtx.lineTo(iFW/2, 0); targetCtx.lineTo(0, iFH); targetCtx.closePath(); targetCtx.fill(); targetCtx.restore(); } }); } targetCtx.restore(); }
+            updatePhysics(deltaTime_s, engineCommandActive, gimbalLeft, gimbalRight) { /* same as V8 */ if (deltaTime_s <= 0 || this.totalMass_kg <= 0) return; let currentLocalGravityMagnitude_N = 0; let targetGimbalAngle_rad = 0; if (gimbalLeft) { targetGimbalAngle_rad = -this.maxGimbalAngle_rad; playGimbalSound(); } else if (gimbalRight) { targetGimbalAngle_rad = this.maxGimbalAngle_rad; playGimbalSound(); } if (this.engineGimbalAngle_rad < targetGimbalAngle_rad) { this.engineGimbalAngle_rad = Math.min(targetGimbalAngle_rad, this.engineGimbalAngle_rad + this.gimbalRate_rad_s * deltaTime_s); } else if (this.engineGimbalAngle_rad > targetGimbalAngle_rad) { this.engineGimbalAngle_rad = Math.max(targetGimbalAngle_rad, this.engineGimbalAngle_rad - this.gimbalRate_rad_s * deltaTime_s); } let netTorque_Nm = 0; if (gimbalLeft && !engineCommandActive) netTorque_Nm -= BASE_REACTION_WHEEL_TORQUE; if (gimbalRight && !engineCommandActive) netTorque_Nm += BASE_REACTION_WHEEL_TORQUE; this.currentThrust_N = 0; if (engineCommandActive && this.currentFuel_kg > 0) {  let fuelConsumedThisFrame_kg = 0; let calculatedThrustThisFrame = 0; this.parts.forEach(p => { if (p.type === 'engine') { p.isActive = true; calculatedThrustThisFrame += p.thrust_N; fuelConsumedThisFrame_kg += p.fuelConsumptionRate_kg_s * deltaTime_s; } }); if (fuelConsumedThisFrame_kg > this.currentFuel_kg) { const fuelFraction = this.currentFuel_kg / fuelConsumedThisFrame_kg; calculatedThrustThisFrame *= fuelFraction; fuelConsumedThisFrame_kg = this.currentFuel_kg; } this.currentThrust_N = calculatedThrustThisFrame; let fuelToDeduct = fuelConsumedThisFrame_kg; for (let i = this.parts.length - 1; i >= 0; i--) { const p = this.parts[i]; if (p.type === 'tank' && p.currentFuel > 0) { const take = Math.min(p.currentFuel, fuelToDeduct); p.currentFuel -= take; this.currentFuel_kg -= take; this.totalMass_kg -= take; fuelToDeduct -= take; if (fuelToDeduct <= 0) break; } } playEngineSound(true, this.currentThrust_N / this.maxThrust_N); } else { this.parts.forEach(p => { if (p.type === 'engine') p.isActive = false; }); playEngineSound(false); } if (this.currentFuel_kg <= 0) {  this.currentFuel_kg = 0; simulationState.engineActive = false; this.parts.forEach(p => { if (p.type === 'engine') p.isActive = false; }); this.currentThrust_N = 0; playEngineSound(false); } if (this.currentThrust_N > 0 && simulationState.engineActive) { const leverArm_m = this.getCoMOffset_m(); const gimbalTorque_Nm = this.currentThrust_N * Math.sin(this.engineGimbalAngle_rad) * leverArm_m; netTorque_Nm -= gimbalTorque_Nm; } netTorque_Nm -= this.angularVelocity_rad_s * this.momentOfInertia_kg_m2 * 0.8;  const angularAcceleration_rad_s2 = netTorque_Nm / this.momentOfInertia_kg_m2; this.angularVelocity_rad_s += angularAcceleration_rad_s2 * deltaTime_s; this.angularVelocity_rad_s = Math.max(-MAX_ANGULAR_VELOCITY, Math.min(MAX_ANGULAR_VELOCITY, this.angularVelocity_rad_s)); this.angle_rad += this.angularVelocity_rad_s * deltaTime_s; const effectiveThrustAngle_rad = this.angle_rad + this.engineGimbalAngle_rad; const thrustForceX_N = this.currentThrust_N * Math.sin(effectiveThrustAngle_rad); const thrustForceY_N = this.currentThrust_N * Math.cos(effectiveThrustAngle_rad); const distanceToPlanetCenter_m = Math.sqrt(this.position_x_m**2 + this.position_y_m**2); this.altitudeAGL_m = distanceToPlanetCenter_m - planet.radius_m; let gravityForceX_N = 0, gravityForceY_N = 0; if (distanceToPlanetCenter_m > 1) { currentLocalGravityMagnitude_N = (GRAVITATIONAL_CONSTANT_G * planet.mass_kg * this.totalMass_kg) / (distanceToPlanetCenter_m**2); gravityForceX_N = -currentLocalGravityMagnitude_N * (this.position_x_m / distanceToPlanetCenter_m); gravityForceY_N = -currentLocalGravityMagnitude_N * (this.position_y_m / distanceToPlanetCenter_m);  } currentAirDensityValue = 0; currentDragForceMagnitude = 0; let dragForceX_N = 0, dragForceY_N = 0; if (this.altitudeAGL_m < EARTH_MAX_ATMOSPHERE_ALTITUDE && this.altitudeAGL_m >= 0) { currentAirDensityValue = EARTH_SEA_LEVEL_AIR_DENSITY * Math.exp(-this.altitudeAGL_m / EARTH_ATMOSPHERE_SCALE_HEIGHT); const speed_ms = Math.sqrt(this.velocity_x_ms**2 + this.velocity_y_ms**2); if (speed_ms > 0.01) { const velocityAngleToY_rad = Math.atan2(this.velocity_x_ms, this.velocity_y_ms); const crossSectionalArea_m2 = this.getCrossSectionalArea(velocityAngleToY_rad); currentDragForceMagnitude = 0.5 * currentAirDensityValue * speed_ms**2 * DRAG_COEFFICIENT * crossSectionalArea_m2; dragForceX_N = -currentDragForceMagnitude * (this.velocity_x_ms / speed_ms); dragForceY_N = -currentDragForceMagnitude * (this.velocity_y_ms / speed_ms); } } let netForceX_N_trans = thrustForceX_N + gravityForceX_N + dragForceX_N; let netForceY_N_trans = thrustForceY_N + gravityForceY_N + dragForceY_N;  simulationState.landed = false; if (distanceToPlanetCenter_m <= planet.radius_m + 0.1) {  simulationState.landed = true; const overlap = planet.radius_m - distanceToPlanetCenter_m; const normX = this.position_x_m / distanceToPlanetCenter_m; const normY = this.position_y_m / distanceToPlanetCenter_m; this.position_x_m += normX * overlap; this.position_y_m += normY * overlap; this.altitudeAGL_m = 0; let v_radial = (this.velocity_x_ms * normX) + (this.velocity_y_ms * normY); if (v_radial < 0) { this.velocity_x_ms -= v_radial * normX; this.velocity_y_ms -= v_radial * normY;} const normalForceMagnitudeOnGround = Math.abs(currentLocalGravityMagnitude_N); const frictionCoefficient = 0.8; let frictionMagnitude = frictionCoefficient * normalForceMagnitudeOnGround; const v_tangent_world_x = this.velocity_x_ms - v_radial * normX; const v_tangent_world_y = this.velocity_y_ms - v_radial * normY; const v_tangent_speed = Math.sqrt(v_tangent_world_x**2 + v_tangent_world_y**2); if (v_tangent_speed > 0.01) { const frictionForceApplied_x = -frictionMagnitude * (v_tangent_world_x / v_tangent_speed); const frictionForceApplied_y = -frictionMagnitude * (v_tangent_world_y / v_tangent_speed); const tangental_accel_x = (thrustForceX_N + dragForceX_N) / this.totalMass_kg; const tangental_accel_y = (thrustForceY_N + dragForceY_N) / this.totalMass_kg; const tangental_force_mag = Math.sqrt(tangental_accel_x**2+tangental_accel_y**2) * this.totalMass_kg; if (frictionMagnitude > tangental_force_mag && v_tangent_speed < 0.5) { this.velocity_x_ms = v_radial * normX; this.velocity_y_ms = v_radial * normY;} else { netForceX_N_trans += frictionForceApplied_x; netForceY_N_trans += frictionForceApplied_y; } } const angleSurfaceNormal = Math.atan2(normX, normY); const angleDiff = Math.atan2(Math.sin(this.angle_rad - angleSurfaceNormal), Math.cos(this.angle_rad - angleSurfaceNormal)); if(Math.abs(angleDiff) < Math.PI/4) { this.angularVelocity_rad_s *= 0.5; } } const accelerationX_ms2 = netForceX_N_trans / this.totalMass_kg; const accelerationY_ms2 = netForceY_N_trans / this.totalMass_kg; this.velocity_x_ms += accelerationX_ms2 * deltaTime_s; this.velocity_y_ms += accelerationY_ms2 * deltaTime_s; this.position_x_m += this.velocity_x_ms * deltaTime_s; this.position_y_m += this.velocity_y_ms * deltaTime_s; this._reassemble(); this.calculateOrbitalParameters(); 
+                if (this.currentThrust_N > 0 && simulationState.engineActive && smokeParticles.length < MAX_SMOKE_PARTICLES) { 
+                    const smokeEmissionRate = SMOKE_PARTICLES_PER_SECOND_BASE * Math.min(1, this.currentThrust_N / (this.maxThrust_N * 0.5)); 
+                    const numParticlesToEmit = Math.max(0, Math.round(smokeEmissionRate * deltaTime_s));
+                    const baseExhaustVelocity = 20 + Math.random() * 10; 
+                    const spreadAngle = Math.PI / 8; 
+                    for (let i = 0; i < numParticlesToEmit; i++) {
+                        if (smokeParticles.length >= MAX_SMOKE_PARTICLES) break;
+                        const emitX_m = this.position_x_m; const emitY_m = this.position_y_m; 
+                        const smokeBaseAngle_rad = effectiveThrustAngle_rad + Math.PI; 
+                        const randomAngleOffset = (Math.random() - 0.5) * spreadAngle * 2; 
+                        const smokeEmitAngle_rad = smokeBaseAngle_rad + randomAngleOffset;
+                        const particle_vx_relative = baseExhaustVelocity * Math.sin(smokeEmitAngle_rad) * SMOKE_EXHAUST_VELOCITY_FACTOR;
+                        const particle_vy_relative = baseExhaustVelocity * Math.cos(smokeEmitAngle_rad) * SMOKE_EXHAUST_VELOCITY_FACTOR;
+                        const particle_vx_world = this.velocity_x_ms + particle_vx_relative; 
+                        const particle_vy_world = this.velocity_y_ms + particle_vy_relative;
+                        smokeParticles.push(new SmokeParticle(emitX_m, emitY_m, particle_vx_world, particle_vy_world)); 
+                    }
+                }
+            }
+        }
+        const spacecraftDesigns = { /* same as V8 */
+            "DefaultOrbiter": [ { type: 'engine', thrust_N: 250000, fuelConsumptionRate_kg_s: 80, dryMass_kg: 1000, width_m: 2.5, height_m: 2}, { type: 'tank', fuelCapacity_kg: 10000, dryMass_kg: 1500, width_m: 2.5, height_m: 8 }, { type: 'pod', dryMass_kg: 800, width_m: 2.5, height_m: 2 } ],
+            "SmallProbe": [ { type: 'engine', thrust_N: 50000, fuelConsumptionRate_kg_s: 20, dryMass_kg: 200, width_m: 1, height_m: 1}, { type: 'tank', fuelCapacity_kg: 1000, dryMass_kg: 100, width_m: 1, height_m: 2 }, { type: 'fairing', dryMass_kg: 50, width_m: 1.2, height_m: 1.5 }, { type: 'pod', dryMass_kg: 150, width_m: 0.8, height_m: 0.8, color: 'gold' } ],
+            "HeavyLifter_Lower": [ { type: 'engine', thrust_N: 1000000, fuelConsumptionRate_kg_s: 300, dryMass_kg: 5000, width_m: 4, height_m: 3}, { type: 'tank', fuelCapacity_kg: 50000, dryMass_kg: 5000, width_m: 4, height_m: 15 }, ]
+        };
+        function populateDesignSelector() { /* same as V8 */ for (const designName in spacecraftDesigns) { const option = document.createElement('option'); option.value = designName; option.textContent = designName.replace(/_/g, ' '); dom.designSelect.appendChild(option); } dom.designSelect.value = simulationState.currentDesignName; }
+        function generateClouds() { /* same as V8 */ clouds = []; for (let i = 0; i < NUM_CLOUDS; i++) { const angle = Math.random() * 2 * Math.PI; const alt_m = MIN_CLOUD_ALTITUDE_M + Math.random() * (MAX_CLOUD_ALTITUDE_M - MIN_CLOUD_ALTITUDE_M); const distFromCenter_m = planet.radius_m + alt_m; const x_m = distFromCenter_m * Math.sin(angle); const y_m = distFromCenter_m * Math.cos(angle); const baseSize = 10000 + Math.random() * 20000; /* Increased cloud base size */ const numPuffs = 5 + Math.floor(Math.random() * 7); const puffs = []; for(let j=0; j<numPuffs; j++) { puffs.push({ dx_m: (Math.random() - 0.5) * baseSize * 0.7, dy_m: (Math.random() - 0.5) * baseSize * 0.4, r_m: baseSize * (0.15 + Math.random() * 0.35) }); } clouds.push({ x_m, y_m, puffs });  } }
+        function drawClouds(ctx, camX_m, camY_m, ppm) { /* same as V8 */ const viewWidth_m = canvas.width / ppm; const viewHeight_m = canvas.height / ppm; clouds.forEach(cloud => { const estCloudSpan = Math.max(...cloud.puffs.map(p => p.r_m)) * 2;  if (Math.abs(cloud.x_m - camX_m) > viewWidth_m / 1.2 + estCloudSpan || Math.abs(cloud.y_m - camY_m) > viewHeight_m / 1.2 + estCloudSpan) { return; } let baseAlpha = 0.3 + Math.random() * 0.2; /* Randomized alpha a bit more */  if (spacecraft && spacecraft.altitudeAGL_m > MAX_CLOUD_ALTITUDE_M + 10000) { baseAlpha *= Math.max(0, 1 - (spacecraft.altitudeAGL_m - (MAX_CLOUD_ALTITUDE_M + 10000)) / 40000); /* Slower fade when above */ } if (baseAlpha <= 0.01) return; cloud.puffs.forEach(puff => { const puffWorldX = cloud.x_m + puff.dx_m; const puffWorldY = cloud.y_m + puff.dy_m; const viewX_px = (puffWorldX - camX_m) * ppm; const viewY_px = (puffWorldY - camY_m) * ppm; const radius_px = Math.max(1, puff.r_m * ppm); const screenX_px = canvas.width / 2 + viewX_px; const screenY_px = canvas.height / 2 - viewY_px; if (screenX_px + radius_px < 0 || screenX_px - radius_px > canvas.width || screenY_px + radius_px < 0 || screenY_px - radius_px > canvas.height) return; ctx.fillStyle = `rgba(230, 230, 245, ${baseAlpha.toFixed(2)})`; /* Slightly off-white clouds */ ctx.beginPath(); ctx.arc(screenX_px, screenY_px, radius_px, 0, 2 * Math.PI); ctx.fill(); }); }); }
+        function generateSurfaceFeatures() { /* same as V8 */  surfaceFeatures = []; for (let i = 0; i < NUM_SURFACE_FEATURES; i++) { const angle = Math.random() * 2 * Math.PI; const type = Math.random() < 0.3 ? 'mountain' : 'tree';  let featureHeight_m, baseWidth_m; let color; if (type === 'mountain') { featureHeight_m = 100 + Math.random() * MAX_MOUNTAIN_HEIGHT_M; baseWidth_m = featureHeight_m * (1.5 + Math.random()); const gray = 80 + Math.random() * 40; color = `rgb(${gray},${gray},${gray})`; } else { featureHeight_m = 5 + Math.random() * MAX_TREE_HEIGHT_M; baseWidth_m = featureHeight_m * 0.2 + Math.random() * (featureHeight_m * 0.1); const green = 30 + Math.random() * 50; color = `rgb(0, ${green}, 0)`; } surfaceFeatures.push({ angle, type, height_m: featureHeight_m, baseWidth_m, color }); } surfaceFeatures.sort((a, b) => a.angle - b.angle); }
+        function drawSurfaceFeatures(ctx, camX_m, camY_m, ppm) { /* same as V8 */ if (ppm < SURFACE_FEATURE_VISIBILITY_PPM) return;  const viewAngleWidth = (canvas.width / ppm) / planet.radius_m * 1.5; const cameraAngle = Math.atan2(camX_m, camY_m); surfaceFeatures.forEach(feature => { let angleDiff = Math.abs(feature.angle - cameraAngle); if (angleDiff > Math.PI) angleDiff = 2 * Math.PI - angleDiff;  if (angleDiff > viewAngleWidth / 2) return; const featureBaseX_m = planet.radius_m * Math.sin(feature.angle); const featureBaseY_m = planet.radius_m * Math.cos(feature.angle); const viewX_px = (featureBaseX_m - camX_m) * ppm; const viewY_px = (featureBaseY_m - camY_m) * ppm; const screenX_px = canvas.width / 2 + viewX_px; const screenY_px = canvas.height / 2 - viewY_px;  const height_px = feature.height_m * ppm; const base_px = feature.baseWidth_m * ppm; if (height_px < 1 && base_px < 1) return;  ctx.save(); ctx.translate(screenX_px, screenY_px); ctx.rotate(feature.angle); ctx.fillStyle = feature.color; if (feature.type === 'mountain') { if (base_px > 0.5 && height_px > 0.5) { ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-base_px / 2, -height_px); ctx.lineTo(base_px / 2, -height_px); ctx.closePath(); ctx.fill(); } } else { if (base_px > 0.2 && height_px > 0.5) { const trunkHeight_px = height_px * 0.4; const foliageRadius_px = height_px * 0.6; ctx.fillRect(-base_px / 2, -trunkHeight_px, base_px, trunkHeight_px); ctx.beginPath(); ctx.arc(0, -trunkHeight_px - foliageRadius_px * 0.6, foliageRadius_px, 0, 2 * Math.PI); ctx.fill(); } } ctx.restore(); }); }
+        function drawOrbitPath(ctx, camX_m, camY_m, ppm) { /* same as V8 */ if (!spacecraft || spacecraft.altitudeAGL_m < ORBIT_PATH_VISIBILITY_ALTITUDE_M && ppm > ORBIT_PATH_VISIBILITY_PPM) return;  if (apoapsisAGL === Infinity || isNaN(apoapsisAGL) || isNaN(periapsisAGL) || spacecraft.totalMass_kg <=0) return;  const mu = GRAVITATIONAL_CONSTANT_G * planet.mass_kg; const r_vec_x = spacecraft.position_x_m; const r_vec_y = spacecraft.position_y_m; const v_vec_x = spacecraft.velocity_x_ms; const v_vec_y = spacecraft.velocity_y_ms; const r_mag = Math.sqrt(r_vec_x**2 + r_vec_y**2); const v_mag_sq = v_vec_x**2 + v_vec_y**2; const specificOrbitalEnergy = v_mag_sq / 2 - mu / r_mag; if (specificOrbitalEnergy >= 0) return;  const h_vec_z = r_vec_x * v_vec_y - r_vec_y * v_vec_x;  const eccentricity_vec_x = (v_mag_sq - mu / r_mag) * r_vec_x / mu - (r_vec_x * v_vec_x + r_vec_y * v_vec_y) * v_vec_x / mu; const eccentricity_vec_y = (v_mag_sq - mu / r_mag) * r_vec_y / mu - (r_vec_x * v_vec_x + r_vec_y * v_vec_y) * v_vec_y / mu; const eccentricity = Math.sqrt(eccentricity_vec_x**2 + eccentricity_vec_y**2); if (eccentricity >= 1) return;  const semiMajorAxis = -mu / (2 * specificOrbitalEnergy); const argOfPeriapsis_rad = Math.atan2(eccentricity_vec_y, eccentricity_vec_x); ctx.strokeStyle = 'rgba(150, 150, 255, 0.5)'; ctx.lineWidth = Math.max(1, 1 / ppm * 0.00001); ctx.beginPath(); for (let i = 0; i <= ORBIT_PATH_SEGMENTS; i++) { const trueAnomaly_rad = (i / ORBIT_PATH_SEGMENTS) * 2 * Math.PI; const r_path = semiMajorAxis * (1 - eccentricity**2) / (1 + eccentricity * Math.cos(trueAnomaly_rad)); const x_perifocal = r_path * Math.cos(trueAnomaly_rad); const y_perifocal = r_path * Math.sin(trueAnomaly_rad); const x_world = x_perifocal * Math.cos(argOfPeriapsis_rad) - y_perifocal * Math.sin(argOfPeriapsis_rad); const y_world = x_perifocal * Math.sin(argOfPeriapsis_rad) + y_perifocal * Math.cos(argOfPeriapsis_rad); const viewX_px = (x_world - camX_m) * ppm; const viewY_px = (y_world - camY_m) * ppm; const screenX_px = canvas.width / 2 + viewX_px; const screenY_px = canvas.height / 2 - viewY_px; if (i === 0) ctx.moveTo(screenX_px, screenY_px); else ctx.lineTo(screenX_px, screenY_px); } ctx.stroke(); ctx.lineWidth = 1;  }
+        function drawPlanet(ctx) { /* same as V8 */ const viewCenterX_px = canvas.width / 2; const viewCenterY_px = canvas.height / 2; const planetViewX_px = (0 - simulationState.cameraX_m) * simulationState.currentPixelsPerMeter; const planetViewY_px = (0 - simulationState.cameraY_m) * simulationState.currentPixelsPerMeter; const planetScreenX_px = viewCenterX_px + planetViewX_px; const planetScreenY_px = viewCenterY_px - planetViewY_px; const planetRadius_px = planet.radius_m * simulationState.currentPixelsPerMeter; if (planet.maxAtmosphereRadius_m * simulationState.currentPixelsPerMeter > 2) { const atmRadius_px = planet.maxAtmosphereRadius_m * simulationState.currentPixelsPerMeter; ctx.fillStyle = planet.atmosphereColor; ctx.beginPath(); ctx.arc(planetScreenX_px, planetScreenY_px, atmRadius_px, 0, 2 * Math.PI); ctx.fill(); } if (planetRadius_px > 0.5) { ctx.fillStyle = planet.color; ctx.beginPath(); ctx.arc(planetScreenX_px, planetScreenY_px, planetRadius_px, 0, 2 * Math.PI); ctx.fill(); } }
+        
+        function initSimulation() { /* Modified from V8 */
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('nostats') === 'true') {
+                if(dom.statsPanel) dom.statsPanel.style.display = 'none';
+            } else {
+                 if(dom.statsPanel) dom.statsPanel.style.display = 'block';
+            }
+
+            const selectedDesignName = dom.designSelect.value || simulationState.currentDesignName;
+            simulationState.currentDesignName = selectedDesignName;
+            const designConfig = spacecraftDesigns[selectedDesignName];
+            if (!designConfig) { console.error("Selected design not found:", selectedDesignName); return; }
+            spacecraft = new Spacecraft(designConfig); 
+            spacecraft.position_x_m = 0; spacecraft.position_y_m = planet.radius_m; 
+            spacecraft.angle_rad = 0; spacecraft.velocity_x_ms = 0; spacecraft.velocity_y_ms = 0;
+            spacecraft.angularVelocity_rad_s = 0; 
+            simulationState.isLaunched = false; simulationState.engineActive = false;
+            simulationState.timeElapsed = 0; simulationState.lastTimestamp = 0;
+            const comX = spacecraft.position_x_m + spacecraft.getCoMOffset_m() * Math.sin(spacecraft.angle_rad);
+            const comY = spacecraft.position_y_m + spacecraft.getCoMOffset_m() * Math.cos(spacecraft.angle_rad);
+            simulationState.cameraX_m = comX; simulationState.cameraY_m = comY; 
+            simulationState.controlFlags = { rotateLeft: false, rotateRight: false }; 
+            simulationState.landed = true; spacecraft.engineGimbalAngle_rad = 0;
+            currentDragForceMagnitude = 0; currentAirDensityValue = EARTH_SEA_LEVEL_AIR_DENSITY;
+            spacecraft.calculateOrbitalParameters(); 
+            apoapsisAGL = spacecraft.altitudeAGL_m; periapsisAGL = spacecraft.altitudeAGL_m;
+            smokeParticles = []; 
+            if (clouds.length === 0) generateClouds(); 
+            if (surfaceFeatures.length === 0) generateSurfaceFeatures(); 
+            dom.launchButton.disabled = false; dom.launchButton.textContent = "Launch!";
+            updateStatsDisplay();
+            drawStagingAreaRocket(); // New: Draw selected rocket in staging area
+        }
+
+        function drawStagingAreaRocket() {
+            if (!spacecraft) return;
+            stagingCtx.clearRect(0, 0, stagingCanvas.width, stagingCanvas.height);
+            stagingCtx.fillStyle = '#383838'; // Background for staging area
+            stagingCtx.fillRect(0,0, stagingCanvas.width, stagingCanvas.height);
+
+
+            const tempCraft = new Spacecraft(spacecraftDesigns[simulationState.currentDesignName]); // Create a temporary craft for drawing
+            
+            // Calculate a suitable PPM to fit the rocket in the staging canvas
+            const rocketHeight_m = tempCraft.logicalStackHeight_m;
+            const rocketWidth_m = tempCraft.maxWidth_m;
+            const maxDim_m = Math.max(rocketHeight_m, rocketWidth_m, 1); // Avoid div by zero
+
+            const stagingPPM = Math.min(
+                (stagingCanvas.height * 0.9) / rocketHeight_m, 
+                (stagingCanvas.width * 0.9) / rocketWidth_m 
+            );
+            
+            const stagingSfcScreenX = stagingCanvas.width / 2;
+            // Position rocket towards the bottom of staging area, CoM centered horizontally
+            const comOffset_m = tempCraft.getCoMOffset_m();
+            const stagingSfcScreenY = stagingCanvas.height - (rocketHeight_m - comOffset_m) * stagingPPM - 10 ; // 10px padding from bottom
+
+
+            // Temporarily set angle to 0 for upright drawing in staging
+            const originalAngle = tempCraft.angle_rad;
+            tempCraft.angle_rad = 0; 
+            tempCraft.draw(stagingCtx, stagingCanvas.width, stagingCanvas.height, stagingSfcScreenX, stagingSfcScreenY, stagingPPM, true);
+            tempCraft.angle_rad = originalAngle; // Restore if needed, though tempCraft is discarded
+        }
+
+
+        function updateCamera() { /* same as V8 */ if(!spacecraft) return; const comOffset_m = spacecraft.getCoMOffset_m(); const comX = spacecraft.position_x_m + comOffset_m * Math.sin(spacecraft.angle_rad); const comY = spacecraft.position_y_m + comOffset_m * Math.cos(spacecraft.angle_rad); const targetCameraX_m = comX; const targetCameraY_m = comY; const lerpFactor = 0.1; simulationState.cameraX_m += (targetCameraX_m - simulationState.cameraX_m) * lerpFactor; simulationState.cameraY_m += (targetCameraY_m - simulationState.cameraY_m) * lerpFactor; }
+        function updateStatsDisplay() { /* same as V8 */ if(!spacecraft) return; dom.time.textContent = simulationState.timeElapsed.toFixed(1); dom.altitude.textContent = spacecraft.altitudeAGL_m.toFixed(0); dom.apoapsis.textContent = apoapsisAGL >= 1e7 ? (apoapsisAGL/1e3).toFixed(0) + " km" : (apoapsisAGL === Infinity ? "Escape" : apoapsisAGL.toFixed(0) + " m"); dom.periapsis.textContent = periapsisAGL >= 1e7 ? (periapsisAGL/1e3).toFixed(0) + " km" : periapsisAGL.toFixed(0) + " m"; dom.speed.textContent = Math.sqrt(spacecraft.velocity_x_ms**2 + spacecraft.velocity_y_ms**2).toFixed(2); dom.angle.textContent = ((spacecraft.angle_rad * 180 / Math.PI)%360).toFixed(2); dom.gimbal.textContent = (spacecraft.engineGimbalAngle_rad * 180 / Math.PI).toFixed(2); dom.mass.textContent = spacecraft.totalMass_kg.toFixed(2); dom.thrust.textContent = spacecraft.currentThrust_N.toFixed(0); dom.zoomLevel.textContent = simulationState.currentPixelsPerMeter.toExponential(1); const fuelPercent = spacecraft.initialFuel_kg > 0 ? (spacecraft.currentFuel_kg / spacecraft.initialFuel_kg) * 100 : 0; dom.fuelGaugeBar.style.width = `${fuelPercent}%`; dom.fuelText.textContent = `Fuel: ${fuelPercent.toFixed(0)}%`; if (fuelPercent < 25) dom.fuelGaugeBar.style.backgroundColor = 'red'; else if (fuelPercent < 50) dom.fuelGaugeBar.style.backgroundColor = 'orange'; else dom.fuelGaugeBar.style.backgroundColor = 'lightgreen'; }
+        function gameLoop(timestamp) { /* same as V8 */  if(!spacecraft) return; const rawDeltaTime_ms = (timestamp - simulationState.lastTimestamp) || 0; simulationState.lastTimestamp = timestamp; const deltaTime_ms = Math.min(rawDeltaTime_ms, 100); const deltaTime_s = (deltaTime_ms / 1000) * TIME_SCALE; if (simulationState.isLaunched && !simulationState.landed) { simulationState.timeElapsed += deltaTime_s; } if (simulationState.isLaunched || !simulationState.landed) { spacecraft.updatePhysics(deltaTime_s, simulationState.engineActive, simulationState.controlFlags.rotateLeft, simulationState.controlFlags.rotateRight); } else if (simulationState.landed && simulationState.engineActive){ spacecraft.updatePhysics(deltaTime_s, simulationState.engineActive, simulationState.controlFlags.rotateLeft, simulationState.controlFlags.rotateRight); } updateCamera(); smokeParticles = smokeParticles.filter(p => p.age_s < p.lifetime_s); smokeParticles.forEach(p => p.update(deltaTime_s)); const atmFactor = Math.max(0, 1 - Math.min(1, spacecraft.altitudeAGL_m / EARTH_MAX_ATMOSPHERE_ALTITUDE)); const skyR = SPACE_BLACK_COLOR.r + (SKY_BLUE_COLOR.r - SPACE_BLACK_COLOR.r) * atmFactor; const skyG = SPACE_BLACK_COLOR.g + (SKY_BLUE_COLOR.g - SPACE_BLACK_COLOR.g) * atmFactor; const skyB = SPACE_BLACK_COLOR.b + (SKY_BLUE_COLOR.b - SPACE_BLACK_COLOR.b) * atmFactor; ctx.fillStyle = `rgb(${Math.round(skyR)},${Math.round(skyG)},${Math.round(skyB)})`; ctx.fillRect(0, 0, canvas.width, canvas.height); drawOrbitPath(ctx, simulationState.cameraX_m, simulationState.cameraY_m, simulationState.currentPixelsPerMeter);  drawClouds(ctx, simulationState.cameraX_m, simulationState.cameraY_m, simulationState.currentPixelsPerMeter); drawPlanet(ctx); drawSurfaceFeatures(ctx, simulationState.cameraX_m, simulationState.cameraY_m, simulationState.currentPixelsPerMeter); smokeParticles.forEach(p => p.draw(ctx, simulationState.cameraX_m, simulationState.cameraY_m, simulationState.currentPixelsPerMeter)); const comOffset_m = spacecraft.getCoMOffset_m(); const sfcComX_world = spacecraft.position_x_m + comOffset_m * Math.sin(spacecraft.angle_rad); const sfcComY_world = spacecraft.position_y_m + comOffset_m * Math.cos(spacecraft.angle_rad); const sfcComScreenX_main = canvas.width/2 + (sfcComX_world - simulationState.cameraX_m) * simulationState.currentPixelsPerMeter; const sfcComScreenY_main = canvas.height/2 - (sfcComY_world - simulationState.cameraY_m) * simulationState.currentPixelsPerMeter; if (simulationState.currentPixelsPerMeter < SPACECRAFT_INDICATOR_PPM_THRESHOLD && spacecraft) { ctx.fillStyle = 'yellow'; ctx.beginPath(); ctx.arc(sfcComScreenX_main, sfcComScreenY_main, 3, 0, 2 * Math.PI); ctx.fill(); ctx.strokeStyle = 'yellow'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(sfcComScreenX_main, sfcComScreenY_main); const speed = Math.sqrt(spacecraft.velocity_x_ms**2 + spacecraft.velocity_y_ms**2); const vectorLength = Math.min(50, speed * 0.1);  ctx.lineTo( sfcComScreenX_main + (spacecraft.velocity_x_ms / Math.max(1,speed)) * vectorLength, sfcComScreenY_main - (spacecraft.velocity_y_ms / Math.max(1,speed)) * vectorLength  ); ctx.stroke(); ctx.lineWidth = 1; } else if (spacecraft) { spacecraft.draw(ctx, canvas.width, canvas.height, sfcComScreenX_main, sfcComScreenY_main, simulationState.currentPixelsPerMeter); } if (simulationState.currentPixelsPerMeter < INSET_VIEW_PPM_THRESHOLD && spacecraft) { insetCanvas.style.display = 'block'; insetCtx.clearRect(0, 0, insetCanvas.width, insetCanvas.height); const largerCraftDim_m = Math.max(spacecraft.logicalStackHeight_m, spacecraft.maxWidth_m, 1); const insetPPM = INSET_VIEW_TARGET_SIZE_PX / largerCraftDim_m; const insetSfcScreenX = insetCanvas.width / 2;  const insetSfcScreenY = insetCanvas.height / 2; spacecraft.draw(insetCtx, insetCanvas.width, insetCanvas.height, insetSfcScreenX, insetSfcScreenY, insetPPM, true); } else { insetCanvas.style.display = 'none'; } updateStatsDisplay(); if (simulationState.landed && !simulationState.engineActive && simulationState.isLaunched) { dom.launchButton.textContent = "Landed"; } requestAnimationFrame(gameLoop); }
+        
+        // Event Listeners
+        dom.launchButton.addEventListener('click', () => { if(!soundInitialized) initAudio(); if (!simulationState.isLaunched) { simulationState.isLaunched = true; simulationState.landed = false; simulationState.engineActive = spacecraft.currentFuel_kg > 0; } else { simulationState.engineActive = !simulationState.engineActive; if(spacecraft.currentFuel_kg <= 0) simulationState.engineActive = false; if(simulationState.engineActive && simulationState.landed) simulationState.landed = false; } dom.launchButton.textContent = simulationState.engineActive ? "Engine Active" : (spacecraft.currentFuel_kg > 0 ? "Engine Off" : "Out of Fuel"); dom.launchButton.disabled = spacecraft.currentFuel_kg <=0 && !simulationState.engineActive; });
+        dom.resetButton.addEventListener('click', () => { if(!soundInitialized) initAudio(); initSimulation(); }); 
+        dom.muteButton.addEventListener('click', toggleMute); 
+        dom.designSelect.addEventListener('change', (event) => { simulationState.currentDesignName = event.target.value; initSimulation(); drawStagingAreaRocket(); /* Update staging view on select change */ });
+        document.addEventListener('keydown', (e) => { if(!soundInitialized && (e.key === 'q' || e.key === 'Q' || e.key === 'e' || e.key === 'E' || e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === ' ')) initAudio(); if (e.key === 'q' || e.key === 'Q' || e.key === 'ArrowLeft') simulationState.controlFlags.rotateLeft = true; if (e.key === 'e' || e.key === 'E' || e.key === 'ArrowRight') simulationState.controlFlags.rotateRight = true; if (e.key === '+' || e.key === '=') handleZoomIn(); if (e.key === '-' || e.key === '_') handleZoomOut(); if (e.key === ' ') { e.preventDefault(); dom.launchButton.click(); }  });
+        document.addEventListener('keyup', (e) => { if (e.key === 'q' || e.key === 'Q' || e.key === 'ArrowLeft') simulationState.controlFlags.rotateLeft = false; if (e.key === 'e' || e.key === 'E' || e.key === 'ArrowRight') simulationState.controlFlags.rotateRight = false; });
+        const makePressReleaseButton = (buttonElem, flagName) => { const action = () => { if(!soundInitialized) initAudio(); simulationState.controlFlags[flagName] = true; }; buttonElem.addEventListener('mousedown', action); buttonElem.addEventListener('mouseup', () => simulationState.controlFlags[flagName] = false); buttonElem.addEventListener('mouseleave', () => simulationState.controlFlags[flagName] = false); buttonElem.addEventListener('touchstart', (e) => { e.preventDefault(); action(); }); buttonElem.addEventListener('touchend', (e) => { e.preventDefault(); simulationState.controlFlags[flagName] = false; }); };
+        makePressReleaseButton(dom.rotateLeftButton, 'rotateLeft'); makePressReleaseButton(dom.rotateRightButton, 'rotateRight');
+        function handleZoomIn() { if(!soundInitialized) initAudio(); simulationState.currentPixelsPerMeter *= 1.5; if(simulationState.currentPixelsPerMeter > 20) simulationState.currentPixelsPerMeter = 20;}
+        function handleZoomOut() { if(!soundInitialized) initAudio(); simulationState.currentPixelsPerMeter /= 1.5; if(simulationState.currentPixelsPerMeter < 1e-7) simulationState.currentPixelsPerMeter = 1e-7; }
+        dom.zoomInButton.addEventListener('click', handleZoomIn); dom.zoomOutButton.addEventListener('click', handleZoomOut);
+        canvas.addEventListener('wheel', (e) => { if(!soundInitialized) initAudio(); e.preventDefault(); if (e.deltaY < 0) handleZoomIn(); else handleZoomOut(); });
+        
+        document.querySelectorAll('.part-button').forEach(button => {
+            button.addEventListener('click', () => {
+                const partType = button.dataset.partType;
+                console.log("Selected part type:", partType); // Placeholder for now
+                // Later: Add logic to add this part to a temporary build list or staging area
+            });
+        });
+
+        populateDesignSelector(); 
+        initSimulation();       
+        requestAnimationFrame(gameLoop);
+    </script>
+</body>
+</html>
