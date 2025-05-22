@@ -324,6 +324,3 @@ document.addEventListener('DOMContentLoaded', () => {
     requestAnimationFrame(gameLoop);
 });
 
-</script>
-</body>
-</html>
