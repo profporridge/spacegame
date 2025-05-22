@@ -1,26 +1,35 @@
-import { Spacecraft } from './spacecraft.js'; // For temp craft in staging
+import { Spacecraft } from './spacecraft.js';
+import { CommandPod, FuelTank, Engine, Fairing } from './parts.js'; // Ensure these are imported if used for type checking or default configs
 import { SPACECRAFT_INDICATOR_PPM_THRESHOLD, INSET_VIEW_PPM_THRESHOLD, INSET_VIEW_TARGET_SIZE_PX, ISP_VACUUM_DEFAULT } from './constants.js';
 
-let domElements = {}; // Will be initialized by main.js
-let currentShipPartsConfigRef = []; // Reference to currentShipPartsConfig in main.js
-let spacecraftDesignsRef = {}; // Reference to spacecraftDesigns in main.js
-let initSimulationFuncRef = () => {}; // Reference to initSimulation in main.js
+let domElements = {}; 
+let currentShipPartsConfigRef = []; 
+let spacecraftDesignsRef = {}; 
+let initSimulationFuncRef = () => {}; 
+let stagingCtxRef, stagingCanvasRef;
+let simulationStateRef; 
+let partCatalogRef = {}; // Will hold constructors: { 'pod': CommandPod, ... }
+let audioModuleRef = null; // Will hold the imported audio module
 
-export function initializeUI(domRefs, shipPartsConfigRef, designsRef, initSimFunc) {
+export function initializeUI(domRefs, shipPartsConfig, designsRef, initSimFunc, stagingContext, stagingCanvasElement, simState, catalog, audioMod) {
     domElements = domRefs;
-    currentShipPartsConfigRef = shipPartsConfigRef;
+    currentShipPartsConfigRef = shipPartsConfig;
     spacecraftDesignsRef = designsRef;
     initSimulationFuncRef = initSimFunc;
+    stagingCtxRef = stagingContext;
+    stagingCanvasRef = stagingCanvasElement;
+    simulationStateRef = simState;
+    partCatalogRef = catalog;
+    audioModuleRef = audioMod; // Store audio module
 
     populateDesignSelector();
-    initializeDragAndDrop();
-    setupStagingCanvasDrop();
+    populatePartPalette(); 
     setupBuilderActionButtons();
 }
 
 function populateDesignSelector() { 
     if (!domElements.designSelect) return;
-    domElements.designSelect.innerHTML = ''; // Clear existing options
+    domElements.designSelect.innerHTML = ''; 
     for (const designName in spacecraftDesignsRef) { 
         const option = document.createElement('option'); 
         option.value = designName; 
@@ -30,8 +39,55 @@ function populateDesignSelector() {
     if(simulationStateRef) domElements.designSelect.value = simulationStateRef.currentDesignName; 
 }
 
+function populatePartPalette() {
+    if (!domElements.partPaletteContainer) { 
+        const paletteContainer = document.querySelector('#partPalette .part-category');
+        if (!paletteContainer) {
+            console.error("Part palette container not found!");
+            return;
+        }
+        domElements.partPaletteContainer = paletteContainer;
+    }
+    domElements.partPaletteContainer.innerHTML = ''; 
+
+    // Define parts for the palette with their thumbnail image names
+    const paletteParts = [
+        { type: 'pod', name: 'Std. Pod', thumbnail: 'pod1.png', defaultConfig: { type: 'pod', name:'Std. Pod', dryMass_kg: 500, width_m: 2, height_m: 1.5, color: 'silver' }},
+        { type: 'tank', name: 'Med. Tank', thumbnail: 'tank1.png', defaultConfig: { type: 'tank', name:'Med. Tank', fuelCapacity_kg: 10000, dryMass_kg: 1500, width_m: 2.5, height_m: 8, color: '#aabbcc' }},
+        { type: 'engine', name: 'Main Engine', thumbnail: 'engine1.png', defaultConfig: { type: 'engine', name:'Main Engine', thrust_N: 250000, fuelConsumptionRate_kg_s: 80, dryMass_kg: 1000, width_m: 2.5, height_m: 2, color: '#505050', isp: 310 }},
+        { type: 'fairing', name: 'Payload Fairing', thumbnail: 'fairing1.png', defaultConfig: { type: 'fairing', name:'Payload Fairing', dryMass_kg: 100, width_m: 2.5, height_m: 3, color: '#f0f0f0' }}
+    ];
+
+    paletteParts.forEach(partInfo => {
+        const button = document.createElement('button');
+        button.classList.add('part-button');
+        button.draggable = true;
+        button.dataset.partType = partInfo.type;
+        button.dataset.partName = partInfo.name;
+        button.dataset.partConfig = JSON.stringify(partInfo.defaultConfig);
+
+        const img = document.createElement('img');
+        img.src = `images/${partInfo.thumbnail}`;
+        img.alt = partInfo.name;
+        img.style.width = '40px'; // Adjust as needed
+        img.style.height = 'auto';
+        img.style.marginRight = '10px';
+        img.style.verticalAlign = 'middle';
+        img.ondragstart = (e) => e.preventDefault(); // Prevent dragging the image itself, allow button drag
+
+        button.appendChild(img);
+        button.appendChild(document.createTextNode(partInfo.name));
+        domElements.partPaletteContainer.appendChild(button);
+    });
+    // Re-initialize drag and drop for newly created buttons
+    if (stagingCanvasRef && domElements.dragImage && currentShipPartsConfigRef && simulationStateRef && audioModuleRef) {
+         initializeDragAndDrop(stagingCanvasRef, domElements.dragImage, currentShipPartsConfigRef, simulationStateRef, audioModuleRef);
+    }
+}
+
+
 export function updateStatsDisplay(simState, sfc, apo, peri) { 
-    if(!sfc || !domElements.time) return; 
+    if(!domElements.time || !sfc) return; 
     domElements.time.textContent = simState.timeElapsed.toFixed(1); 
     if(domElements.apoapsis) domElements.apoapsis.textContent = apo >= 1e7 ? (apo/1e3).toFixed(0) + " km" : (apo === Infinity ? "Escape" : apo.toFixed(0) + " m"); 
     if(domElements.periapsis) domElements.periapsis.textContent = peri >= 1e7 ? (peri/1e3).toFixed(0) + " km" : peri.toFixed(0) + " m"; 
@@ -40,7 +96,6 @@ export function updateStatsDisplay(simState, sfc, apo, peri) {
     if(domElements.mass) domElements.mass.textContent = sfc.totalMass_kg.toFixed(2); 
     if(domElements.thrust) domElements.thrust.textContent = sfc.currentThrust_N.toFixed(0); 
     if(domElements.zoomLevel) domElements.zoomLevel.textContent = simState.currentPixelsPerMeter.toExponential(1); 
-    
     const fuelPercent = sfc.initialFuel_kg > 0 ? (sfc.currentFuel_kg / sfc.initialFuel_kg) * 100 : 0; 
     if(domElements.fuelGaugeBar) domElements.fuelGaugeBar.style.width = `${fuelPercent}%`; 
     if(domElements.fuelText) domElements.fuelText.textContent = `Fuel: ${fuelPercent.toFixed(0)}%`; 
@@ -52,7 +107,7 @@ export function updateStatsDisplay(simState, sfc, apo, peri) {
 }
 
 export function drawHUD(mainCtx, sfc, simState) { 
-    if (!sfc || !simState.isLaunched) return;
+    if (!sfc || !simState.isLaunched || !mainCtx) return; 
     mainCtx.save(); 
     mainCtx.font = "bold 16px Arial"; 
     mainCtx.fillStyle = "rgba(220, 220, 255, 0.9)"; 
@@ -62,7 +117,6 @@ export function drawHUD(mainCtx, sfc, simState) {
     const speed_ms = Math.sqrt(sfc.velocity_x_ms**2 + sfc.velocity_y_ms**2);
     const speedText = `Spd: ${speed_ms.toFixed(1)} m/s`; 
     mainCtx.fillText(speedText, 10, mainCtx.canvas.height - 10);
-    
     if (speed_ms > 1) { 
         const angleOfVelocity = Math.atan2(sfc.velocity_x_ms, sfc.velocity_y_ms); 
         const hudCenterX = mainCtx.canvas.width / 2; 
@@ -86,36 +140,37 @@ export function drawHUD(mainCtx, sfc, simState) {
     mainCtx.restore();
 }
 
-export function drawStagingAreaRocket(stagingCtx, stagingCanvas, partsConfig) { 
-    if (!stagingCtx || !stagingCanvas) return;
-    stagingCtx.clearRect(0, 0, stagingCanvas.width, stagingCanvas.height); 
-    stagingCtx.fillStyle = '#383838'; 
-    stagingCtx.fillRect(0,0, stagingCanvas.width, stagingCanvas.height);
-    if (partsConfig.length === 0) return; 
+export function drawStagingAreaRocket() { 
+    if (!stagingCtxRef || !stagingCanvasRef) return;
+    stagingCtxRef.clearRect(0, 0, stagingCanvasRef.width, stagingCanvasRef.height); 
+    stagingCtxRef.fillStyle = '#383838'; 
+    stagingCtxRef.fillRect(0,0, stagingCanvasRef.width, stagingCanvasRef.height);
+    if (currentShipPartsConfigRef.length === 0) return; 
     
-    // Create a temporary spacecraft instance just for drawing in staging
-    // This avoids modifying the main 'spacecraft' object if one is in flight
-    const tempCraft = new Spacecraft(partsConfig); 
+    const tempCraft = new Spacecraft(currentShipPartsConfigRef); 
     
     const rocketHeight_m = tempCraft.logicalStackHeight_m; 
     const rocketWidth_m = tempCraft.maxWidth_m;
     const maxDim_m = Math.max(rocketHeight_m, rocketWidth_m, 1); 
-    const stagingPPM = Math.min( (stagingCanvas.height * 0.95) / rocketHeight_m, (stagingCanvas.width * 0.9) / rocketWidth_m );
-    const stagingSfcScreenX = stagingCanvas.width / 2;
+
+    const stagingPPM = Math.min( (stagingCanvasRef.height * 0.95) / rocketHeight_m, (stagingCanvasRef.width * 0.9) / rocketWidth_m );
+    
+    const stagingSfcScreenX = stagingCanvasRef.width / 2;
     const comOffset_m = tempCraft.getCoMOffset_m(); 
-    const craftCenterY_px = stagingCanvas.height / 2; 
+    const craftCenterY_px = stagingCanvasRef.height / 2; 
     const bottomOffsetY_px = (tempCraft.logicalStackHeight_m - comOffset_m) * stagingPPM;
-    const stagingSfcScreenY = craftCenterY_px + bottomOffsetY_px - (stagingCanvas.height * 0.05) ; 
+    const stagingSfcScreenY = craftCenterY_px + bottomOffsetY_px - (stagingCanvasRef.height * 0.05) ; 
     
     const originalAngle = tempCraft.angle_rad; 
-    tempCraft.angle_rad = 0; // Draw upright in staging
-    tempCraft.draw(stagingCtx, stagingCanvas.width, stagingCanvas.height, stagingSfcScreenX, stagingSfcScreenY, stagingPPM, true); // isInsetView = true for different flame scaling
+    tempCraft.angle_rad = 0; 
+    // Pass stagingCtx, canvas dimensions, calculated screen pos, stagingPPM, and true for isInsetView (to use simpler flame, and true for showNodes)
+    tempCraft.draw(stagingCtxRef, stagingCanvasRef.width, stagingCanvasRef.height, stagingSfcScreenX, stagingSfcScreenY, stagingPPM, true, true); // showNodes = true for staging
     tempCraft.angle_rad = originalAngle; 
 }
 
-export function updateStagingStats(partsConfig) { 
-    if (!domElements.stagingMass) return; // Ensure DOM elements are available
-    if (partsConfig.length === 0) { 
+export function updateStagingStats() { 
+    if (!domElements.stagingMass || !currentShipPartsConfigRef) return; 
+    if (currentShipPartsConfigRef.length === 0) { 
         domElements.stagingMass.textContent = "0.00"; 
         domElements.stagingThrust.textContent = "0.00"; 
         domElements.stagingDeltaV.textContent = "0.00"; 
@@ -123,7 +178,7 @@ export function updateStagingStats(partsConfig) {
     }
     let totalDryMass = 0; let totalFuelMass = 0; 
     let totalThrust = 0; let minISP = Infinity; 
-    partsConfig.forEach(partConfig => { 
+    currentShipPartsConfigRef.forEach(partConfig => { 
         totalDryMass += partConfig.dryMass_kg || 0; 
         if (partConfig.type === 'tank') { totalFuelMass += partConfig.fuelCapacity_kg || 0; } 
         if (partConfig.type === 'engine') { 
@@ -142,56 +197,50 @@ export function updateStagingStats(partsConfig) {
     domElements.stagingDeltaV.textContent = deltaV.toFixed(0);
 }
 
-// For Drag and Drop
 let draggedPartConfig = null; 
 let touchDraggedPartElement = null; 
-let touchStartOffset = {x:0, y:0};
-let simulationStateRef = null; // Will be set by main.js
 
-export function initializeDragAndDrop(stagingCanvasElement, dragImageElementRef, currentPartsRef, simStateRef) {
+export function initializeDragAndDrop(stagingCanvasElement, dragImageElementRef, currentPartsRef, simState, audioMod) {
     const dragImageElement = dragImageElementRef;
-    simulationStateRef = simStateRef; // Store reference for initAudio
+    simulationStateRef = simState; 
+    audioModuleRef = audioMod;
 
     document.querySelectorAll('.part-button').forEach(button => {
+        const imgElement = button.querySelector('img'); // Get the img for drag image
+
         button.addEventListener('dragstart', (event) => {
-            const partType = event.target.dataset.partType; 
-            const partName = event.target.dataset.partName || partType.charAt(0).toUpperCase() + partType.slice(1);
-            let defaultConfig;
-            switch(partType) { 
-                case 'pod': defaultConfig = { type: 'pod', name: partName, dryMass_kg: 500, width_m: 2, height_m: 1.5, color: 'silver' }; break;
-                case 'tank': defaultConfig = { type: 'tank', name: partName, fuelCapacity_kg: 1000, dryMass_kg: 150, width_m: 1.8, height_m: 4, color: 'lightgreen' }; break;
-                case 'engine': defaultConfig = { type: 'engine', name: partName, thrust_N: 30000, fuelConsumptionRate_kg_s: 10, dryMass_kg: 200, width_m: 2.2, height_m: 2, color: 'darkgray', isp: ISP_VACUUM_DEFAULT }; break;
-                case 'fairing': defaultConfig = { type: 'fairing', name: partName, dryMass_kg: 100, width_m: 2.5, height_m: 3, color: '#f0f0f0' }; break;
-                default: console.error("Unknown part type for drag:", partType); return;
-            }
-            draggedPartConfig = defaultConfig;
-            event.dataTransfer.setData('application/json', JSON.stringify(defaultConfig)); 
-            event.dataTransfer.effectAllowed = 'copy';
-            if (dragImageElement) {
-                dragImageElement.textContent = `[ ${partName} ]`;
-                dragImageElement.style.display = 'block'; 
-                event.dataTransfer.setDragImage(dragImageElement, 10, 10); 
-            }
+            try {
+                const partConfigString = event.target.closest('.part-button').dataset.partConfig; // Get from button itself
+                if (!partConfigString) { console.error("No part config found on button:", event.target); return; }
+                draggedPartConfig = JSON.parse(partConfigString);
+                
+                event.dataTransfer.setData('application/json', partConfigString); 
+                event.dataTransfer.effectAllowed = 'copy';
+
+                if (imgElement) { // Use the part's image from the palette
+                    event.dataTransfer.setDragImage(imgElement, imgElement.width / 2, imgElement.height / 2);
+                } else if (dragImageElement) { // Fallback to text
+                    dragImageElement.textContent = `[ ${draggedPartConfig.name} ]`;
+                    dragImageElement.style.display = 'block'; 
+                    event.dataTransfer.setDragImage(dragImageElement, 10, 10); 
+                }
+            } catch (e) { console.error("Error in dragstart:", e); }
         });
-        button.addEventListener('dragend', () => { if(dragImageElement) dragImageElement.style.display = 'none'; });
+        if(dragImageElement) button.addEventListener('dragend', () => { dragImageElement.style.display = 'none'; });
 
         button.addEventListener('touchstart', (event) => {
             event.preventDefault(); 
-            if(!audio.soundInitialized && simulationStateRef) initAudio(simulationStateRef.soundMuted); // audio not defined error
-            const partType = event.target.dataset.partType; const partName = event.target.dataset.partName || partType.charAt(0).toUpperCase() + partType.slice(1);
-            let defaultConfig;
-             switch(partType) { /* same switch as dragstart */ 
-                case 'pod': defaultConfig = { type: 'pod', name: partName, dryMass_kg: 500, width_m: 2, height_m: 1.5, color: 'silver' }; break;
-                case 'tank': defaultConfig = { type: 'tank', name: partName, fuelCapacity_kg: 1000, dryMass_kg: 150, width_m: 1.8, height_m: 4, color: 'lightgreen' }; break;
-                case 'engine': defaultConfig = { type: 'engine', name: partName, thrust_N: 30000, fuelConsumptionRate_kg_s: 10, dryMass_kg: 200, width_m: 2.2, height_m: 2, color: 'darkgray', isp: ISP_VACUUM_DEFAULT }; break;
-                case 'fairing': defaultConfig = { type: 'fairing', name: partName, dryMass_kg: 100, width_m: 2.5, height_m: 3, color: '#f0f0f0' }; break;
-                default: return;
-             }
-            draggedPartConfig = defaultConfig; 
+            if(!audioModuleRef.soundInitialized && simulationStateRef) audioModuleRef.initAudio(simulationStateRef.soundMuted);
             
-            if (dragImageElement) {
+            try {
+                const partConfigString = event.target.closest('.part-button').dataset.partConfig;
+                if (!partConfigString) return;
+                draggedPartConfig = JSON.parse(partConfigString);
+            } catch (e) { console.error("Error parsing part config on touchstart:", e); return; }
+            
+            if (dragImageElement) { // For touch, we still use the simple text label for now
                 touchDraggedPartElement = dragImageElement.cloneNode(true); 
-                touchDraggedPartElement.textContent = `[ ${partName} ]`;
+                touchDraggedPartElement.textContent = `[ ${draggedPartConfig.name} ]`;
                 touchDraggedPartElement.style.position = 'fixed'; 
                 touchDraggedPartElement.style.zIndex = '1001';
                 touchDraggedPartElement.style.display = 'block';
@@ -202,38 +251,60 @@ export function initializeDragAndDrop(stagingCanvasElement, dragImageElementRef,
         }, {passive: false});
     });
 
-    function moveTouchDraggedElement(clientX, clientY) {
-        if (touchDraggedPartElement) {
-            touchDraggedPartElement.style.left = `${clientX - touchDraggedPartElement.offsetWidth / 2}px`;
-            touchDraggedPartElement.style.top = `${clientY - touchDraggedPartElement.offsetHeight / 2}px`;
-        }
-    }
+    function moveTouchDraggedElement(clientX, clientY) { if (touchDraggedPartElement) { touchDraggedPartElement.style.left = `${clientX - touchDraggedPartElement.offsetWidth / 2}px`; touchDraggedPartElement.style.top = `${clientY - touchDraggedPartElement.offsetHeight / 2}px`; } }
     
-    document.body.addEventListener('touchmove', (event) => {
-        if (touchDraggedPartElement) {
-            // event.preventDefault(); // This might be too aggressive globally
-            const touch = event.targetTouches[0];
-            moveTouchDraggedElement(touch.clientX, touch.clientY);
-            const stagingRect = stagingCanvasElement.getBoundingClientRect();
-            if (touch.clientX >= stagingRect.left && touch.clientX <= stagingRect.right &&
-                touch.clientY >= stagingRect.top && touch.clientY <= stagingRect.bottom) {
-                stagingCanvasElement.classList.add('drag-over');
+    document.body.addEventListener('touchmove', (event) => { if (touchDraggedPartElement) { const touch = event.targetTouches[0]; moveTouchDraggedElement(touch.clientX, touch.clientY); const stagingRect = stagingCanvasElement.getBoundingClientRect(); if (touch.clientX >= stagingRect.left && touch.clientX <= stagingRect.right && touch.clientY >= stagingRect.top && touch.clientY <= stagingRect.bottom) { stagingCanvasElement.classList.add('drag-over'); } else { stagingCanvasElement.classList.remove('drag-over'); } } }, {passive: false});
+
+    function handleDropOnStaging(droppedConfig) {
+        if (!droppedConfig || !droppedConfig.type) return;
+        
+        // *** Basic Node Snapping Logic ***
+        const newPartInstance = new partCatalogRef[droppedConfig.type](droppedConfig);
+        if (!newPartInstance) { console.error("Could not create instance for dropped part", droppedConfig); return; }
+
+        if (currentPartsRef.length === 0) { // First part
+            currentPartsRef.push(droppedConfig);
+        } else {
+            const topPartConfig = currentPartsRef[currentPartsRef.length - 1];
+            const topPartInstance = new partCatalogRef[topPartConfig.type](topPartConfig);
+
+            const topNode = topPartInstance.attachmentNodes.find(node => node.type === 'stack_top' || node.type === 'fuel_output'); // Prefer stack_top
+            const bottomNodeOfNew = newPartInstance.attachmentNodes.find(node => node.type === 'stack_bottom' || node.type === 'engine_top' || node.type === 'fuel_input');
+
+            if (topNode && bottomNodeOfNew && topNode.acceptedTypes.includes(bottomNodeOfNew.type)) {
+                // Simple stack connection:
+                console.log(`Connecting ${newPartInstance.name} (node ${bottomNodeOfNew.id}) to ${topPartInstance.name} (node ${topNode.id})`);
+                currentPartsRef.push(droppedConfig);
             } else {
-                stagingCanvasElement.classList.remove('drag-over');
+                console.warn("No compatible node found for stacking. Part not added.");
+                // Future: Try radial attachment or provide feedback
+                return; // Don't add if no simple stack connection found
             }
         }
-    }, {passive: false});
+        drawStagingAreaRocket(); 
+        updateStagingStats(); 
+    }
 
-    document.body.addEventListener('touchend', (event) => {
+    stagingCanvasElement.addEventListener('drop', (event) => { 
+        event.preventDefault(); stagingCanvasElement.classList.remove('drag-over'); 
+        let droppedData; 
+        try { droppedData = JSON.parse(event.dataTransfer.getData('application/json')); } 
+        catch (e) { console.warn("Could not parse dropped JSON data", e); droppedData = null; } 
+        
+        const partConfigToDrop = draggedPartConfig || droppedData; 
+        if (partConfigToDrop) {
+            handleDropOnStaging(partConfigToDrop);
+        }
+        draggedPartConfig = null;  
+    });
+     document.body.addEventListener('touchend', (event) => {
         if (touchDraggedPartElement) {
             const touch = event.changedTouches[0];
             const stagingRect = stagingCanvasElement.getBoundingClientRect();
             if (touch.clientX >= stagingRect.left && touch.clientX <= stagingRect.right &&
                 touch.clientY >= stagingRect.top && touch.clientY <= stagingRect.bottom) {
                 if (draggedPartConfig) {
-                    currentPartsRef.push(JSON.parse(JSON.stringify(draggedPartConfig)));
-                    drawStagingAreaRocket(stagingCtx, stagingCanvasElement, currentPartsRef); // Pass stagingCtx and stagingCanvas
-                    updateStagingStats(currentPartsRef);
+                    handleDropOnStaging(draggedPartConfig);
                 }
             }
             document.body.removeChild(touchDraggedPartElement);
@@ -242,24 +313,12 @@ export function initializeDragAndDrop(stagingCanvasElement, dragImageElementRef,
             stagingCanvasElement.classList.remove('drag-over');
         }
     });
-
     stagingCanvasElement.addEventListener('dragover', (event) => { event.preventDefault(); event.dataTransfer.dropEffect = 'copy'; stagingCanvasElement.classList.add('drag-over'); });
     stagingCanvasElement.addEventListener('dragenter', (event) => { event.preventDefault(); stagingCanvasElement.classList.add('drag-over'); });
     stagingCanvasElement.addEventListener('dragleave', () => { stagingCanvasElement.classList.remove('drag-over'); });
-    stagingCanvasElement.addEventListener('drop', (event) => { 
-        event.preventDefault(); stagingCanvasElement.classList.remove('drag-over'); 
-        let droppedData; 
-        try { droppedData = JSON.parse(event.dataTransfer.getData('application/json')); } 
-        catch (e) { console.warn("Could not parse dropped JSON data", e); } 
-        
-        if (draggedPartConfig && draggedPartConfig.type === (droppedData && droppedData.type)) { 
-            currentPartsRef.push(JSON.parse(JSON.stringify(draggedPartConfig))); 
-        } else if (droppedData && droppedData.type) { 
-            currentPartsRef.push(droppedData); 
-        } else { return; } 
-        
-        drawStagingAreaRocket(stagingCtx, stagingCanvasElement, currentPartsRef); 
-        updateStagingStats(currentPartsRef); 
-        draggedPartConfig = null;  
-    });
+}
+
+function setupBuilderActionButtons() {
+    if (domElements.clearStagingButton) { domElements.clearStagingButton.addEventListener('click', () => { currentShipPartsConfigRef.length = 0; drawStagingAreaRocket(); updateStagingStats(); });}
+    if (domElements.undoLastPartButton) { domElements.undoLastPartButton.addEventListener('click', () => { if (currentShipPartsConfigRef.length > 0) { currentShipPartsConfigRef.pop(); drawStagingAreaRocket(); updateStagingStats(); }});}
 }
