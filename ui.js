@@ -13,7 +13,7 @@ export function initializeUI(domRefs, shipPartsConfigRef, designsRef, initSimFun
     initSimulationFuncRef = initSimFunc;
 
     populateDesignSelector();
-    setupPartPaletteDrag();
+    initializeDragAndDrop();
     setupStagingCanvasDrop();
     setupBuilderActionButtons();
 }
