@@ -1,5 +1,5 @@
-import { Spacecraft } from './spacecraft.js';
-import { CommandPod, FuelTank, Engine, Fairing } from './parts.js'; // Ensure these are imported if used for type checking or default configs
+import { Spacecraft } from './spacecraft.js'; 
+import { CommandPod, FuelTank, Engine, Fairing } from './parts.js';
 import { SPACECRAFT_INDICATOR_PPM_THRESHOLD, INSET_VIEW_PPM_THRESHOLD, INSET_VIEW_TARGET_SIZE_PX, ISP_VACUUM_DEFAULT } from './constants.js';
 
 let domElements = {}; 
@@ -8,23 +8,25 @@ let spacecraftDesignsRef = {};
 let initSimulationFuncRef = () => {}; 
 let stagingCtxRef, stagingCanvasRef;
 let simulationStateRef; 
-let partCatalogRef = {}; // Will hold constructors: { 'pod': CommandPod, ... }
-let audioModuleRef = null; // Will hold the imported audio module
+let partCatalogRef = {};
+let audioModuleRef = null;
 
-export function initializeUI(domRefs, shipPartsConfig, designsRef, initSimFunc, stagingContext, stagingCanvasElement, simState, catalog, audioMod) {
+export function initializeUI(domRefs, shipPartsConfigRefFromMain, designsRef, initSimFunc, stagingContext, stagingCanvasElement, simState, catalog, audioMod) {
     domElements = domRefs;
-    currentShipPartsConfigRef = shipPartsConfig;
+    currentShipPartsConfigRef = shipPartsConfigRefFromMain; // Use the reference passed from main.js
     spacecraftDesignsRef = designsRef;
     initSimulationFuncRef = initSimFunc;
     stagingCtxRef = stagingContext;
     stagingCanvasRef = stagingCanvasElement;
     simulationStateRef = simState;
     partCatalogRef = catalog;
-    audioModuleRef = audioMod; // Store audio module
+    audioModuleRef = audioMod;
 
     populateDesignSelector();
     populatePartPalette(); 
     setupBuilderActionButtons();
+    // Initialize D&D here as it needs access to ui.js's scope and functions
+    initializeDragAndDropInternal(stagingCanvasRef, domElements.dragImage, currentShipPartsConfigRef, simulationStateRef, audioModuleRef);
 }
 
 function populateDesignSelector() { 
@@ -36,21 +38,25 @@ function populateDesignSelector() {
         option.textContent = designName.replace(/_/g, ' '); 
         domElements.designSelect.appendChild(option); 
     } 
-    if(simulationStateRef) domElements.designSelect.value = simulationStateRef.currentDesignName; 
+    if(simulationStateRef && domElements.designSelect.options.length > 0) { // Ensure options exist before setting value
+         const currentDesign = simulationStateRef.currentDesignName;
+         if (spacecraftDesignsRef[currentDesign]) { // Check if the design name is valid
+            domElements.designSelect.value = currentDesign;
+         } else if (domElements.designSelect.options.length > 0) { // Fallback to first option
+            domElements.designSelect.value = domElements.designSelect.options[0].value;
+            simulationStateRef.currentDesignName = domElements.designSelect.value; // Update state
+         }
+    }
 }
 
 function populatePartPalette() {
     if (!domElements.partPaletteContainer) { 
         const paletteContainer = document.querySelector('#partPalette .part-category');
-        if (!paletteContainer) {
-            console.error("Part palette container not found!");
-            return;
-        }
+        if (!paletteContainer) { console.error("Part palette container not found!"); return; }
         domElements.partPaletteContainer = paletteContainer;
     }
     domElements.partPaletteContainer.innerHTML = ''; 
 
-    // Define parts for the palette with their thumbnail image names
     const paletteParts = [
         { type: 'pod', name: 'Std. Pod', thumbnail: 'pod1.png', defaultConfig: { type: 'pod', name:'Std. Pod', dryMass_kg: 500, width_m: 2, height_m: 1.5, color: 'silver' }},
         { type: 'tank', name: 'Med. Tank', thumbnail: 'tank1.png', defaultConfig: { type: 'tank', name:'Med. Tank', fuelCapacity_kg: 10000, dryMass_kg: 1500, width_m: 2.5, height_m: 8, color: '#aabbcc' }},
@@ -69,20 +75,16 @@ function populatePartPalette() {
         const img = document.createElement('img');
         img.src = `images/${partInfo.thumbnail}`;
         img.alt = partInfo.name;
-        img.style.width = '40px'; // Adjust as needed
+        img.style.width = '40px'; 
         img.style.height = 'auto';
         img.style.marginRight = '10px';
         img.style.verticalAlign = 'middle';
-        img.ondragstart = (e) => e.preventDefault(); // Prevent dragging the image itself, allow button drag
+        img.ondragstart = (e) => e.preventDefault(); 
 
         button.appendChild(img);
         button.appendChild(document.createTextNode(partInfo.name));
         domElements.partPaletteContainer.appendChild(button);
     });
-    // Re-initialize drag and drop for newly created buttons
-    if (stagingCanvasRef && domElements.dragImage && currentShipPartsConfigRef && simulationStateRef && audioModuleRef) {
-         initializeDragAndDrop(stagingCanvasRef, domElements.dragImage, currentShipPartsConfigRef, simulationStateRef, audioModuleRef);
-    }
 }
 
 
@@ -141,30 +143,47 @@ export function drawHUD(mainCtx, sfc, simState) {
 }
 
 export function drawStagingAreaRocket() { 
-    if (!stagingCtxRef || !stagingCanvasRef) return;
+    if (!stagingCtxRef || !stagingCanvasRef) { console.error("Staging canvas not initialized for drawing"); return; }
     stagingCtxRef.clearRect(0, 0, stagingCanvasRef.width, stagingCanvasRef.height); 
     stagingCtxRef.fillStyle = '#383838'; 
     stagingCtxRef.fillRect(0,0, stagingCanvasRef.width, stagingCanvasRef.height);
+    // console.log("drawStagingAreaRocket called. Parts:", currentShipPartsConfigRef.length); // DEBUG
     if (currentShipPartsConfigRef.length === 0) return; 
     
     const tempCraft = new Spacecraft(currentShipPartsConfigRef); 
     
+    if (tempCraft.parts.length === 0) {
+        // console.log("Temp craft has no parts after construction."); // DEBUG
+        return;
+    }
+
     const rocketHeight_m = tempCraft.logicalStackHeight_m; 
     const rocketWidth_m = tempCraft.maxWidth_m;
-    const maxDim_m = Math.max(rocketHeight_m, rocketWidth_m, 1); 
+    // console.log("Temp Craft dims (m): H=", rocketHeight_m, "W=", rocketWidth_m); // DEBUG
+    
+    // Ensure rocketHeight_m and rocketWidth_m are positive for PPM calculation
+    if (rocketHeight_m <= 0 || rocketWidth_m <=0 ) {
+        // console.warn("Cannot draw staging rocket with zero or negative dimensions."); // DEBUG
+        return;
+    }
 
-    const stagingPPM = Math.min( (stagingCanvasRef.height * 0.95) / rocketHeight_m, (stagingCanvasRef.width * 0.9) / rocketWidth_m );
+    const stagingPPM = Math.min( 
+        (stagingCanvasRef.height * 0.90) / rocketHeight_m, // Use 90% to leave margin
+        (stagingCanvasRef.width * 0.90) / rocketWidth_m 
+    );
+    // console.log("Staging PPM:", stagingPPM); // DEBUG
     
     const stagingSfcScreenX = stagingCanvasRef.width / 2;
     const comOffset_m = tempCraft.getCoMOffset_m(); 
-    const craftCenterY_px = stagingCanvasRef.height / 2; 
-    const bottomOffsetY_px = (tempCraft.logicalStackHeight_m - comOffset_m) * stagingPPM;
-    const stagingSfcScreenY = craftCenterY_px + bottomOffsetY_px - (stagingCanvasRef.height * 0.05) ; 
-    
+    // Position rocket so its *bottom* is near the bottom of the staging canvas
+    const rocketDrawHeightPx = rocketHeight_m * stagingPPM;
+    const stagingSfcScreenY = stagingCanvasRef.height - (rocketHeight_m - comOffset_m) * stagingPPM - (stagingCanvasRef.height * 0.025); // Small bottom padding
+
+    // console.log("Staging draw coords:", stagingSfcScreenX, stagingSfcScreenY); // DEBUG
+
     const originalAngle = tempCraft.angle_rad; 
     tempCraft.angle_rad = 0; 
-    // Pass stagingCtx, canvas dimensions, calculated screen pos, stagingPPM, and true for isInsetView (to use simpler flame, and true for showNodes)
-    tempCraft.draw(stagingCtxRef, stagingCanvasRef.width, stagingCanvasRef.height, stagingSfcScreenX, stagingSfcScreenY, stagingPPM, true, true); // showNodes = true for staging
+    tempCraft.draw(stagingCtxRef, stagingCanvasRef.width, stagingCanvasRef.height, stagingSfcScreenX, stagingSfcScreenY, stagingPPM, true, true); 
     tempCraft.angle_rad = originalAngle; 
 }
 
@@ -193,33 +212,36 @@ export function updateStagingStats() {
     let deltaV = 0; 
     if (wetMass > totalDryMass && totalDryMass > 0) { 
         deltaV = (minISP === Infinity ? ISP_VACUUM_DEFAULT : minISP) * g0 * Math.log(wetMass / totalDryMass); 
-    } 
-    domElements.stagingDeltaV.textContent = deltaV.toFixed(0);
+    } else if (wetMass > totalDryMass && totalDryMass === 0) { // E.g. only fuel tanks (infinite delta-v if massless structure)
+        deltaV = Infinity;
+    }
+    domElements.stagingDeltaV.textContent = deltaV === Infinity ? "Inf." : deltaV.toFixed(0);
 }
 
 let draggedPartConfig = null; 
 let touchDraggedPartElement = null; 
+let audioModuleRefForDnd = null; // To call initAudio from touch events
 
-export function initializeDragAndDrop(stagingCanvasElement, dragImageElementRef, currentPartsRef, simState, audioMod) {
+function initializeDragAndDropInternal(stagingCanvasElement, dragImageElementRef, currentPartsRef, simState, audioModule) {
     const dragImageElement = dragImageElementRef;
     simulationStateRef = simState; 
-    audioModuleRef = audioMod;
+    audioModuleRefForDnd = audioModule; // Store audio module reference for touch events
 
     document.querySelectorAll('.part-button').forEach(button => {
-        const imgElement = button.querySelector('img'); // Get the img for drag image
+        const imgElement = button.querySelector('img'); 
 
         button.addEventListener('dragstart', (event) => {
             try {
-                const partConfigString = event.target.closest('.part-button').dataset.partConfig; // Get from button itself
+                const partConfigString = event.target.closest('.part-button').dataset.partConfig; 
                 if (!partConfigString) { console.error("No part config found on button:", event.target); return; }
                 draggedPartConfig = JSON.parse(partConfigString);
                 
                 event.dataTransfer.setData('application/json', partConfigString); 
                 event.dataTransfer.effectAllowed = 'copy';
 
-                if (imgElement) { // Use the part's image from the palette
-                    event.dataTransfer.setDragImage(imgElement, imgElement.width / 2, imgElement.height / 2);
-                } else if (dragImageElement) { // Fallback to text
+                if (imgElement) { 
+                    event.dataTransfer.setDragImage(imgElement, imgElement.naturalWidth / 2, imgElement.naturalHeight / 2); // Use naturalWidth for accurate centering
+                } else if (dragImageElement) { 
                     dragImageElement.textContent = `[ ${draggedPartConfig.name} ]`;
                     dragImageElement.style.display = 'block'; 
                     event.dataTransfer.setDragImage(dragImageElement, 10, 10); 
@@ -230,7 +252,7 @@ export function initializeDragAndDrop(stagingCanvasElement, dragImageElementRef,
 
         button.addEventListener('touchstart', (event) => {
             event.preventDefault(); 
-            if(!audioModuleRef.soundInitialized && simulationStateRef) audioModuleRef.initAudio(simulationStateRef.soundMuted);
+            if(!audioModuleRefForDnd.soundInitialized && simulationStateRef) audioModuleRefForDnd.initAudio(simulationStateRef.soundMuted);
             
             try {
                 const partConfigString = event.target.closest('.part-button').dataset.partConfig;
@@ -238,7 +260,7 @@ export function initializeDragAndDrop(stagingCanvasElement, dragImageElementRef,
                 draggedPartConfig = JSON.parse(partConfigString);
             } catch (e) { console.error("Error parsing part config on touchstart:", e); return; }
             
-            if (dragImageElement) { // For touch, we still use the simple text label for now
+            if (dragImageElement) { 
                 touchDraggedPartElement = dragImageElement.cloneNode(true); 
                 touchDraggedPartElement.textContent = `[ ${draggedPartConfig.name} ]`;
                 touchDraggedPartElement.style.position = 'fixed'; 
@@ -253,33 +275,21 @@ export function initializeDragAndDrop(stagingCanvasElement, dragImageElementRef,
 
     function moveTouchDraggedElement(clientX, clientY) { if (touchDraggedPartElement) { touchDraggedPartElement.style.left = `${clientX - touchDraggedPartElement.offsetWidth / 2}px`; touchDraggedPartElement.style.top = `${clientY - touchDraggedPartElement.offsetHeight / 2}px`; } }
     
-    document.body.addEventListener('touchmove', (event) => { if (touchDraggedPartElement) { const touch = event.targetTouches[0]; moveTouchDraggedElement(touch.clientX, touch.clientY); const stagingRect = stagingCanvasElement.getBoundingClientRect(); if (touch.clientX >= stagingRect.left && touch.clientX <= stagingRect.right && touch.clientY >= stagingRect.top && touch.clientY <= stagingRect.bottom) { stagingCanvasElement.classList.add('drag-over'); } else { stagingCanvasElement.classList.remove('drag-over'); } } }, {passive: false});
+    document.body.addEventListener('touchmove', (event) => { if (touchDraggedPartElement) { const touch = event.targetTouches[0]; moveTouchDraggedElement(touch.clientX, clientY); const stagingRect = stagingCanvasElement.getBoundingClientRect(); if (touch.clientX >= stagingRect.left && touch.clientX <= stagingRect.right && touch.clientY >= stagingRect.top && touch.clientY <= stagingRect.bottom) { stagingCanvasElement.classList.add('drag-over'); } else { stagingCanvasElement.classList.remove('drag-over'); } } }, {passive: false});
 
     function handleDropOnStaging(droppedConfig) {
-        if (!droppedConfig || !droppedConfig.type) return;
+        if (!droppedConfig || !droppedConfig.type || !partCatalogRef[droppedConfig.type]) {
+             console.warn("Invalid or unknown part type dropped:", droppedConfig);
+             return;
+        }
         
-        // *** Basic Node Snapping Logic ***
         const newPartInstance = new partCatalogRef[droppedConfig.type](droppedConfig);
-        if (!newPartInstance) { console.error("Could not create instance for dropped part", droppedConfig); return; }
 
-        if (currentPartsRef.length === 0) { // First part
+        if (currentPartsRef.length === 0) { 
             currentPartsRef.push(droppedConfig);
         } else {
-            const topPartConfig = currentPartsRef[currentPartsRef.length - 1];
-            const topPartInstance = new partCatalogRef[topPartConfig.type](topPartConfig);
-
-            const topNode = topPartInstance.attachmentNodes.find(node => node.type === 'stack_top' || node.type === 'fuel_output'); // Prefer stack_top
-            const bottomNodeOfNew = newPartInstance.attachmentNodes.find(node => node.type === 'stack_bottom' || node.type === 'engine_top' || node.type === 'fuel_input');
-
-            if (topNode && bottomNodeOfNew && topNode.acceptedTypes.includes(bottomNodeOfNew.type)) {
-                // Simple stack connection:
-                console.log(`Connecting ${newPartInstance.name} (node ${bottomNodeOfNew.id}) to ${topPartInstance.name} (node ${topNode.id})`);
-                currentPartsRef.push(droppedConfig);
-            } else {
-                console.warn("No compatible node found for stacking. Part not added.");
-                // Future: Try radial attachment or provide feedback
-                return; // Don't add if no simple stack connection found
-            }
+            // Simplified: always stack on top for now
+            currentPartsRef.push(droppedConfig);
         }
         drawStagingAreaRocket(); 
         updateStagingStats(); 

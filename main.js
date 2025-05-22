@@ -1,13 +1,11 @@
-// In main.js
 import * as C from './constants.js';
-import { Part, CommandPod, FuelTank, Engine, Fairing } from './parts.js'; // Part classes
+import { Part, CommandPod, FuelTank, Engine, Fairing } from './parts.js';
 import { Spacecraft, initializeSpacecraftAndParts } from './spacecraft.js';
-import { SmokeParticle } from './smoke.js'; // SmokeParticle class
-import * as ENV from './environment.js'; // Environment module
-import * as AUDIO from './audio.js';   // Audio module
-import * as UI from './ui.js';       // UI module
+import { SmokeParticle } from './smoke.js';
+import * as ENV from './environment.js';
+import * as AUDIO from './audio.js'; 
+import * as UI from './ui.js'; 
 
-// ... (Global state variables same as before) ...
 let spacecraftInstance = null; 
 let currentShipPartsConfig = []; 
 let simulationState = { 
@@ -24,7 +22,6 @@ let smokeParticles = [];
 let cloudLayers = []; 
 let surfaceFeatures = [];
 
-// Canvas Contexts
 const canvas = document.getElementById('gameCanvas'); 
 const ctx = canvas.getContext('2d');
 const insetCanvas = document.getElementById('insetCanvas'); 
@@ -33,8 +30,7 @@ const stagingCanvas = document.getElementById('stagingCanvas');
 const stagingCtx = stagingCanvas.getContext('2d');
 const dragImageElement = document.getElementById('dragImage');
 
-// DOM Elements Cache
-const dom = { /* ... same as V8.5, ensure all IDs match HTML ... */ 
+const dom = { 
     time: document.getElementById('time'), apoapsis: document.getElementById('apoapsis'), 
     periapsis: document.getElementById('periapsis'), angle: document.getElementById('angle'), 
     gimbal: document.getElementById('gimbal'), mass: document.getElementById('mass'), 
@@ -54,26 +50,26 @@ const dom = { /* ... same as V8.5, ensure all IDs match HTML ... */
     undoLastPartButton: document.getElementById('undoLastPartButton'), 
     stagingMass: document.getElementById('stagingMass'), 
     stagingThrust: document.getElementById('stagingThrust'), 
-    stagingDeltaV: document.getElementById('stagingDeltaV')
+    stagingDeltaV: document.getElementById('stagingDeltaV'),
+    dragImage: dragImageElement // Add dragImage to dom for ui.js
 };
-if (document.getElementById('launchButton')) {
+if (document.getElementById('launchButton')) { // Keep this if launchButton exists in HTML
      dom.launchButton = document.getElementById('launchButton');
 }
 
-// Part Catalog for dynamic drawing/instantiation
-const partCatalog = {
+
+const partCatalog = { // For ui.js to know how to instantiate parts for thumbnails/drag data
     'pod': CommandPod,
     'tank': FuelTank,
     'engine': Engine,
     'fairing': Fairing
 };
 
-const spacecraftDesigns = { /* same as V8.5 */
-    "DefaultOrbiter": [ { type: 'pod', name:'Orbiter Pod', dryMass_kg: 800, width_m: 2.5, height_m: 2 }, { type: 'tank', name:'Medium Tank', fuelCapacity_kg: 10000, dryMass_kg: 1500, width_m: 2.5, height_m: 8 }, { type: 'engine', name:'Main Engine LKO', thrust_N: 250000, fuelConsumptionRate_kg_s: 80, dryMass_kg: 1000, width_m: 2.5, height_m: 2, isp: 310} ],
-    "SmallProbe": [ { type: 'pod', name:'Probe Core', dryMass_kg: 150, width_m: 0.8, height_m: 0.8, color: 'gold' }, { type: 'fairing', name:'1.2m Fairing', dryMass_kg: 50, width_m: 1.2, height_m: 1.5 }, { type: 'tank', name:'Small Tank', fuelCapacity_kg: 1000, dryMass_kg: 100, width_m: 1, height_m: 2 }, { type: 'engine', name:'Small Engine', thrust_N: 50000, fuelConsumptionRate_kg_s: 20, dryMass_kg: 200, width_m: 1, height_m: 1, isp: 280}],
-    "HeavyLifter_Lower": [ { type: 'tank', name:'Large Tank', fuelCapacity_kg: 50000, dryMass_kg: 5000, width_m: 4, height_m: 15 }, { type: 'engine', name:'Heavy Engine', thrust_N: 1000000, fuelConsumptionRate_kg_s: 300, dryMass_kg: 5000, width_m: 4, height_m: 3, isp: 300}]
-}; // Parts are typically listed top-to-bottom for config, but builder will stack bottom-up.
-   // For consistency, let's list design templates bottom-to-top (engine first)
+const spacecraftDesigns = { 
+    "DefaultOrbiter": [ { type: 'engine', name:'Main Engine LKO', thrust_N: 250000, fuelConsumptionRate_kg_s: 80, dryMass_kg: 1000, width_m: 2.5, height_m: 2, isp: 310}, { type: 'tank', name:'Medium Tank', fuelCapacity_kg: 10000, dryMass_kg: 1500, width_m: 2.5, height_m: 8 }, { type: 'pod', name:'Orbiter Pod', dryMass_kg: 800, width_m: 2.5, height_m: 2 } ],
+    "SmallProbe": [ { type: 'engine', name:'Small Engine', thrust_N: 50000, fuelConsumptionRate_kg_s: 20, dryMass_kg: 200, width_m: 1, height_m: 1, isp: 280}, { type: 'tank', name:'Small Tank', fuelCapacity_kg: 1000, dryMass_kg: 100, width_m: 1, height_m: 2 }, { type: 'fairing', name:'1.2m Fairing', dryMass_kg: 50, width_m: 1.2, height_m: 1.5 }, { type: 'pod', name:'Probe Core', dryMass_kg: 150, width_m: 0.8, height_m: 0.8, color: 'gold' } ],
+    "HeavyLifter_Lower": [ { type: 'engine', name:'Heavy Engine', thrust_N: 1000000, fuelConsumptionRate_kg_s: 300, dryMass_kg: 5000, width_m: 4, height_m: 3, isp: 300}, { type: 'tank', name:'Large Tank', fuelCapacity_kg: 50000, dryMass_kg: 5000, width_m: 4, height_m: 15 }, ]
+}; 
 Object.keys(spacecraftDesigns).forEach(key => spacecraftDesigns[key].reverse());
 
 
@@ -125,13 +121,21 @@ function initSimulation(launchSource = 'template') {
         const templateToLoadCfg = spacecraftDesigns[simulationState.currentDesignName] || spacecraftDesigns[Object.keys(spacecraftDesigns)[0]]; 
         currentShipPartsConfig = JSON.parse(JSON.stringify(templateToLoadCfg)); 
     }
-    UI.drawStagingAreaRocket(stagingCtx, stagingCanvas, currentShipPartsConfig); 
-    UI.updateStagingStats(currentShipPartsConfig);
+    UI.drawStagingAreaRocket(); // UI module will use its stored refs for stagingCtx, etc.
+    UI.updateStagingStats();   // UI module will use its stored ref for currentShipPartsConfig
 }
 
-function updateCamera() { /* same as before */ }
+function updateCamera() { 
+    if(!spacecraftInstance) return; 
+    const comOffset_m = spacecraftInstance.getCoMOffset_m(); 
+    const comX = spacecraftInstance.position_x_m + comOffset_m * Math.sin(spacecraftInstance.angle_rad); 
+    const comY = spacecraftInstance.position_y_m + comOffset_m * Math.cos(spacecraftInstance.angle_rad); 
+    const targetCameraX_m = comX; const targetCameraY_m = comY; 
+    const lerpFactor = 0.1; 
+    simulationState.cameraX_m += (targetCameraX_m - simulationState.cameraX_m) * lerpFactor; 
+    simulationState.cameraY_m += (targetCameraY_m - simulationState.cameraY_m) * lerpFactor; 
+}
 
-// --- Main Game Loop ---
 function gameLoop(timestamp) {  
     if(!spacecraftInstance && currentShipPartsConfig.length === 0 && !simulationState.isLaunched) { requestAnimationFrame(gameLoop); return; } 
     if(!spacecraftInstance && simulationState.isLaunched) { requestAnimationFrame(gameLoop); return; } 
@@ -208,13 +212,14 @@ function gameLoop(timestamp) {
     UI.updateStatsDisplay(simulationState, spacecraftInstance, apoapsisAGL.value, periapsisAGL.value); 
     
     if (spacecraftInstance && simulationState.landed && !simulationState.engineActive && simulationState.isLaunched) { 
-        // Future: Update launch button text if it's the primary one
+        // dom.launchButton might be null if removed, handle this
+        // if(dom.launchButton) dom.launchButton.textContent = "Landed"; 
     } 
     requestAnimationFrame(gameLoop); 
 }
         
 function setupEventListeners() {
-    if(dom.launchButton) { // Check if the old launch button still exists
+    if(dom.launchButton) { 
         dom.launchButton.addEventListener('click', () => { 
             if(!AUDIO.soundInitialized) AUDIO.initAudio(simulationState.soundMuted); 
             initSimulation('template'); 
@@ -234,7 +239,7 @@ function setupEventListeners() {
         if (spacecraftInstance) { 
             simulationState.isLaunched = true; simulationState.landed = false; 
             simulationState.engineActive = spacecraftInstance.currentFuel_kg > 0; 
-            if(dom.launchButton) dom.launchButton.disabled = true; // Disable template launch if custom is launched
+            if(dom.launchButton) dom.launchButton.disabled = true; 
         } 
     });
     dom.resetButton.addEventListener('click', () => { 
@@ -249,30 +254,66 @@ function setupEventListeners() {
         const selectedDesign = spacecraftDesigns[simulationState.currentDesignName]; 
         if (selectedDesign) { currentShipPartsConfig = JSON.parse(JSON.stringify(selectedDesign)); } 
         else { currentShipPartsConfig = []; } 
-        UI.drawStagingAreaRocket(stagingCtx, stagingCanvas, currentShipPartsConfig); 
-        UI.updateStagingStats(currentShipPartsConfig); 
+        UI.drawStagingAreaRocket(); // UI will use its internal refs
+        UI.updateStagingStats();   // UI will use its internal refs
         initSimulation('template'); 
     });
-    dom.clearStagingButton.addEventListener('click', () => { currentShipPartsConfig = []; UI.drawStagingAreaRocket(stagingCtx, stagingCanvas, currentShipPartsConfig); UI.updateStagingStats(currentShipPartsConfig); });
-    dom.undoLastPartButton.addEventListener('click', () => { if (currentShipPartsConfig.length > 0) { currentShipPartsConfig.pop(); UI.drawStagingAreaRocket(stagingCtx, stagingCanvas, currentShipPartsConfig); UI.updateStagingStats(currentShipPartsConfig); }});
+    // Event listeners for builder actions are now in ui.js setupBuilderActionButtons
     
-    // ... (key listeners, makePressReleaseButton, zoom handlers - same as V8.4, ensure AUDIO.initAudio calls)
-    document.addEventListener('keydown', (e) => { if(!AUDIO.soundInitialized && (e.key === 'q' || e.key === 'Q' || e.key === 'e' || e.key === 'E' || e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === ' ')) AUDIO.initAudio(simulationState.soundMuted); if (e.key === 'q' || e.key === 'Q' || e.key === 'ArrowLeft') simulationState.controlFlags.rotateLeft = true; if (e.key === 'e' || e.key === 'E' || e.key === 'ArrowRight') simulationState.controlFlags.rotateRight = true; if (e.key === '+' || e.key === '=') { if(!AUDIO.soundInitialized) AUDIO.initAudio(simulationState.soundMuted); simulationState.currentPixelsPerMeter *= 1.5; if(simulationState.currentPixelsPerMeter > 20) simulationState.currentPixelsPerMeter = 20;} if (e.key === '-' || e.key === '_') { if(!AUDIO.soundInitialized) AUDIO.initAudio(simulationState.soundMuted); simulationState.currentPixelsPerMeter /= 1.5; if(simulationState.currentPixelsPerMeter < 1e-7) simulationState.currentPixelsPerMeter = 1e-7; } if (e.key === ' ') { e.preventDefault(); if(currentShipPartsConfig.length > 0 && !dom.launchCurrentBuildButton.disabled) dom.launchCurrentBuildButton.click(); else if (dom.launchButton && !dom.launchButton.disabled) dom.launchButton.click(); }  });
-    document.addEventListener('keyup', (e) => { if (e.key === 'q' || e.key === 'Q' || e.key === 'ArrowLeft') simulationState.controlFlags.rotateLeft = false; if (e.key === 'e' || e.key === 'E' || e.key === 'ArrowRight') simulationState.controlFlags.rotateRight = false; });
-    const makePressReleaseButton = (buttonElem, flagName) => { const action = () => { if(!AUDIO.soundInitialized) AUDIO.initAudio(simulationState.soundMuted); simulationState.controlFlags[flagName] = true; }; buttonElem.addEventListener('mousedown', action); buttonElem.addEventListener('mouseup', () => simulationState.controlFlags[flagName] = false); buttonElem.addEventListener('mouseleave', () => simulationState.controlFlags[flagName] = false); buttonElem.addEventListener('touchstart', (e) => { e.preventDefault(); action(); }, {passive: false}); buttonElem.addEventListener('touchend', (e) => { e.preventDefault(); simulationState.controlFlags[flagName] = false; }); };
-    makePressReleaseButton(dom.rotateLeftButton, 'rotateLeft'); makePressReleaseButton(dom.rotateRightButton, 'rotateRight');
-    dom.zoomInButton.addEventListener('click', () => { if(!AUDIO.soundInitialized) AUDIO.initAudio(simulationState.soundMuted); simulationState.currentPixelsPerMeter *= 1.5; if(simulationState.currentPixelsPerMeter > 20) simulationState.currentPixelsPerMeter = 20;}); 
-    dom.zoomOutButton.addEventListener('click', () => { if(!AUDIO.soundInitialized) AUDIO.initAudio(simulationState.soundMuted); simulationState.currentPixelsPerMeter /= 1.5; if(simulationState.currentPixelsPerMeter < 1e-7) simulationState.currentPixelsPerMeter = 1e-7; });
+    document.addEventListener('keydown', (e) => { 
+        if(!AUDIO.soundInitialized && (e.key === 'q' || e.key === 'Q' || e.key === 'e' || e.key === 'E' || e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === ' ')) AUDIO.initAudio(simulationState.soundMuted); 
+        if (e.key === 'q' || e.key === 'Q' || e.key === 'ArrowLeft') simulationState.controlFlags.rotateLeft = true; 
+        if (e.key === 'e' || e.key === 'E' || e.key === 'ArrowRight') simulationState.controlFlags.rotateRight = true; 
+        if (e.key === '+' || e.key === '=') { if(!AUDIO.soundInitialized) AUDIO.initAudio(simulationState.soundMuted); simulationState.currentPixelsPerMeter *= 1.5; if(simulationState.currentPixelsPerMeter > 20) simulationState.currentPixelsPerMeter = 20;} 
+        if (e.key === '-' || e.key === '_') { if(!AUDIO.soundInitialized) AUDIO.initAudio(simulationState.soundMuted); simulationState.currentPixelsPerMeter /= 1.5; if(simulationState.currentPixelsPerMeter < 1e-7) simulationState.currentPixelsPerMeter = 1e-7; } 
+        if (e.key === ' ') { e.preventDefault(); if(currentShipPartsConfig.length > 0 && !dom.launchCurrentBuildButton.disabled) dom.launchCurrentBuildButton.click(); else if (dom.launchButton && !dom.launchButton.disabled) dom.launchButton.click(); }  
+    });
+    document.addEventListener('keyup', (e) => { 
+        if (e.key === 'q' || e.key === 'Q' || e.key === 'ArrowLeft') simulationState.controlFlags.rotateLeft = false; 
+        if (e.key === 'e' || e.key === 'E' || e.key === 'ArrowRight') simulationState.controlFlags.rotateRight = false; 
+    });
+    
+    const makePressReleaseButton = (buttonElem, flagName) => { 
+        if (!buttonElem) return; // Guard against null button
+        const action = () => { if(!AUDIO.soundInitialized) AUDIO.initAudio(simulationState.soundMuted); simulationState.controlFlags[flagName] = true; }; 
+        buttonElem.addEventListener('mousedown', action); 
+        buttonElem.addEventListener('mouseup', () => simulationState.controlFlags[flagName] = false); 
+        buttonElem.addEventListener('mouseleave', () => simulationState.controlFlags[flagName] = false); 
+        buttonElem.addEventListener('touchstart', (e) => { e.preventDefault(); action(); }, {passive: false}); 
+        buttonElem.addEventListener('touchend', (e) => { e.preventDefault(); simulationState.controlFlags[flagName] = false; }); 
+    };
+    makePressReleaseButton(dom.rotateLeftButton, 'rotateLeft'); 
+    makePressReleaseButton(dom.rotateRightButton, 'rotateRight');
+    
+    if(dom.zoomInButton) dom.zoomInButton.addEventListener('click', () => { if(!AUDIO.soundInitialized) AUDIO.initAudio(simulationState.soundMuted); simulationState.currentPixelsPerMeter *= 1.5; if(simulationState.currentPixelsPerMeter > 20) simulationState.currentPixelsPerMeter = 20;}); 
+    if(dom.zoomOutButton) dom.zoomOutButton.addEventListener('click', () => { if(!AUDIO.soundInitialized) AUDIO.initAudio(simulationState.soundMuted); simulationState.currentPixelsPerMeter /= 1.5; if(simulationState.currentPixelsPerMeter < 1e-7) simulationState.currentPixelsPerMeter = 1e-7; });
     canvas.addEventListener('wheel', (e) => { if(!AUDIO.soundInitialized) AUDIO.initAudio(simulationState.soundMuted); e.preventDefault(); if (e.deltaY < 0) {simulationState.currentPixelsPerMeter *= 1.5; if(simulationState.currentPixelsPerMeter > 20) simulationState.currentPixelsPerMeter = 20;} else {simulationState.currentPixelsPerMeter /= 1.5; if(simulationState.currentPixelsPerMeter < 1e-7) simulationState.currentPixelsPerMeter = 1e-7;} });
-
 }
 
 // --- Entry Point ---
 document.addEventListener('DOMContentLoaded', () => {
-    initializeSpacecraftAndParts( (a,b) => AUDIO.playEngineSound(a,b,simulationState.soundMuted), () => AUDIO.playGimbalSound(simulationState.soundMuted), simulationState, smokeParticles, currentAirDensityValue);
+    // Initialize spacecraft module with dependencies it needs to call back
+    initializeSpacecraftAndParts(
+        (active, ratio) => AUDIO.playEngineSound(active, ratio, simulationState.soundMuted), 
+        () => AUDIO.playGimbalSound(simulationState.soundMuted), 
+        simulationState, // Pass the main simulationState object
+        smokeParticles,  // Pass the main smokeParticles array
+        currentAirDensityValue // Pass the main air density value (primitive, so it's a copy)
+                               // Spacecraft.updatePhysics will return new airDensity
+    );
     
-    UI.initializeUI(dom, currentShipPartsConfig, spacecraftDesigns, initSimulation, stagingCtx, stagingCanvas, simulationState, partCatalog, AUDIO);
-  //  UI.initializeDragAndDrop(stagingCanvas, dragImageElement, currentShipPartsConfig, simulationState, AUDIO); // Pass AUDIO module
+    UI.initializeUI(
+        dom, 
+        currentShipPartsConfig, 
+        spacecraftDesigns, 
+        initSimulation, 
+        stagingCtx,            
+        stagingCanvas,         
+        simulationState,
+        partCatalog,
+        AUDIO // Pass the AUDIO module to ui.js for touch event audio init
+    );
+    // Drag and Drop listeners are now set up inside initializeUI using initializeDragAndDropInternal
     
     canvas.width = Math.min(window.innerWidth * 0.70 - 20, 800); 
     canvas.height = Math.min(window.innerHeight * 0.70, 600);
