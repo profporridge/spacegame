@@ -6,6 +6,7 @@ import {
     GRAVITATIONAL_CONSTANT_G, SKY_BLUE_COLOR, SPACE_BLACK_COLOR, EARTH_MAX_ATMOSPHERE_ALTITUDE
 } from './constants.js';
 
+
 export function generateClouds(cloudLayersArrayRef) { // Modifies the passed array
     cloudLayersArrayRef.length = 0; // Clear existing layers
     for (let layer = 0; layer < NUM_CLOUD_LAYERS; layer++) { 
@@ -158,6 +159,7 @@ export function drawOrbitPath(mainCtx, camX_m, camY_m, ppm, spacecraftRef, apoap
     mainCtx.lineWidth = 1;  
 }
 
+
 export function drawPlanet(mainCtx, camX_m, camY_m, ppm) { 
     const viewCenterX_px = mainCtx.canvas.width / 2; 
     const viewCenterY_px = mainCtx.canvas.height / 2;
@@ -166,7 +168,22 @@ export function drawPlanet(mainCtx, camX_m, camY_m, ppm) {
     const planetScreenX_px = viewCenterX_px + planetViewX_px; 
     const planetScreenY_px = viewCenterY_px - planetViewY_px; 
     const planetRadius_px = planet.radius_m * ppm;
+    //document.getElementById('gameCanvas');
+    let planetSVG = SVG('#planetEarthSVG');
 
+   // SVG.on(document, 'DOMContentLoaded', function() {
+    // if (!planetSVG) {
+    //     planetSVG = SVG().addTo('#gameCanvas').size('100%', '100%'); // Create a new SVG element if it doesn't exist
+    //     planetSVG.id = 'planetEarthSVG'; // Ensure the SVG has an ID for future reference
+    //     gameCanvasSVG.add(planetSVG);
+    // }
+    planetSVG.clear(); // Clear previous drawings
+    planetSVG.size(mainCtx.canvas.width, mainCtx.canvas.height); // Ensure SVG scales to canvas size
+    //planetSVG.scale(1 / ppm); // Scale the SVG to match the canvas PPM
+    planetSVG.circle(planetRadius_px*2)
+               // .move(planetScreenX_px, planetScreenY_px)
+                .fill('#f06');
+   // planetSVG.find(".continent").each({y=> y.scale(planetRadius_px*2/100.0).move(planetScreenX_px, planetScreenY_px).fill("#2ecc71");
     if (planet.maxAtmosphereRadius_m * ppm > 2) { 
          const atmRadius_px = planet.maxAtmosphereRadius_m * ppm;
          mainCtx.fillStyle = planet.atmosphereColor; 
@@ -175,10 +192,12 @@ export function drawPlanet(mainCtx, camX_m, camY_m, ppm) {
          mainCtx.fill();
     }
     if (planetRadius_px > 0.5) { 
-        mainCtx.fillStyle = planet.color; 
-        mainCtx.beginPath();
-        mainCtx.arc(planetScreenX_px, planetScreenY_px, planetRadius_px, 0, 2 * Math.PI); 
-        mainCtx.fill();
+        var planet = planetSVG.circle(planetRadius_px, x= viewCenterX_px, y = viewCenterY_px).fill(planet.color);
+      // planet.fillStyle = planet.color; 
+        //mainCtx.beginPath();
+        //mainCtx.arc(planetScreenX_px, planetScreenY_px, planetRadius_px, 0, 2 * Math.PI); 
+        //mainCtx.fill();
+        
     }
 }
 

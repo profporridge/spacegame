@@ -35,6 +35,7 @@ export class SmokeParticle {
             this.vy_ms *= (1 - particleDragFactor * deltaTime_s * (currentGlobalAirDensity / EARTH_SEA_LEVEL_AIR_DENSITY)); 
         } 
     }
+    
     draw(ctx, camX_m, camY_m, ppm, canvasWidth, canvasHeight) { // Pass canvas dimensions for culling
         if (this.age_s >= this.lifetime_s) return; 
         const viewX_px = (this.x_m - camX_m) * ppm; 

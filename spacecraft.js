@@ -2,7 +2,7 @@ import {
     GRAVITATIONAL_CONSTANT_G, planet, EARTH_MAX_ATMOSPHERE_ALTITUDE, EARTH_SEA_LEVEL_AIR_DENSITY,
     EARTH_ATMOSPHERE_SCALE_HEIGHT, DRAG_COEFFICIENT, MAX_GIMBAL_ANGLE_DEG, GIMBAL_RATE_DEG_S,
     BASE_REACTION_WHEEL_TORQUE, MAX_ANGULAR_VELOCITY, SMOKE_PARTICLES_PER_SECOND_BASE,
-    MAX_SMOKE_PARTICLES, SMOKE_EXHAUST_VELOCITY_FACTOR
+    MAX_SMOKE_PARTICLES, SMOKE_EXHAUST_VELOCITY_FACTOR, SMOKE_PERSIST_CHANCE
 } from './constants.js';
 import { SmokeParticle } from './smoke.js';
 import { CommandPod, FuelTank, Engine, Fairing } from './parts.js'; // To instantiate parts
@@ -14,12 +14,14 @@ let main_playGimbalSound = () => {};
 let main_simulationState = {}; // To access simulationState.engineActive
 let main_smokeParticles = []; // To push new smoke particles
 let main_currentAirDensityValue = EARTH_SEA_LEVEL_AIR_DENSITY; // For smoke drag
+let main_oldSmokeParticles = []; // For old smoke particles, these will no longer be updated
 
-export function initializeSpacecraftAndParts(playEngineSoundFunc, playGimbalSoundFunc, simState, smokeArray, airDensityVar) {
+export function initializeSpacecraftAndParts(playEngineSoundFunc, playGimbalSoundFunc, simState, smokeArray, oldSmokeArray, airDensityVar) {
     main_playEngineSound = playEngineSoundFunc;
     main_playGimbalSound = playGimbalSoundFunc;
     main_simulationState = simState;
     main_smokeParticles = smokeArray; // Reference to the global smoke particles array
+    main_oldSmokeParticles = oldSmokeArray; // Reference to the global old smoke particles array
     main_currentAirDensityValue = airDensityVar; // This will be updated in main.js
 }
 
@@ -284,7 +286,7 @@ export class Spacecraft {
             const baseExhaustVelocity = 20 + Math.random() * 10; 
             const spreadAngle = Math.PI / 8; 
             for (let i = 0; i < numParticlesToEmit; i++) {
-                if (smokeParticlesArray.length >= MAX_SMOKE_PARTICLES) break;
+                //if (smokeParticlesArray.length >= MAX_SMOKE_PARTICLES) break;
                 const emitX_m = this.position_x_m; const emitY_m = this.position_y_m; 
                 const smokeBaseAngle_rad = effectiveThrustAngle_rad + Math.PI; 
                 const randomAngleOffset = (Math.random() - 0.5) * spreadAngle * 2; 
@@ -294,6 +296,13 @@ export class Spacecraft {
                 const particle_vx_world = this.velocity_x_ms + particle_vx_relative; 
                 const particle_vy_world = this.velocity_y_ms + particle_vy_relative;
                 smokeParticlesArray.push(new SmokeParticle(emitX_m, emitY_m, particle_vx_world, particle_vy_world)); 
+            }
+            while (smokeParticlesArray.length > MAX_SMOKE_PARTICLES) { 
+                var OldSmokeParticle = smokeParticlesArray.pop();
+                if (Math.random()> SMOKE_PERSIST_CHANCE) { 
+                    main_oldSmokeParticles.push(OldSmokeParticle);
+                }
+
             }
         }
         return { currentAirDensity: calculatedAirDensity, currentDrag: currentDragForce, apoapsis: apoapsisRef.value, periapsis: periapsisRef.value };

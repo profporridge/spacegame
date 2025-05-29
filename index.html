@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>2D Spacecraft Prototype - V9.0 (Modular)</title>
     <link rel="stylesheet" href="style.css"> <!-- We'll move CSS to a separate file -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/svg.js/3.2.4/svg.min.js" integrity="sha512-ovlWyhrYXr3HEkGJI5YPXIFYIbHEKs2yfemKVVIIQe9U74tXyTuVdzMlvZlw/0X5lnIDRgtVlckrkeuCrDpq4Q==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+   
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/svg.js/3.2.4/svg.draggable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/svg.js/3.2.4/svg.panzoom.min.js"></script>
 </head>
 <body>
     <div id="dragImage"></div> 
@@ -47,10 +52,18 @@
 
             <div id="leftPanel">
                 <div id="mainContainer">
-                    <canvas id="gameCanvas"></canvas>
+                    <canvas id="gameCanvas">
+                    <svg width="200" height="200" id="planetEarthSVG" xmlns="http://www.w3.org/2000/svg"><g>
+                        <circle class="globe" cx="100" cy="100" r="100" fill="#3498db" stroke="#2c3e50" stroke-width="5"/>
+                        <path class="continent" d="M60,80 Q80,50 100,80 T140,80 T160,100 T120,140 Q100,170 80,140 T60,100" fill="#2ecc71"/>
+                        <path class="continent" d="M90,60 Q110,40 130,60 T140,100 Q130,120 110,100 T90,60" fill="#2ecc71"/>
+</g></svg>
+</canvas>
+
                     <canvas id="insetCanvas"></canvas>
                     <div id="uiOverlay">
-                        <div id="stats">
+                        <div id="stats" style="display:none;">
+                
                             <!-- Stats content will be populated by JS or can be simplified -->
                             <div class="stat-item"><span class="stat-label">Time:</span> <span id="time">0.0</span> s</div>
                             <div class="stat-item"><span class="stat-label">Apoapsis:</span> <span id="apoapsis">0.00</span> m</div>

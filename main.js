@@ -4,7 +4,8 @@ import { Spacecraft, initializeSpacecraftAndParts } from './spacecraft.js';
 import { SmokeParticle } from './smoke.js';
 import * as ENV from './environment.js';
 import * as AUDIO from './audio.js'; 
-import * as UI from './ui.js'; 
+import * as UI from './ui.js';
+
 
 let spacecraftInstance = null; 
 let currentShipPartsConfig = []; 
@@ -18,7 +19,7 @@ let currentDragForceMagnitude = 0;
 let currentAirDensityValue = C.EARTH_SEA_LEVEL_AIR_DENSITY; 
 let apoapsisAGL = { value: 0 }; 
 let periapsisAGL = { value: 0 };
-let smokeParticles = []; 
+let smokeParticles = []; let oldSmokeParticles = []; // For smoke persistenceq
 let cloudLayers = []; 
 let surfaceFeatures = [];
 
@@ -29,6 +30,7 @@ const insetCtx = insetCanvas.getContext('2d');
 const stagingCanvas = document.getElementById('stagingCanvas'); 
 const stagingCtx = stagingCanvas.getContext('2d');
 const dragImageElement = document.getElementById('dragImage');
+//const gameCanvasSVG = SVG().addTo('#gameCanvas');
 
 const dom = { 
     time: document.getElementById('time'), apoapsis: document.getElementById('apoapsis'), 
@@ -66,16 +68,20 @@ const partCatalog = { // For ui.js to know how to instantiate parts for thumbnai
 };
 
 const spacecraftDesigns = { 
-    "DefaultOrbiter": [ { type: 'engine', name:'Main Engine LKO', thrust_N: 250000, fuelConsumptionRate_kg_s: 80, dryMass_kg: 1000, width_m: 2.5, height_m: 2, isp: 310}, { type: 'tank', name:'Medium Tank', fuelCapacity_kg: 10000, dryMass_kg: 1500, width_m: 2.5, height_m: 8 }, { type: 'pod', name:'Orbiter Pod', dryMass_kg: 800, width_m: 2.5, height_m: 2 } ],
+    "DefaultOrbiter": [ 
+        { type: 'engine', name:'Main Engine LKO', thrust_N: 250000, fuelConsumptionRate_kg_s: 80, dryMass_kg: 1000, width_m: 2.5, height_m: 2, isp: 310}, 
+        { type: 'tank', name:'Medium Tank', fuelCapacity_kg: 10000, dryMass_kg: 1500, width_m: 2.5, height_m: 8 }, 
+        { type: 'pod', name:'Orbiter Pod', dryMass_kg: 800, width_m: 2.5, height_m: 2 } 
+    ],
     "SmallProbe": [ { type: 'engine', name:'Small Engine', thrust_N: 50000, fuelConsumptionRate_kg_s: 20, dryMass_kg: 200, width_m: 1, height_m: 1, isp: 280}, { type: 'tank', name:'Small Tank', fuelCapacity_kg: 1000, dryMass_kg: 100, width_m: 1, height_m: 2 }, { type: 'fairing', name:'1.2m Fairing', dryMass_kg: 50, width_m: 1.2, height_m: 1.5 }, { type: 'pod', name:'Probe Core', dryMass_kg: 150, width_m: 0.8, height_m: 0.8, color: 'gold' } ],
     "HeavyLifter_Lower": [ { type: 'engine', name:'Heavy Engine', thrust_N: 1000000, fuelConsumptionRate_kg_s: 300, dryMass_kg: 5000, width_m: 4, height_m: 3, isp: 300}, { type: 'tank', name:'Large Tank', fuelCapacity_kg: 50000, dryMass_kg: 5000, width_m: 4, height_m: 15 }, ]
 }; 
-Object.keys(spacecraftDesigns).forEach(key => spacecraftDesigns[key].reverse());
+// Object.keys(spacecraftDesigns).forEach(key => spacecraftDesigns[key].reverse());
 
 
 function initSimulation(launchSource = 'template') { 
     const urlParams = new URLSearchParams(window.location.search);
-    if (dom.statsPanel) { dom.statsPanel.style.display = (urlParams.get('nostats') === 'true') ? 'none' : 'block';}
+    if (dom.statsPanel) { dom.statsPanel.style.display = (urlParams.get('stats') === 'true') ?  'block':'none';}
     
     let designToLoad;
     if (launchSource === 'staging' && currentShipPartsConfig.length > 0) { 
@@ -121,6 +127,7 @@ function initSimulation(launchSource = 'template') {
         const templateToLoadCfg = spacecraftDesigns[simulationState.currentDesignName] || spacecraftDesigns[Object.keys(spacecraftDesigns)[0]]; 
         currentShipPartsConfig = JSON.parse(JSON.stringify(templateToLoadCfg)); 
     }
+ //   UI.drawWorld(ctx, canvas.width, canvas.height, simulationState.cameraX_m, simulationState.cameraY_m, simulationState.currentPixelsPerMeter);
     UI.drawStagingAreaRocket(); // UI module will use its stored refs for stagingCtx, etc.
     UI.updateStagingStats();   // UI module will use its stored ref for currentShipPartsConfig
 }
@@ -168,12 +175,17 @@ function gameLoop(timestamp) {
     smokeParticles = smokeParticles.filter(p => p.age_s < p.lifetime_s); 
     smokeParticles.forEach(p => p.update(deltaTime_s, currentAirDensityValue)); 
     
+ 
     ENV.drawSkyBackground(ctx, spacecraftInstance ? spacecraftInstance.altitudeAGL_m : null, canvas.width, canvas.height);
+    
     ENV.drawOrbitPath(ctx, simulationState.cameraX_m, simulationState.cameraY_m, simulationState.currentPixelsPerMeter, spacecraftInstance, apoapsisAGL.value, periapsisAGL.value);  
     ENV.drawClouds(ctx, simulationState.cameraX_m, simulationState.cameraY_m, simulationState.currentPixelsPerMeter, spacecraftInstance ? spacecraftInstance.altitudeAGL_m : 0, cloudLayers); 
     ENV.drawPlanet(ctx, simulationState.cameraX_m, simulationState.cameraY_m, simulationState.currentPixelsPerMeter); 
+
     ENV.drawSurfaceFeatures(ctx, simulationState.cameraX_m, simulationState.cameraY_m, simulationState.currentPixelsPerMeter, surfaceFeatures); 
+    ENV.drawPlanet(ctx, simulationState.cameraX_m, simulationState.cameraY_m, simulationState.currentPixelsPerMete, gameCanvasSVG); 
     smokeParticles.forEach(p => p.draw(ctx, simulationState.cameraX_m, simulationState.cameraY_m, simulationState.currentPixelsPerMeter, canvas.width, canvas.height)); 
+    oldSmokeParticles.forEach(p => p.draw(ctx, simulationState.cameraX_m, simulationState.cameraY_m, simulationState.currentPixelsPerMeter, canvas.width, canvas.height));
     
     if(spacecraftInstance) { 
         const comOffset_m = spacecraftInstance.getCoMOffset_m(); 
@@ -298,6 +310,7 @@ document.addEventListener('DOMContentLoaded', () => {
         () => AUDIO.playGimbalSound(simulationState.soundMuted), 
         simulationState, // Pass the main simulationState object
         smokeParticles,  // Pass the main smokeParticles array
+        oldSmokeParticles, // Pass the main oldSmokeParticles array
         currentAirDensityValue // Pass the main air density value (primitive, so it's a copy)
                                // Spacecraft.updatePhysics will return new airDensity
     );
@@ -316,7 +329,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Drag and Drop listeners are now set up inside initializeUI using initializeDragAndDropInternal
     
     canvas.width = Math.min(window.innerWidth * 0.70 - 20, 800); 
-    canvas.height = Math.min(window.innerHeight * 0.70, 600);
+    canvas.height = Math.min(window.innerHeight * 0.90, 600);
     
     setupEventListeners(); 
     initSimulation('template');       
