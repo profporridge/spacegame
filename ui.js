@@ -6,28 +6,163 @@ let domElements = {};
 let currentShipPartsConfigRef = []; 
 let spacecraftDesignsRef = {}; 
 let initSimulationFuncRef = () => {}; 
-let stagingCtxRef, stagingCanvasRef;
+// let stagingCtxRef, stagingCanvasRef; // Will be replaced by stagingAppInstance
+let stagingAppInstance = null; // To store the Pixi Application for staging canvas
 let simulationStateRef; 
 let partCatalogRef = {};
 let audioModuleRef = null;
+
+// Object to hold UI-specific state, like the staging Pixi app
+const uiState = {
+    stagingApp: null,
+};
 
 export function initializeUI(domRefs, shipPartsConfigRefFromMain, designsRef, initSimFunc, stagingContext, stagingCanvasElement, simState, catalog, audioMod) {
     domElements = domRefs;
     currentShipPartsConfigRef = shipPartsConfigRefFromMain; // Use the reference passed from main.js
     spacecraftDesignsRef = designsRef;
     initSimulationFuncRef = initSimFunc;
-    stagingCtxRef = stagingContext;
-    stagingCanvasRef = stagingCanvasElement;
+    // stagingCtxRef = stagingContext; // No longer needed
+    // stagingCanvasRef = stagingCanvasElement; // Will get from domElements if needed, or directly use stagingCanvasElement
+
+    if (domElements.stagingCanvas) { // Ensure stagingCanvas is available
+        uiState.stagingApp = new PIXI.Application({
+            view: domElements.stagingCanvas, // Use the canvas from domElements
+            width: domElements.stagingCanvas.width,
+            height: domElements.stagingCanvas.height,
+            backgroundColor: 0x383838, // Dark gray background like before
+            resolution: window.devicePixelRatio || 1,
+            autoDensity: true,
+        });
+        stagingAppInstance = uiState.stagingApp; // Keep existing global-like reference if other functions use it
+    } else {
+        console.error("Staging canvas element not found in domElements for Pixi initialization!");
+    }
+
     simulationStateRef = simState;
     partCatalogRef = catalog;
     audioModuleRef = audioMod;
 
     populateDesignSelector();
-    populatePartPalette(); 
+    populatePartPalette();
     setupBuilderActionButtons();
     // Initialize D&D here as it needs access to ui.js's scope and functions
-    initializeDragAndDropInternal(stagingCanvasRef, domElements.dragImage, currentShipPartsConfigRef, simulationStateRef, audioModuleRef);
+    // Ensure stagingCanvasRef is properly passed or accessed if needed by D&D logic.
+    // If domElements.stagingCanvas is the source of truth, pass that.
+    initializeDragAndDropInternal(domElements.stagingCanvas, domElements.dragImage, currentShipPartsConfigRef, simulationStateRef, audioModuleRef);
 }
+
+// Moved initializeDragAndDropInternal to module scope
+let draggedPartConfig = null; 
+let touchDraggedPartElement = null; 
+let audioModuleRefForDnd = null; // To call initAudio from touch events
+
+function initializeDragAndDropInternal(stagingCanvasElement, dragImageElementRef, currentPartsRef, simState, audioModule) {
+    const dragImageElement = dragImageElementRef;
+    // simulationStateRef = simState; // Already set in initializeUI
+    audioModuleRefForDnd = audioModule; // Store audio module reference for touch events
+
+    document.querySelectorAll('.part-button').forEach(button => {
+        const imgElement = button.querySelector('img'); 
+
+        button.addEventListener('dragstart', (event) => {
+            try {
+                const partConfigString = event.target.closest('.part-button').dataset.partConfig; 
+                if (!partConfigString) { console.error("No part config found on button:", event.target); return; }
+                draggedPartConfig = JSON.parse(partConfigString);
+                
+                event.dataTransfer.setData('application/json', partConfigString); 
+                event.dataTransfer.effectAllowed = 'copy';
+
+                if (imgElement) { 
+                    event.dataTransfer.setDragImage(imgElement, imgElement.naturalWidth / 2, imgElement.naturalHeight / 2); // Use naturalWidth for accurate centering
+                } else if (dragImageElement) { 
+                    dragImageElement.textContent = `[ ${draggedPartConfig.name} ]`;
+                    dragImageElement.style.display = 'block'; 
+                    event.dataTransfer.setDragImage(dragImageElement, 10, 10); 
+                }
+            } catch (e) { console.error("Error in dragstart:", e); }
+        });
+        if(dragImageElement) button.addEventListener('dragend', () => { dragImageElement.style.display = 'none'; });
+
+        button.addEventListener('touchstart', (event) => {
+            event.preventDefault(); 
+            if(!audioModuleRefForDnd.soundInitialized && simulationStateRef) audioModuleRefForDnd.initAudio(simulationStateRef.soundMuted);
+            
+            try {
+                const partConfigString = event.target.closest('.part-button').dataset.partConfig;
+                if (!partConfigString) return;
+                draggedPartConfig = JSON.parse(partConfigString);
+            } catch (e) { console.error("Error parsing part config on touchstart:", e); return; }
+            
+            if (dragImageElement) { 
+                touchDraggedPartElement = dragImageElement.cloneNode(true); 
+                touchDraggedPartElement.textContent = `[ ${draggedPartConfig.name} ]`;
+                touchDraggedPartElement.style.position = 'fixed'; 
+                touchDraggedPartElement.style.zIndex = '1001';
+                touchDraggedPartElement.style.display = 'block';
+                document.body.appendChild(touchDraggedPartElement);
+                const touch = event.targetTouches[0];
+                moveTouchDraggedElement(touch.clientX, touch.clientY);
+            }
+        }, {passive: false});
+    });
+
+    function moveTouchDraggedElement(clientX, clientY) { if (touchDraggedPartElement) { touchDraggedPartElement.style.left = `${clientX - touchDraggedPartElement.offsetWidth / 2}px`; touchDraggedPartElement.style.top = `${clientY - touchDraggedPartElement.offsetHeight / 2}px`; } }
+    
+    document.body.addEventListener('touchmove', (event) => { if (touchDraggedPartElement) { const touch = event.targetTouches[0]; moveTouchDraggedElement(touch.clientX, clientY); const stagingRect = stagingCanvasElement.getBoundingClientRect(); if (touch.clientX >= stagingRect.left && touch.clientX <= stagingRect.right && touch.clientY >= stagingRect.top && touch.clientY <= stagingRect.bottom) { stagingCanvasElement.classList.add('drag-over'); } else { stagingCanvasElement.classList.remove('drag-over'); } } }, {passive: false});
+
+    function handleDropOnStaging(droppedConfig) {
+        if (!droppedConfig || !droppedConfig.type || !partCatalogRef[droppedConfig.type]) {
+             console.warn("Invalid or unknown part type dropped:", droppedConfig);
+             return;
+        }
+        
+        const newPartInstance = new partCatalogRef[droppedConfig.type](droppedConfig);
+
+        if (currentPartsRef.length === 0) { 
+            currentPartsRef.push(droppedConfig);
+        } else {
+            // Simplified: always stack on top for now
+            currentPartsRef.push(droppedConfig);
+        }
+        drawStagingAreaRocket(); 
+        updateStagingStats(); 
+    }
+
+    stagingCanvasElement.addEventListener('drop', (event) => { 
+        event.preventDefault(); stagingCanvasElement.classList.remove('drag-over'); 
+        let droppedData; 
+        try { droppedData = JSON.parse(event.dataTransfer.getData('application/json')); } 
+        catch (e) { console.warn("Could not parse dropped JSON data", e); droppedData = null; } 
+        
+        const partConfigToDrop = draggedPartConfig || droppedData; 
+        if (partConfigToDrop) {
+            handleDropOnStaging(partConfigToDrop);
+        }
+        draggedPartConfig = null;  
+    });
+     document.body.addEventListener('touchend', (event) => {
+        if (touchDraggedPartElement) {
+            const touch = event.changedTouches[0];
+            const stagingRect = stagingCanvasElement.getBoundingClientRect();
+            if (touch.clientX >= stagingRect.left && touch.clientX <= stagingRect.right &&
+                touch.clientY >= stagingRect.top && touch.clientY <= stagingRect.bottom) {
+                if (draggedPartConfig) {
+                    handleDropOnStaging(draggedPartConfig);
+                }
+            }
+            document.body.removeChild(touchDraggedPartElement);
+            touchDraggedPartElement = null;
+            draggedPartConfig = null;
+            stagingCanvasElement.classList.remove('drag-over');
+        }
+    });
+    stagingCanvasElement.addEventListener('dragover', (event) => { event.preventDefault(); event.dataTransfer.dropEffect = 'copy'; stagingCanvasElement.classList.add('drag-over'); });
+    stagingCanvasElement.addEventListener('dragenter', (event) => { event.preventDefault(); stagingCanvasElement.classList.add('drag-over'); });
+    stagingCanvasElement.addEventListener('dragleave', () => { stagingCanvasElement.classList.remove('drag-over'); });
+}
+
 
 function populateDesignSelector() { 
     if (!domElements.designSelect) return;
@@ -143,51 +278,61 @@ export function drawHUD(mainCtx, sfc, simState) {
 }
 
 export function drawStagingAreaRocket() { 
-    if (!stagingCtxRef || !stagingCanvasRef) { console.error("Staging canvas not initialized for drawing"); return; }
-    stagingCtxRef.clearRect(0, 0, stagingCanvasRef.width, stagingCanvasRef.height); 
-    stagingCtxRef.fillStyle = '#383838'; 
-    stagingCtxRef.fillRect(0,0, stagingCanvasRef.width, stagingCanvasRef.height);
-    // console.log("drawStagingAreaRocket called. Parts:", currentShipPartsConfigRef.length); // DEBUG
+    if (!uiState.stagingApp || !domElements.stagingCanvas) { 
+        console.error("Staging Pixi App or canvas not initialized for drawing"); return; 
+    }
+    const stage = uiState.stagingApp.stage;
+    const screenWidth = uiState.stagingApp.screen.width;
+    const screenHeight = uiState.stagingApp.screen.height;
+
+    stage.removeChildren(); // Clear previous drawing
+
     if (currentShipPartsConfigRef.length === 0) return; 
     
     const tempCraft = new Spacecraft(currentShipPartsConfigRef); 
     
-    if (tempCraft.parts.length === 0) {
-        // console.log("Temp craft has no parts after construction."); // DEBUG
-        return;
-    }
+    if (tempCraft.parts.length === 0) return;
 
     const rocketHeight_m = tempCraft.logicalStackHeight_m; 
     const rocketWidth_m = tempCraft.maxWidth_m;
-    // console.log("Temp Craft dims (m): H=", rocketHeight_m, "W=", rocketWidth_m); // DEBUG
     
-    // Ensure rocketHeight_m and rocketWidth_m are positive for PPM calculation
-    if (rocketHeight_m <= 0 || rocketWidth_m <=0 ) {
-        // console.warn("Cannot draw staging rocket with zero or negative dimensions."); // DEBUG
-        return;
-    }
+    if (rocketHeight_m <= 0 || rocketWidth_m <=0 ) return;
 
     const stagingPPM = Math.min( 
-        (stagingCanvasRef.height * 0.90) / rocketHeight_m, // Use 90% to leave margin
-        (stagingCanvasRef.width * 0.90) / rocketWidth_m 
+        (screenHeight * 0.90) / rocketHeight_m, 
+        (screenWidth * 0.90) / rocketWidth_m 
     );
-    // console.log("Staging PPM:", stagingPPM); // DEBUG
     
-    const stagingSfcScreenX = stagingCanvasRef.width / 2;
+    const stagingSfcScreenX = screenWidth / 2;
     const comOffset_m = tempCraft.getCoMOffset_m(); 
-    // Position rocket so its *bottom* is near the bottom of the staging canvas
-    const rocketDrawHeightPx = rocketHeight_m * stagingPPM;
-    const stagingSfcScreenY = stagingCanvasRef.height - (rocketHeight_m - comOffset_m) * stagingPPM - (stagingCanvasRef.height * 0.025); // Small bottom padding
+    // Position rocket so its CoM is centered horizontally, 
+    // and its bottom is near the canvas bottom.
+    // sfcScreenY_px is the CoM's Y position on canvas.
+    // Pixi Y is down, so CoM Y = screenHeight - (distance from stack bottom to CoM in px) - padding
+    const com_y_from_bottom_px = comOffset_m * stagingPPM;
+    const stagingSfcScreenY = screenHeight - com_y_from_bottom_px - (screenHeight * 0.05); // 5% bottom padding
 
-    // console.log("Staging draw coords:", stagingSfcScreenX, stagingSfcScreenY); // DEBUG
+    const stagingRocketContainer = new PIXI.Container();
+    stage.addChild(stagingRocketContainer);
+    
+    // Spacecraft.draw expects angle to be set on the instance if it's to be rotated.
+    // For staging, we want it upright.
+    const originalAngle = tempCraft.angle_rad;
+    tempCraft.angle_rad = 0; // Ensure it's drawn upright
 
-    const originalAngle = tempCraft.angle_rad; 
-    tempCraft.angle_rad = 0; 
-    tempCraft.draw(stagingCtxRef, stagingCanvasRef.width, stagingCanvasRef.height, stagingSfcScreenX, stagingSfcScreenY, stagingPPM, true, true); 
-    tempCraft.angle_rad = originalAngle; 
+    tempCraft.draw(
+        stagingRocketContainer, 
+        screenWidth, 
+        screenHeight, 
+        stagingSfcScreenX, 
+        stagingSfcScreenY, 
+        stagingPPM, 
+        true // isInsetView = true (hides nodes, good for staging)
+    );
+    tempCraft.angle_rad = originalAngle; // Restore if needed, though tempCraft is local
 }
 
-export function updateStagingStats() { 
+export function updateStagingStats() {
     if (!domElements.stagingMass || !currentShipPartsConfigRef) return; 
     if (currentShipPartsConfigRef.length === 0) { 
         domElements.stagingMass.textContent = "0.00"; 

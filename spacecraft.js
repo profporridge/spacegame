@@ -25,10 +25,27 @@ export function initializeSpacecraftAndParts(playEngineSoundFunc, playGimbalSoun
     main_currentAirDensityValue = airDensityVar; // This will be updated in main.js
 }
 
+// Helper function to parse rgba string (copied from environment.js / parts.js)
+function parseRgba(rgbaString) {
+    if (typeof rgbaString === 'number') return { hex: rgbaString, alpha: 1 }; // Already a hex
+    if (rgbaString.startsWith('#')) {
+        return { hex: parseInt(rgbaString.substring(1), 16), alpha: 1 };
+    }
+    const match = rgbaString.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
+    if (!match) {
+        console.warn('Invalid color string, defaulting to gray:', rgbaString);
+        return { hex: 0x808080, alpha: 1 }; // Default to gray if parsing fails
+    }
+    return {
+        hex: (parseInt(match[1]) << 16) + (parseInt(match[2]) << 8) + parseInt(match[3]),
+        alpha: match[4] !== undefined ? parseFloat(match[4]) : 1
+    };
+}
+
 
 export class Spacecraft {
     constructor(partsConfigArray) { 
-        this.parts = []; 
+        this.parts = [];
         this.position_x_m = 0; this.position_y_m = planet.radius_m; 
         this.velocity_x_ms = 0; this.velocity_y_ms = 0; 
         this.angle_rad = 0; this.angularVelocity_rad_s = 0;
@@ -126,36 +143,72 @@ export class Spacecraft {
         }
         if(isNaN(periapsisVar.value)) periapsisVar.value = this.altitudeAGL_m;
     }
-    draw(targetCtx, targetCanvasWidth, targetCanvasHeight, sfcScreenX_px, sfcScreenY_px, currentPPM, isInsetView = false) { 
-        targetCtx.save(); 
-        targetCtx.translate(sfcScreenX_px, sfcScreenY_px); 
-        targetCtx.rotate(this.angle_rad); 
-        const comOffset_m = this.getCoMOffset_m(); 
-        const comOffset_px = comOffset_m * currentPPM; 
-        const partsOriginX_px_local = 0; 
-        const partsOriginY_px_local = -comOffset_px; 
-        this.parts.forEach(part => { part.draw(targetCtx, partsOriginX_px_local, -partsOriginY_px_local, currentPPM); }); 
-        if (this.currentThrust_N > 0) { 
-            this.parts.forEach(p => { 
-                if (p.type === 'engine' && p.isActive) { 
-                    const engineBottomY_from_CoM_local_px = -(comOffset_m - p.relative_y_m) * currentPPM; 
-                    const flameHeight_px = (10 + Math.random() * 15 + (this.currentThrust_N / (this.maxThrust_N||1)) * 20) * Math.max(0.1, currentPPM / (isInsetView ? 0.2 : 0.5) ); 
-                    const flameWidth_px = p.width_m * currentPPM * 0.8; 
-                    targetCtx.save(); 
-                    targetCtx.translate(0, engineBottomY_from_CoM_local_px); 
-                    targetCtx.rotate(this.engineGimbalAngle_rad); 
-                    targetCtx.fillStyle = 'orange'; targetCtx.beginPath(); 
-                    targetCtx.moveTo(-flameWidth_px / 2, 0); targetCtx.lineTo(flameWidth_px / 2, 0); targetCtx.lineTo(0, flameHeight_px); 
-                    targetCtx.closePath(); targetCtx.fill(); 
-                    targetCtx.fillStyle = 'yellow'; const iFW = flameWidth_px*0.5, iFH = flameHeight_px*0.6; 
-                    targetCtx.beginPath(); targetCtx.moveTo(-iFW/2, 0); targetCtx.lineTo(iFW/2, 0); targetCtx.lineTo(0, iFH); 
-                    targetCtx.closePath(); targetCtx.fill(); 
-                    targetCtx.restore(); 
-                } 
-            }); 
-        } 
-        targetCtx.restore(); 
+
+    draw(passedSpacecraftContainer, targetCanvasWidth, targetCanvasHeight, sfcScreenX_px, sfcScreenY_px, currentPPM, isInsetView = false) {
+        const shipGraphicsContainer = new PIXI.Container();
+        shipGraphicsContainer.position.set(sfcScreenX_px, sfcScreenY_px);
+        shipGraphicsContainer.rotation = this.angle_rad;
+
+        const comOffset_m = this.getCoMOffset_m(); // Distance from stack bottom to CoM (Y-up)
+
+        this.parts.forEach(part => {
+            const drawWidth_px = part.width_m * currentPPM;
+            const drawHeight_px = part.height_m * currentPPM;
+
+            // Calculate part's top-left position relative to CoM (origin of shipGraphicsContainer)
+            // CoM is (0,0) in shipGraphicsContainer.
+            // part.relative_y_m is bottom of part from stack bottom (Y-up model).
+            // part_top_from_com_m is part's top edge distance from CoM (Y-up model).
+            const part_top_from_com_m = (part.relative_y_m + part.height_m) - comOffset_m;
+            
+            // Convert to Pixi's coordinate system (Y-down) for local positions within shipGraphicsContainer
+            const partTopLeftX_local = -drawWidth_px / 2; // Centered
+            const partTopLeftY_local = -part_top_from_com_m * currentPPM; // Y positive downwards
+
+            part.draw(shipGraphicsContainer, partTopLeftX_local, partTopLeftY_local, currentPPM, !isInsetView); // Show nodes if not inset
+        });
+
+        if (this.currentThrust_N > 0) {
+            this.parts.forEach(p => {
+                if (p.type === 'engine' && p.isActive) {
+                    const flameGraphics = new PIXI.Graphics();
+                    
+                    // Engine's nozzle (bottom of engine part) position relative to CoM
+                    // p.relative_y_m is bottom of engine from stack bottom (Y-up model)
+                    const engineNozzle_y_from_com_m = p.relative_y_m - comOffset_m;
+                     // Convert to Pixi's Y-down, relative to CoM (shipGraphicsContainer origin)
+                    const engineNozzle_y_local_px = -engineNozzle_y_from_com_m * currentPPM;
+
+                    const flameHeight_px = (10 + Math.random() * 15 + (this.currentThrust_N / (this.maxThrust_N || 1)) * 20) * Math.max(0.1, currentPPM / (isInsetView ? 0.2 : 0.5));
+                    const flameWidth_px = p.width_m * currentPPM * 0.8;
+
+                    flameGraphics.position.set(0, engineNozzle_y_local_px); // X is centered at CoM's X, Y is nozzle's Y
+                    flameGraphics.rotation = this.engineGimbalAngle_rad;
+                    
+                    const orange = parseRgba('orange');
+                    flameGraphics.beginFill(orange.hex, orange.alpha);
+                    flameGraphics.moveTo(-flameWidth_px / 2, 0); // Relative to flameGraphics origin (nozzle center)
+                    flameGraphics.lineTo(flameWidth_px / 2, 0);
+                    flameGraphics.lineTo(0, flameHeight_px); // Flame points "down" (positive Y in its local rotated frame)
+                    flameGraphics.closePath();
+                    flameGraphics.endFill();
+
+                    const yellow = parseRgba('yellow');
+                    const iFW = flameWidth_px * 0.5, iFH = flameHeight_px * 0.6;
+                    flameGraphics.beginFill(yellow.hex, yellow.alpha);
+                    flameGraphics.moveTo(-iFW / 2, 0);
+                    flameGraphics.lineTo(iFW / 2, 0);
+                    flameGraphics.lineTo(0, iFH);
+                    flameGraphics.closePath();
+                    flameGraphics.endFill();
+                    
+                    shipGraphicsContainer.addChild(flameGraphics);
+                }
+            });
+        }
+        passedSpacecraftContainer.addChild(shipGraphicsContainer);
     }
+
     updatePhysics(deltaTime_s, masterEngineCommandActive, gimbalLeft, gimbalRight, currentAirDensity, apoapsisRef, periapsisRef, smokeParticlesArray, simStateRef) { 
         if (deltaTime_s <= 0 || this.totalMass_kg <= 0) return { currentAirDensity, apoapsis: apoapsisRef.value, periapsis: periapsisRef.value };
         

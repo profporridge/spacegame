@@ -21,8 +21,15 @@ export class SmokeParticle {
         this.size_m = SMOKE_INITIAL_SIZE_M_MIN + Math.random() * (SMOKE_INITIAL_SIZE_M_MAX - SMOKE_INITIAL_SIZE_M_MIN); 
         const grayScale = 160 + Math.random() * 60; 
         this.initialOpacity = 0.35 + Math.random() * 0.35; 
-        this.color = `rgba(${grayScale},${grayScale},${grayScale},${this.initialOpacity.toFixed(2)})`;
-        this.growthFactor = 2.0 + Math.random() * 3.0; 
+        // this.color = `rgba(${grayScale},${grayScale},${grayScale},${this.initialOpacity.toFixed(2)})`; // No longer needed for graphics color
+        this.growthFactor = 2.0 + Math.random() * 3.0;
+
+        // Initialize PIXI.Graphics object
+        this.graphics = new PIXI.Graphics();
+        this.graphics.beginFill(0x808080, 1); // Base color gray, alpha 1. Actual alpha set in draw().
+        this.graphics.drawCircle(0, 0, 1);    // Unit circle (radius 1), scaled in draw().
+        this.graphics.endFill();
+        this.graphics.visible = false; // Initially not visible, made visible in draw() if active.
     }
     update(deltaTime_s, currentGlobalAirDensity) { // Pass current air density
         this.x_m += this.vx_ms * deltaTime_s; 
@@ -36,7 +43,7 @@ export class SmokeParticle {
         } 
     }
     
-    draw(ctx, camX_m, camY_m, ppm, canvasWidth, canvasHeight) { // Pass canvas dimensions for culling
+    draw(smokeContainer, camX_m, camY_m, ppm, canvasWidth, canvasHeight) { // Pass canvas dimensions for culling
         if (this.age_s >= this.lifetime_s) return; 
         const viewX_px = (this.x_m - camX_m) * ppm; 
         const viewY_px = (this.y_m - camY_m) * ppm; 
@@ -55,9 +62,17 @@ export class SmokeParticle {
         else { opacityFactor = 1; } 
         opacityFactor = Math.max(0, opacityFactor); 
         const opacity = this.initialOpacity * opacityFactor; 
-        if (opacity < 0.005) return; 
-        const colorParts = this.color.match(/\d+/g).slice(0,3).join(',');
-        ctx.fillStyle = `rgba(${colorParts}, ${opacity.toFixed(3)})`;
-        ctx.beginPath(); ctx.arc(screenX_px, screenY_px, radius_px, 0, 2 * Math.PI); ctx.fill(); 
+        if (opacity < 0.005) {
+            this.graphics.visible = false; 
+            return; // Particle is too transparent or expired, ensure it's not drawn
+        }
+        
+        // Update the existing graphics object's properties
+        this.graphics.position.set(screenX_px, screenY_px);
+        this.graphics.scale.set(radius_px, radius_px); // Scale the unit circle drawn in constructor
+        this.graphics.alpha = opacity;                 // Set the current alpha
+        this.graphics.visible = true;                  // Make it visible for this frame
+        
+        // Note: Adding this.graphics to smokeContainer is now handled in main.js gameLoop
     }
 }
