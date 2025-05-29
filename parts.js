@@ -1,4 +1,23 @@
+import { ISP_VACUUM_DEFAULT } from './constants.js'; // Added import
+
 // In parts.js
+
+// Helper function to parse rgba string (copied from environment.js)
+function parseRgba(rgbaString) {
+    if (typeof rgbaString === 'number') return { hex: rgbaString, alpha: 1 }; // Already a hex
+    if (rgbaString.startsWith('#')) {
+        return { hex: parseInt(rgbaString.substring(1), 16), alpha: 1 };
+    }
+    const match = rgbaString.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
+    if (!match) {
+        console.warn('Invalid color string, defaulting to gray:', rgbaString);
+        return { hex: 0x808080, alpha: 1 }; // Default to gray if parsing fails
+    }
+    return {
+        hex: (parseInt(match[1]) << 16) + (parseInt(match[2]) << 8) + parseInt(match[3]),
+        alpha: match[4] !== undefined ? parseFloat(match[4]) : 1
+    };
+}
 
 // Modify base Part constructor for default nodes
 export class Part { 
@@ -19,112 +38,100 @@ export class Part {
     }
     get mass() { return this.dryMass_kg; }
 
-    // Enhanced draw method to include nodes
-    draw(ctx, partStackCenterX_px, spacecraftDrawBottomY_px, currentPPM, showNodes = false) { 
-        const drawWidth_px = this.width_m * currentPPM; 
-        const drawHeight_px = this.height_m * currentPPM; 
-        const partBottomY_onCanvas_relative = spacecraftDrawBottomY_px - (this.relative_y_m * currentPPM);
-        const partTopY_onCanvas_relative = partBottomY_onCanvas_relative - drawHeight_px;
-        const partLeftX_onCanvas_relative = partStackCenterX_px - drawWidth_px / 2; 
+    // PixiJS draw method.
+    // targetTopLeftX_px, targetTopLeftY_px are the desired top-left coordinates of this part
+    // within the parent `container` (which is shipGraphicsContainer, centered at CoM and rotated).
+    draw(container, targetTopLeftX_px, targetTopLeftY_px, currentPPM, showNodes = false) {
+        const partGraphics = new PIXI.Graphics();
+
+        const drawWidth_px = this.width_m * currentPPM;
+        const drawHeight_px = this.height_m * currentPPM;
         
-        // --- Part Specific Drawing Logic (Moved from derived classes or enhanced here) ---
-        ctx.fillStyle = this.color;
-        ctx.strokeStyle = 'black';
-        ctx.lineWidth = 1;
+        const mainColor = parseRgba(this.color);
+        const strokeColor = parseRgba('black'); // Standard stroke
+        const nozzleColor = parseRgba('#777777');
+        const tankStrokeColor = parseRgba('#555555');
+
+        partGraphics.lineStyle(1, strokeColor.hex, strokeColor.alpha);
+        partGraphics.beginFill(mainColor.hex, mainColor.alpha);
 
         if (this.type === 'pod') {
-            ctx.beginPath();
-            ctx.moveTo(partLeftX_onCanvas_relative, partBottomY_onCanvas_relative);
-            ctx.lineTo(partLeftX_onCanvas_relative + drawWidth_px, partBottomY_onCanvas_relative);
-            ctx.lineTo(partLeftX_onCanvas_relative + drawWidth_px / 2, partTopY_onCanvas_relative);
-            ctx.closePath();
-            ctx.fill(); ctx.stroke();
+            // Draw pod shape (triangle) relative to (0,0) of partGraphics
+            partGraphics.moveTo(0, drawHeight_px); // Bottom-left
+            partGraphics.lineTo(drawWidth_px, drawHeight_px); // Bottom-right
+            partGraphics.lineTo(drawWidth_px / 2, 0); // Top-center
+            partGraphics.closePath();
         } else if (this.type === 'tank') {
-            const r = Math.min(drawWidth_px * 0.1, drawHeight_px * 0.1, 5 * (currentPPM / 0.5)); // Adjusted radius
-            const x = partLeftX_onCanvas_relative;
-            const y = partTopY_onCanvas_relative;
-            ctx.beginPath();
-            ctx.moveTo(x + r, y); ctx.lineTo(x + drawWidth_px - r, y); ctx.quadraticCurveTo(x + drawWidth_px, y, x + drawWidth_px, y + r);
-            ctx.lineTo(x + drawWidth_px, y + drawHeight_px - r); ctx.quadraticCurveTo(x + drawWidth_px, y + drawHeight_px, x + drawWidth_px - r, y + drawHeight_px);
-            ctx.lineTo(x + r, y + drawHeight_px); ctx.quadraticCurveTo(x, y + drawHeight_px, x, y + drawHeight_px - r);
-            ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y);
-            ctx.closePath();
-            ctx.fill(); ctx.strokeStyle = '#555'; ctx.stroke();
+            const r = Math.min(drawWidth_px * 0.1, drawHeight_px * 0.1, 5 * (currentPPM / 0.5));
+            // For roundedRect, x,y is top-left corner
+            partGraphics.drawRoundedRect(0, 0, drawWidth_px, drawHeight_px, r);
+            // Overwrite linestyle for tank outline
+            partGraphics.lineStyle(1, tankStrokeColor.hex, tankStrokeColor.alpha);
         } else if (this.type === 'engine') {
             const housingHeight_px = drawHeight_px * 0.4;
             const nozzleHeight_px = drawHeight_px * 0.6;
-            const nozzleExitWidth_px = drawWidth_px * 1.2;
-            const housingTopY = partTopY_onCanvas_relative;
-            const housingBottomY = housingTopY + housingHeight_px;
-
-            ctx.fillStyle = this.color; // Engine housing color
-            ctx.fillRect(partLeftX_onCanvas_relative, housingTopY, drawWidth_px, housingHeight_px);
-            ctx.strokeRect(partLeftX_onCanvas_relative, housingTopY, drawWidth_px, housingHeight_px);
+            const nozzleExitWidth_px = drawWidth_px * 1.2; // Wider than base
             
-            ctx.fillStyle = '#777'; // Nozzle color
-            ctx.beginPath();
-            ctx.moveTo(partStackCenterX_px - drawWidth_px / 2, housingBottomY);      
-            ctx.lineTo(partStackCenterX_px + drawWidth_px / 2, housingBottomY);      
-            ctx.lineTo(partStackCenterX_px + nozzleExitWidth_px / 2, housingBottomY + nozzleHeight_px); 
-            ctx.lineTo(partStackCenterX_px - nozzleExitWidth_px / 2, housingBottomY + nozzleHeight_px); 
-            ctx.closePath();
-            ctx.fill(); ctx.stroke();
+            // Housing (drawn from 0,0 of partGraphics)
+            partGraphics.drawRect(0, 0, drawWidth_px, housingHeight_px);
+            partGraphics.endFill(); // End housing fill
+
+            // Nozzle (drawn relative to 0,0 of partGraphics)
+            partGraphics.beginFill(nozzleColor.hex, nozzleColor.alpha);
+            partGraphics.lineStyle(1, strokeColor.hex, strokeColor.alpha); // Reset stroke for nozzle
+            partGraphics.moveTo(drawWidth_px / 2 - drawWidth_px / 2, housingHeight_px);      // Top-left of nozzle base
+            partGraphics.lineTo(drawWidth_px / 2 + drawWidth_px / 2, housingHeight_px);      // Top-right of nozzle base
+            partGraphics.lineTo(drawWidth_px / 2 + nozzleExitWidth_px / 2, housingHeight_px + nozzleHeight_px); // Bottom-right of nozzle exit
+            partGraphics.lineTo(drawWidth_px / 2 - nozzleExitWidth_px / 2, housingHeight_px + nozzleHeight_px); // Bottom-left of nozzle exit
+            partGraphics.closePath();
         } else if (this.type === 'fairing') {
-            ctx.beginPath();
-            ctx.moveTo(partLeftX_onCanvas_relative, partBottomY_onCanvas_relative); 
-            ctx.lineTo(partLeftX_onCanvas_relative + drawWidth_px, partBottomY_onCanvas_relative); 
-            ctx.quadraticCurveTo( 
-                partLeftX_onCanvas_relative + drawWidth_px, partBottomY_onCanvas_relative - drawHeight_px * 0.7, 
-                partLeftX_onCanvas_relative + drawWidth_px / 2, partTopY_onCanvas_relative 
+            // Fairings are typically wider at base, tapering to top
+            partGraphics.moveTo(0, drawHeight_px); // Bottom-left
+            partGraphics.lineTo(drawWidth_px, drawHeight_px); // Bottom-right
+            partGraphics.quadraticCurveTo(
+                drawWidth_px, drawHeight_px * 0.3, // Control point right
+                drawWidth_px / 2, 0  // Top-center
             );
-            ctx.quadraticCurveTo( 
-                partLeftX_onCanvas_relative, partBottomY_onCanvas_relative - drawHeight_px * 0.7, 
-                partLeftX_onCanvas_relative, partBottomY_onCanvas_relative 
+            partGraphics.quadraticCurveTo(
+                0, drawHeight_px * 0.3, // Control point left
+                0, drawHeight_px // Back to Bottom-left (effectively)
             );
-            ctx.closePath();
-            ctx.fill(); ctx.stroke();
+            partGraphics.closePath();
         } else { // Default fallback: simple rectangle
-             ctx.fillRect(partLeftX_onCanvas_relative, partTopY_onCanvas_relative, drawWidth_px, drawHeight_px); 
-             ctx.strokeRect(partLeftX_onCanvas_relative, partTopY_onCanvas_relative, drawWidth_px, drawHeight_px); 
+            partGraphics.drawRect(0, 0, drawWidth_px, drawHeight_px);
         }
+        partGraphics.endFill(); // Must be called to finalize fill and stroke for current path
+
+        // Position the partGraphics object within its parent container
+        partGraphics.position.set(targetTopLeftX_px, targetTopLeftY_px);
+        container.addChild(partGraphics);
 
         // --- Draw Attachment Nodes ---
         if (showNodes && this.attachmentNodes) {
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-            ctx.strokeStyle = 'rgba(0, 0, 0, 0.7)';
-            ctx.lineWidth = 1;
-            const nodeRadiusBase = 0.1 * currentPPM; // Base radius in meters, then scaled
+            const nodeColor = parseRgba('rgba(255, 255, 255, 0.7)');
+            const nodeStroke = parseRgba('rgba(0, 0, 0, 0.7)');
+            const nodeRadiusBase = 0.1; // Base radius in meters
 
             this.attachmentNodes.forEach(node => {
-                // Node positions are relative to part's own coordinate system (origin at its drawn bottom-center)
-                // y=0 is bottom, y=1 is top of part's height_m
-                // x=0 is center, x=-0.5 is left edge, x=0.5 is right edge of part's width_m
-                const nodeX_local_px = node.position.x * drawWidth_px; 
-                const nodeY_local_px = (1 - node.position.y) * drawHeight_px - drawHeight_px/2; // y=1 (top) -> -h/2; y=0 (bottom) -> +h/2
+                const nodeGraphics = new PIXI.Graphics();
                 
-                // Translate from partStackCenterX (center of stack) and part's bottom relative to drawing origin
-                // The part itself is drawn with its bottom-center at (partStackCenterX_px, partBottomY_onCanvas_relative)
-                // For nodes, we need their position relative to the part's graphical center before rotation.
-                // The current transform in Spacecraft.draw already handles part's position and rotation.
-                // So, node coordinates should be relative to the part's center (0,0) in its local, unrotated frame.
-                // The draw function arguments partStackCenterX_px and spacecraftDrawBottomY_px are for the *entire stack*
-                // We draw relative to the part's own center for nodes
-                // If spacecraftDrawBottomY_px is the bottom of the current part being drawn:
-                const partCenterY_onCanvas = partBottomY_onCanvas_relative - drawHeight_px / 2;
+                // Node positions (node.position.x, node.position.y) are:
+                // x: -0.5 (left edge of part) to 0.5 (right edge of part)
+                // y: 0 (bottom of part) to 1 (top of part)
+                // Convert these to pixel coordinates relative to the part's top-left (0,0) for partGraphics
+                const nodeLocalX_relToPartTopLeft = (node.position.x * drawWidth_px) + (drawWidth_px / 2);
+                const nodeLocalY_relToPartTopLeft = (1 - node.position.y) * drawHeight_px; // Y is inverted (1=top, 0=bottom)
+
+                const nodeRadius_px = Math.max(2, nodeRadiusBase * currentPPM * Math.min(this.width_m, this.height_m));
+
+                nodeGraphics.lineStyle(1, nodeStroke.hex, nodeStroke.alpha);
+                nodeGraphics.beginFill(nodeColor.hex, nodeColor.alpha);
+                nodeGraphics.drawCircle(0, 0, nodeRadius_px); // Draw circle at its own (0,0)
+                nodeGraphics.endFill();
                 
-                const nodeScreenX = partStackCenterX_px + nodeX_local_px;
-                // node.position.y=1 (top) should be at partTopY_onCanvas_relative
-                // node.position.y=0 (bottom) should be at partBottomY_onCanvas_relative
-                // node.position.y=0.5 (middle) should be at partCenterY_onCanvas
-                const nodeScreenY = partBottomY_onCanvas_relative - (node.position.y * drawHeight_px) ;
-
-
-                const nodeRadius_px = Math.max(2, nodeRadiusBase * Math.min(this.width_m, this.height_m));
-
-                ctx.beginPath();
-                ctx.arc(nodeScreenX, nodeScreenY, nodeRadius_px, 0, 2 * Math.PI);
-                ctx.fill();
-                ctx.stroke();
+                // Position node relative to the part's top-left (targetTopLeftX_px, targetTopLeftY_px)
+                nodeGraphics.position.set(targetTopLeftX_px + nodeLocalX_relToPartTopLeft, targetTopLeftY_px + nodeLocalY_relToPartTopLeft);
+                container.addChild(nodeGraphics); // Add to the same container as the part (shipGraphicsContainer)
             });
         }
     }

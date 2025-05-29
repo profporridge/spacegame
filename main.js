@@ -24,15 +24,40 @@ let cloudLayers = [];
 let surfaceFeatures = [];
 
 const canvas = document.getElementById('gameCanvas'); 
-const ctx = canvas.getContext('2d');
+// const ctx = canvas.getContext('2d'); // No longer primary context
 const insetCanvas = document.getElementById('insetCanvas'); 
-const insetCtx = insetCanvas.getContext('2d');
+const insetCtx = insetCanvas.getContext('2d'); // Keep for inset, or refactor later
 const stagingCanvas = document.getElementById('stagingCanvas'); 
-const stagingCtx = stagingCanvas.getContext('2d');
+const stagingCtx = stagingCanvas.getContext('2d'); // Keep for staging, or refactor later
 const dragImageElement = document.getElementById('dragImage');
-//const gameCanvasSVG = SVG().addTo('#gameCanvas');
 
-const dom = { 
+// Initialize PixiJS Application
+const app = new PIXI.Application({
+    view: canvas,
+    width: canvas.width, // Set initial width
+    height: canvas.height, // Set initial height
+    backgroundColor: 0x000000, 
+    resolution: window.devicePixelRatio || 1,
+    autoDensity: true,
+});
+
+let environmentContainer = new PIXI.Container();
+app.stage.addChild(environmentContainer);
+
+let smokeLayerContainer = new PIXI.Container(); // For smoke particles - Add before spacecraft
+app.stage.addChild(smokeLayerContainer);
+
+let spacecraftLayerContainer = new PIXI.Container(); // For spacecraft rendering - Add after smoke
+app.stage.addChild(spacecraftLayerContainer);
+
+// For Inset View
+let insetApp = null;
+let insetSpacecraftContainer = null;
+
+// No longer need ctx directly for PixiJS rendering for main canvas
+// const ctx = canvas.getContext('2d');
+
+const dom = {
     time: document.getElementById('time'), apoapsis: document.getElementById('apoapsis'), 
     periapsis: document.getElementById('periapsis'), angle: document.getElementById('angle'), 
     gimbal: document.getElementById('gimbal'), mass: document.getElementById('mass'), 
@@ -172,58 +197,132 @@ function gameLoop(timestamp) {
     
     updateCamera(); 
     
-    smokeParticles = smokeParticles.filter(p => p.age_s < p.lifetime_s); 
-    smokeParticles.forEach(p => p.update(deltaTime_s, currentAirDensityValue)); 
+    updateCamera(); 
     
- 
-    ENV.drawSkyBackground(ctx, spacecraftInstance ? spacecraftInstance.altitudeAGL_m : null, canvas.width, canvas.height);
+    updateCamera(); 
     
-    ENV.drawOrbitPath(ctx, simulationState.cameraX_m, simulationState.cameraY_m, simulationState.currentPixelsPerMeter, spacecraftInstance, apoapsisAGL.value, periapsisAGL.value);  
-    ENV.drawClouds(ctx, simulationState.cameraX_m, simulationState.cameraY_m, simulationState.currentPixelsPerMeter, spacecraftInstance ? spacecraftInstance.altitudeAGL_m : 0, cloudLayers); 
-    ENV.drawPlanet(ctx, simulationState.cameraX_m, simulationState.cameraY_m, simulationState.currentPixelsPerMeter); 
+    // --- Smoke Particle Update, Draw, and Management ---
+    smokeLayerContainer.removeChildren(); // Clear container at the start of smoke processing
 
-    ENV.drawSurfaceFeatures(ctx, simulationState.cameraX_m, simulationState.cameraY_m, simulationState.currentPixelsPerMeter, surfaceFeatures); 
-    ENV.drawPlanet(ctx, simulationState.cameraX_m, simulationState.cameraY_m, simulationState.currentPixelsPerMete, gameCanvasSVG); 
-    smokeParticles.forEach(p => p.draw(ctx, simulationState.cameraX_m, simulationState.cameraY_m, simulationState.currentPixelsPerMeter, canvas.width, canvas.height)); 
-    oldSmokeParticles.forEach(p => p.draw(ctx, simulationState.cameraX_m, simulationState.cameraY_m, simulationState.currentPixelsPerMeter, canvas.width, canvas.height));
+    const currentActiveSmoke = [];
+    const newlyRetiredToOld = []; // Particles that just expired from the main 'smokeParticles'
+
+    // Process active 'smokeParticles'
+    for (const particle of smokeParticles) {
+        particle.update(deltaTime_s, currentAirDensityValue);
+        if (particle.age_s < particle.lifetime_s) {
+            particle.draw(smokeLayerContainer, simulationState.cameraX_m, simulationState.cameraY_m, simulationState.currentPixelsPerMeter, app.screen.width, app.screen.height);
+            if (particle.graphics.visible) {
+                smokeLayerContainer.addChild(particle.graphics);
+            }
+            currentActiveSmoke.push(particle);
+        } else {
+            // Particle has expired
+            particle.graphics.visible = false; // Ensure its graphics are not accidentally rendered
+            // Logic for moving to oldSmokeParticles:
+            // This logic was previously in Spacecraft.updatePhysics. It should be consolidated.
+            // For now, let's replicate the SMOKE_PERSIST_CHANCE logic here.
+            // Note: Spacecraft.updatePhysics also has a MAX_OLD_SMOKE_PARTICLES check when *adding* new particles.
+            if (Math.random() > C.SMOKE_PERSIST_CHANCE) { // From constants.js via C
+                 // This particle might become an "old" particle.
+                 // It needs to be added to oldSmokeParticles array, but not drawn this frame as "active".
+                 newlyRetiredToOld.push(particle);
+            }
+        }
+    }
+    smokeParticles = currentActiveSmoke;
+
+    // Process 'oldSmokeParticles'
+    const stillOldAndVisible = [];
+    for (const particle of oldSmokeParticles) {
+        particle.update(deltaTime_s, currentAirDensityValue); // They continue to age and fade
+        if (particle.age_s < particle.lifetime_s) {
+            particle.draw(smokeLayerContainer, simulationState.cameraX_m, simulationState.cameraY_m, simulationState.currentPixelsPerMeter, app.screen.width, app.screen.height);
+            if (particle.graphics.visible) {
+                smokeLayerContainer.addChild(particle.graphics);
+            }
+            stillOldAndVisible.push(particle);
+        } else {
+            particle.graphics.visible = false;
+        }
+    }
+    // Combine still-living old particles with newly retired active particles
+    oldSmokeParticles = stillOldAndVisible.concat(newlyRetiredToOld);
     
+    // Optional: Limit the number of oldSmokeParticles (as was in Spacecraft.updatePhysics)
+    while (oldSmokeParticles.length > C.MAX_OLD_SMOKE_PARTICLES) {
+        const removedParticle = oldSmokeParticles.shift(); // Remove the oldest from the array
+        // Its graphics are already removed from container due to removeChildren() or will be next frame.
+    }
+    
+    // --- Environment Drawing ---
+    environmentContainer.removeChildren();
+    ENV.drawSkyBackground(environmentContainer, spacecraftInstance ? spacecraftInstance.altitudeAGL_m : null, app.screen.width, app.screen.height);
+    ENV.drawOrbitPath(environmentContainer, simulationState.cameraX_m, simulationState.cameraY_m, simulationState.currentPixelsPerMeter, spacecraftInstance, apoapsisAGL.value, periapsisAGL.value);  
+    ENV.drawClouds(environmentContainer, simulationState.cameraX_m, simulationState.cameraY_m, simulationState.currentPixelsPerMeter, spacecraftInstance ? spacecraftInstance.altitudeAGL_m : 0, cloudLayers); 
+    ENV.drawPlanet(environmentContainer, simulationState.cameraX_m, simulationState.cameraY_m, simulationState.currentPixelsPerMeter); 
+    ENV.drawSurfaceFeatures(environmentContainer, simulationState.cameraX_m, simulationState.cameraY_m, simulationState.currentPixelsPerMeter, surfaceFeatures);
+    
+    // --- Spacecraft Drawing ---
+    spacecraftLayerContainer.removeChildren();
+
     if(spacecraftInstance) { 
         const comOffset_m = spacecraftInstance.getCoMOffset_m(); 
         const sfcComX_world = spacecraftInstance.position_x_m + comOffset_m * Math.sin(spacecraftInstance.angle_rad); 
         const sfcComY_world = spacecraftInstance.position_y_m + comOffset_m * Math.cos(spacecraftInstance.angle_rad); 
-        const sfcComScreenX_main = canvas.width/2 + (sfcComX_world - simulationState.cameraX_m) * simulationState.currentPixelsPerMeter; 
-        const sfcComScreenY_main = canvas.height/2 - (sfcComY_world - simulationState.cameraY_m) * simulationState.currentPixelsPerMeter; 
+        const sfcComScreenX_main = app.screen.width/2 + (sfcComX_world - simulationState.cameraX_m) * simulationState.currentPixelsPerMeter; 
+        const sfcComScreenY_main = app.screen.height/2 - (sfcComY_world - simulationState.cameraY_m) * simulationState.currentPixelsPerMeter; 
         
-        if (simulationState.currentPixelsPerMeter < C.SPACECRAFT_INDICATOR_PPM_THRESHOLD) { 
-            ctx.fillStyle = 'yellow'; ctx.beginPath(); 
-            ctx.arc(sfcComScreenX_main, sfcComScreenY_main, 3, 0, 2 * Math.PI); ctx.fill(); 
-            ctx.strokeStyle = 'yellow'; ctx.lineWidth = 1.5; ctx.beginPath(); 
-            ctx.moveTo(sfcComScreenX_main, sfcComScreenY_main); 
-            const speed = Math.sqrt(spacecraftInstance.velocity_x_ms**2 + spacecraftInstance.velocity_y_ms**2); 
-            const vectorLength = Math.min(50, speed * 0.1);  
-            ctx.lineTo( sfcComScreenX_main + (spacecraftInstance.velocity_x_ms / Math.max(1,speed)) * vectorLength, sfcComScreenY_main - (spacecraftInstance.velocity_y_ms / Math.max(1,speed)) * vectorLength  ); 
-            ctx.stroke(); ctx.lineWidth = 1; 
-        } else { 
-            spacecraftInstance.draw(ctx, canvas.width, canvas.height, sfcComScreenX_main, sfcComScreenY_main, simulationState.currentPixelsPerMeter); 
-        } 
+        if (simulationState.currentPixelsPerMeter >= C.SPACECRAFT_INDICATOR_PPM_THRESHOLD) {
+             spacecraftInstance.draw(
+                spacecraftLayerContainer, 
+                app.screen.width, 
+                app.screen.height, 
+                sfcComScreenX_main, 
+                sfcComScreenY_main, 
+                simulationState.currentPixelsPerMeter
+            );
+        } else {
+            // Spacecraft indicator drawing - needs to be converted to PIXI.Graphics
+            // For now, this means small spacecraft won't be visible.
+            // Example for later:
+            // const indicator = new PIXI.Graphics();
+            // indicator.beginFill(0xFFFF00); // Yellow
+            // indicator.drawCircle(sfcComScreenX_main, sfcComScreenY_main, 3);
+            // indicator.endFill();
+            // spacecraftLayerContainer.addChild(indicator); 
+            // // Similar for the velocity vector line
+        }
         
-        if (simulationState.currentPixelsPerMeter < C.INSET_VIEW_PPM_THRESHOLD) { 
-            insetCanvas.style.display = 'block'; 
-            insetCtx.clearRect(0, 0, insetCanvas.width, insetCanvas.height); 
-            const largerCraftDim_m = Math.max(spacecraftInstance.logicalStackHeight_m, spacecraftInstance.maxWidth_m, 1); 
-            const insetPPM = C.INSET_VIEW_TARGET_SIZE_PX / largerCraftDim_m; 
-            const insetSfcScreenX = insetCanvas.width / 2;  
-            const insetSfcScreenY = insetCanvas.height / 2; 
-            spacecraftInstance.draw(insetCtx, insetCanvas.width, insetCanvas.height, insetSfcScreenX, insetSfcScreenY, insetPPM, true); 
-        } else { 
-            insetCanvas.style.display = 'none'; 
-        } 
+        
+        // Inset view drawing
+        if (insetApp && spacecraftInstance && simulationState.currentPixelsPerMeter < C.INSET_VIEW_PPM_THRESHOLD) {
+            insetCanvas.style.display = 'block';
+            insetSpacecraftContainer.removeChildren();
+            
+            const largerCraftDim_m = Math.max(spacecraftInstance.logicalStackHeight_m, spacecraftInstance.maxWidth_m, 1);
+            const insetPPM = C.INSET_VIEW_TARGET_SIZE_PX / largerCraftDim_m;
+            const insetSfcScreenX = insetApp.screen.width / 2;
+            const insetSfcScreenY = insetApp.screen.height / 2;
+
+            spacecraftInstance.draw(
+                insetSpacecraftContainer,
+                insetApp.screen.width,
+                insetApp.screen.height,
+                insetSfcScreenX,
+                insetSfcScreenY,
+                insetPPM,
+                true // isInsetView = true
+            );
+        } else {
+            insetCanvas.style.display = 'none';
+        }
     }
     
-    UI.drawHUD(ctx, spacecraftInstance, simulationState); 
-    UI.updateStatsDisplay(simulationState, spacecraftInstance, apoapsisAGL.value, periapsisAGL.value); 
+    // UI.drawHUD(ctx, spacecraftInstance, simulationState); // Commented out, uses ctx
+    UI.updateStatsDisplay(simulationState, spacecraftInstance, apoapsisAGL.value, periapsisAGL.value);
     
-    if (spacecraftInstance && simulationState.landed && !simulationState.engineActive && simulationState.isLaunched) { 
+    if (spacecraftInstance && simulationState.landed && !simulationState.engineActive && simulationState.isLaunched) {
         // dom.launchButton might be null if removed, handle this
         // if(dom.launchButton) dom.launchButton.textContent = "Landed"; 
     } 
@@ -328,10 +427,27 @@ document.addEventListener('DOMContentLoaded', () => {
     );
     // Drag and Drop listeners are now set up inside initializeUI using initializeDragAndDropInternal
     
-    canvas.width = Math.min(window.innerWidth * 0.70 - 20, 800); 
-    canvas.height = Math.min(window.innerHeight * 0.90, 600);
+    // Update PixiJS app dimensions if canvas size changed by logic elsewhere (though it's set once now)
+    // app.renderer.resize(canvas.width, canvas.height);
     
     setupEventListeners(); 
-    initSimulation('template');       
-    requestAnimationFrame(gameLoop);
+    initSimulation('template');
+    // requestAnimationFrame(gameLoop); // PIXI.Application uses its own ticker by default
+    app.ticker.add(gameLoop); // Add gameLoop to PixiJS ticker
+
+    // Initialize Inset View Pixi Application
+    if (insetCanvas) {
+        insetApp = new PIXI.Application({
+            view: insetCanvas,
+            width: insetCanvas.width,
+            height: insetCanvas.height,
+            backgroundColor: 0x222222, // Darker background
+            resolution: window.devicePixelRatio || 1,
+            autoDensity: true,
+        });
+        insetSpacecraftContainer = new PIXI.Container();
+        insetApp.stage.addChild(insetSpacecraftContainer);
+    } else {
+        console.error("Inset canvas not found for Pixi initialization.");
+    }
 });
