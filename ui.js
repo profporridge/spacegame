@@ -17,19 +17,20 @@ const uiState = {
     stagingApp: null,
 };
 
-export function initializeUI(domRefs, shipPartsConfigRefFromMain, designsRef, initSimFunc, stagingContext, stagingCanvasElement, simState, catalog, audioMod) {
+export function initializeUI(domRefs, shipPartsConfigRefFromMain, designsRef, initSimFunc, sharedRenderer, stagingCanvasElement, simState, catalog, audioMod) {
     domElements = domRefs;
     currentShipPartsConfigRef = shipPartsConfigRefFromMain; // Use the reference passed from main.js
     spacecraftDesignsRef = designsRef;
     initSimulationFuncRef = initSimFunc;
     // stagingCtxRef = stagingContext; // No longer needed
-    // stagingCanvasRef = stagingCanvasElement; // Will get from domElements if needed, or directly use stagingCanvasElement
+   //  stagingCanvasRef = stagingCanvasElement; // Will get from domElements if needed, or directly use stagingCanvasElement
 
-    if (domElements.stagingCanvas) { // Ensure stagingCanvas is available
+    if (stagingCanvasElement) { // Ensure stagingCanvas is available
         uiState.stagingApp = new PIXI.Application({
-            view: domElements.stagingCanvas, // Use the canvas from domElements
-            width: domElements.stagingCanvas.width,
-            height: domElements.stagingCanvas.height,
+            renderer: sharedRenderer,// sharedRenderer, // Use the shared renderer from main.js
+       //    view: stagingCanvasElement, // Use the canvas from domElements
+            width: stagingCanvasElement.width,
+            height: stagingCanvasElement.height,
             backgroundColor: 0x383838, // Dark gray background like before
             resolution: window.devicePixelRatio || 1,
             autoDensity: true,
@@ -49,18 +50,15 @@ export function initializeUI(domRefs, shipPartsConfigRefFromMain, designsRef, in
     // Initialize D&D here as it needs access to ui.js's scope and functions
     // Ensure stagingCanvasRef is properly passed or accessed if needed by D&D logic.
     // If domElements.stagingCanvas is the source of truth, pass that.
-    initializeDragAndDropInternal(domElements.stagingCanvas, domElements.dragImage, currentShipPartsConfigRef, simulationStateRef, audioModuleRef);
+    initializeDragAndDropInternal(stagingCanvasElement, domElements.dragImage, currentShipPartsConfigRef, simulationStateRef, audioModuleRef);
 }
 
-// Moved initializeDragAndDropInternal to module scope
-let draggedPartConfig = null; 
-let touchDraggedPartElement = null; 
-let audioModuleRefForDnd = null; // To call initAudio from touch events
+
 
 function initializeDragAndDropInternal(stagingCanvasElement, dragImageElementRef, currentPartsRef, simState, audioModule) {
     const dragImageElement = dragImageElementRef;
     // simulationStateRef = simState; // Already set in initializeUI
-    audioModuleRefForDnd = audioModule; // Store audio module reference for touch events
+ //   audioModuleRefForDnd = audioModule; // Store audio module reference for touch events
 
     document.querySelectorAll('.part-button').forEach(button => {
         const imgElement = button.querySelector('img'); 
@@ -130,7 +128,12 @@ function initializeDragAndDropInternal(stagingCanvasElement, dragImageElementRef
         updateStagingStats(); 
     }
 
-    stagingCanvasElement.addEventListener('drop', (event) => { 
+    uiState.stagingApp.stage.eventMode = 'static';
+    uiState.stagingApp.stage.hitArea = uiState.stagingApp.screen;
+    uiState.stagingApp.stage.on('pointerup', onDragEnd);
+    uiState.stagingApp.stage.on('pointerupoutside', onDragEnd);
+    uiState.stagingApp.stage.on('drop', (event) => {
+
         event.preventDefault(); stagingCanvasElement.classList.remove('drag-over'); 
         let droppedData; 
         try { droppedData = JSON.parse(event.dataTransfer.getData('application/json')); } 
@@ -164,6 +167,25 @@ function initializeDragAndDropInternal(stagingCanvasElement, dragImageElementRef
 }
 
 
+    function onDragStart()
+    {
+        // Store a reference to the data
+        // * The reason for this is because of multitouch *
+        // * We want to track the movement of this particular touch *
+        this.alpha = 0.5;
+        dragTarget = this;
+        uiState.stagingApp.stage.on('pointermove', onDragMove);
+    }
+
+    function onDragEnd()
+    {
+        if (dragTarget)
+        {
+            uiState.stagingApp.stage.off('pointermove', onDragMove);
+            dragTarget.alpha = 1;
+            dragTarget = null;
+        }
+    }
 function populateDesignSelector() { 
     if (!domElements.designSelect) return;
     domElements.designSelect.innerHTML = ''; 
@@ -363,115 +385,115 @@ export function updateStagingStats() {
     domElements.stagingDeltaV.textContent = deltaV === Infinity ? "Inf." : deltaV.toFixed(0);
 }
 
-let draggedPartConfig = null; 
-let touchDraggedPartElement = null; 
-let audioModuleRefForDnd = null; // To call initAudio from touch events
+// let draggedPartConfig = null; 
+// let touchDraggedPartElement = null; 
+// let audioModuleRefForDnd = null; // To call initAudio from touch events
 
-function initializeDragAndDropInternal(stagingCanvasElement, dragImageElementRef, currentPartsRef, simState, audioModule) {
-    const dragImageElement = dragImageElementRef;
-    simulationStateRef = simState; 
-    audioModuleRefForDnd = audioModule; // Store audio module reference for touch events
+// function initializeDragAndDropInternal(stagingCanvasElement, dragImageElementRef, currentPartsRef, simState, audioModule) {
+//     const dragImageElement = dragImageElementRef;
+//     simulationStateRef = simState; 
+//     audioModuleRefForDnd = audioModule; // Store audio module reference for touch events
 
-    document.querySelectorAll('.part-button').forEach(button => {
-        const imgElement = button.querySelector('img'); 
+//     document.querySelectorAll('.part-button').forEach(button => {
+//         const imgElement = button.querySelector('img'); 
 
-        button.addEventListener('dragstart', (event) => {
-            try {
-                const partConfigString = event.target.closest('.part-button').dataset.partConfig; 
-                if (!partConfigString) { console.error("No part config found on button:", event.target); return; }
-                draggedPartConfig = JSON.parse(partConfigString);
+//         button.addEventListener('dragstart', (event) => {
+//             try {
+//                 const partConfigString = event.target.closest('.part-button').dataset.partConfig; 
+//                 if (!partConfigString) { console.error("No part config found on button:", event.target); return; }
+//                 draggedPartConfig = JSON.parse(partConfigString);
                 
-                event.dataTransfer.setData('application/json', partConfigString); 
-                event.dataTransfer.effectAllowed = 'copy';
+//                 event.dataTransfer.setData('application/json', partConfigString); 
+//                 event.dataTransfer.effectAllowed = 'copy';
 
-                if (imgElement) { 
-                    event.dataTransfer.setDragImage(imgElement, imgElement.naturalWidth / 2, imgElement.naturalHeight / 2); // Use naturalWidth for accurate centering
-                } else if (dragImageElement) { 
-                    dragImageElement.textContent = `[ ${draggedPartConfig.name} ]`;
-                    dragImageElement.style.display = 'block'; 
-                    event.dataTransfer.setDragImage(dragImageElement, 10, 10); 
-                }
-            } catch (e) { console.error("Error in dragstart:", e); }
-        });
-        if(dragImageElement) button.addEventListener('dragend', () => { dragImageElement.style.display = 'none'; });
+//                 if (imgElement) { 
+//                     event.dataTransfer.setDragImage(imgElement, imgElement.naturalWidth / 2, imgElement.naturalHeight / 2); // Use naturalWidth for accurate centering
+//                 } else if (dragImageElement) { 
+//                     dragImageElement.textContent = `[ ${draggedPartConfig.name} ]`;
+//                     dragImageElement.style.display = 'block'; 
+//                     event.dataTransfer.setDragImage(dragImageElement, 10, 10); 
+//                 }
+//             } catch (e) { console.error("Error in dragstart:", e); }
+//         });
+//         if(dragImageElement) button.addEventListener('dragend', () => { dragImageElement.style.display = 'none'; });
 
-        button.addEventListener('touchstart', (event) => {
-            event.preventDefault(); 
-            if(!audioModuleRefForDnd.soundInitialized && simulationStateRef) audioModuleRefForDnd.initAudio(simulationStateRef.soundMuted);
+//         button.addEventListener('touchstart', (event) => {
+//             event.preventDefault(); 
+//             if(!audioModuleRefForDnd.soundInitialized && simulationStateRef) audioModuleRefForDnd.initAudio(simulationStateRef.soundMuted);
             
-            try {
-                const partConfigString = event.target.closest('.part-button').dataset.partConfig;
-                if (!partConfigString) return;
-                draggedPartConfig = JSON.parse(partConfigString);
-            } catch (e) { console.error("Error parsing part config on touchstart:", e); return; }
+//             try {
+//                 const partConfigString = event.target.closest('.part-button').dataset.partConfig;
+//                 if (!partConfigString) return;
+//                 draggedPartConfig = JSON.parse(partConfigString);
+//             } catch (e) { console.error("Error parsing part config on touchstart:", e); return; }
             
-            if (dragImageElement) { 
-                touchDraggedPartElement = dragImageElement.cloneNode(true); 
-                touchDraggedPartElement.textContent = `[ ${draggedPartConfig.name} ]`;
-                touchDraggedPartElement.style.position = 'fixed'; 
-                touchDraggedPartElement.style.zIndex = '1001';
-                touchDraggedPartElement.style.display = 'block';
-                document.body.appendChild(touchDraggedPartElement);
-                const touch = event.targetTouches[0];
-                moveTouchDraggedElement(touch.clientX, touch.clientY);
-            }
-        }, {passive: false});
-    });
+//             if (dragImageElement) { 
+//                 touchDraggedPartElement = dragImageElement.cloneNode(true); 
+//                 touchDraggedPartElement.textContent = `[ ${draggedPartConfig.name} ]`;
+//                 touchDraggedPartElement.style.position = 'fixed'; 
+//                 touchDraggedPartElement.style.zIndex = '1001';
+//                 touchDraggedPartElement.style.display = 'block';
+//                 document.body.appendChild(touchDraggedPartElement);
+//                 const touch = event.targetTouches[0];
+//                 moveTouchDraggedElement(touch.clientX, touch.clientY);
+//             }
+//         }, {passive: false});
+//     });
 
-    function moveTouchDraggedElement(clientX, clientY) { if (touchDraggedPartElement) { touchDraggedPartElement.style.left = `${clientX - touchDraggedPartElement.offsetWidth / 2}px`; touchDraggedPartElement.style.top = `${clientY - touchDraggedPartElement.offsetHeight / 2}px`; } }
+//     function moveTouchDraggedElement(clientX, clientY) { if (touchDraggedPartElement) { touchDraggedPartElement.style.left = `${clientX - touchDraggedPartElement.offsetWidth / 2}px`; touchDraggedPartElement.style.top = `${clientY - touchDraggedPartElement.offsetHeight / 2}px`; } }
     
-    document.body.addEventListener('touchmove', (event) => { if (touchDraggedPartElement) { const touch = event.targetTouches[0]; moveTouchDraggedElement(touch.clientX, clientY); const stagingRect = stagingCanvasElement.getBoundingClientRect(); if (touch.clientX >= stagingRect.left && touch.clientX <= stagingRect.right && touch.clientY >= stagingRect.top && touch.clientY <= stagingRect.bottom) { stagingCanvasElement.classList.add('drag-over'); } else { stagingCanvasElement.classList.remove('drag-over'); } } }, {passive: false});
+//     document.body.addEventListener('touchmove', (event) => { if (touchDraggedPartElement) { const touch = event.targetTouches[0]; moveTouchDraggedElement(touch.clientX, clientY); const stagingRect = stagingCanvasElement.getBoundingClientRect(); if (touch.clientX >= stagingRect.left && touch.clientX <= stagingRect.right && touch.clientY >= stagingRect.top && touch.clientY <= stagingRect.bottom) { stagingCanvasElement.classList.add('drag-over'); } else { stagingCanvasElement.classList.remove('drag-over'); } } }, {passive: false});
 
-    function handleDropOnStaging(droppedConfig) {
-        if (!droppedConfig || !droppedConfig.type || !partCatalogRef[droppedConfig.type]) {
-             console.warn("Invalid or unknown part type dropped:", droppedConfig);
-             return;
-        }
+//     function handleDropOnStaging(droppedConfig) {
+//         if (!droppedConfig || !droppedConfig.type || !partCatalogRef[droppedConfig.type]) {
+//              console.warn("Invalid or unknown part type dropped:", droppedConfig);
+//              return;
+//         }
         
-        const newPartInstance = new partCatalogRef[droppedConfig.type](droppedConfig);
+//         const newPartInstance = new partCatalogRef[droppedConfig.type](droppedConfig);
 
-        if (currentPartsRef.length === 0) { 
-            currentPartsRef.push(droppedConfig);
-        } else {
-            // Simplified: always stack on top for now
-            currentPartsRef.push(droppedConfig);
-        }
-        drawStagingAreaRocket(); 
-        updateStagingStats(); 
-    }
+//         if (currentPartsRef.length === 0) { 
+//             currentPartsRef.push(droppedConfig);
+//         } else {
+//             // Simplified: always stack on top for now
+//             currentPartsRef.push(droppedConfig);
+//         }
+//         drawStagingAreaRocket(); 
+//         updateStagingStats(); 
+//     }
 
-    stagingCanvasElement.addEventListener('drop', (event) => { 
-        event.preventDefault(); stagingCanvasElement.classList.remove('drag-over'); 
-        let droppedData; 
-        try { droppedData = JSON.parse(event.dataTransfer.getData('application/json')); } 
-        catch (e) { console.warn("Could not parse dropped JSON data", e); droppedData = null; } 
+//     stagingCanvasElement.addEventListener('drop', (event) => { 
+//         event.preventDefault(); stagingCanvasElement.classList.remove('drag-over'); 
+//         let droppedData; 
+//         try { droppedData = JSON.parse(event.dataTransfer.getData('application/json')); } 
+//         catch (e) { console.warn("Could not parse dropped JSON data", e); droppedData = null; } 
         
-        const partConfigToDrop = draggedPartConfig || droppedData; 
-        if (partConfigToDrop) {
-            handleDropOnStaging(partConfigToDrop);
-        }
-        draggedPartConfig = null;  
-    });
-     document.body.addEventListener('touchend', (event) => {
-        if (touchDraggedPartElement) {
-            const touch = event.changedTouches[0];
-            const stagingRect = stagingCanvasElement.getBoundingClientRect();
-            if (touch.clientX >= stagingRect.left && touch.clientX <= stagingRect.right &&
-                touch.clientY >= stagingRect.top && touch.clientY <= stagingRect.bottom) {
-                if (draggedPartConfig) {
-                    handleDropOnStaging(draggedPartConfig);
-                }
-            }
-            document.body.removeChild(touchDraggedPartElement);
-            touchDraggedPartElement = null;
-            draggedPartConfig = null;
-            stagingCanvasElement.classList.remove('drag-over');
-        }
-    });
-    stagingCanvasElement.addEventListener('dragover', (event) => { event.preventDefault(); event.dataTransfer.dropEffect = 'copy'; stagingCanvasElement.classList.add('drag-over'); });
-    stagingCanvasElement.addEventListener('dragenter', (event) => { event.preventDefault(); stagingCanvasElement.classList.add('drag-over'); });
-    stagingCanvasElement.addEventListener('dragleave', () => { stagingCanvasElement.classList.remove('drag-over'); });
-}
+//         const partConfigToDrop = draggedPartConfig || droppedData; 
+//         if (partConfigToDrop) {
+//             handleDropOnStaging(partConfigToDrop);
+//         }
+//         draggedPartConfig = null;  
+//     });
+//      document.body.addEventListener('touchend', (event) => {
+//         if (touchDraggedPartElement) {
+//             const touch = event.changedTouches[0];
+//             const stagingRect = stagingCanvasElement.getBoundingClientRect();
+//             if (touch.clientX >= stagingRect.left && touch.clientX <= stagingRect.right &&
+//                 touch.clientY >= stagingRect.top && touch.clientY <= stagingRect.bottom) {
+//                 if (draggedPartConfig) {
+//                     handleDropOnStaging(draggedPartConfig);
+//                 }
+//             }
+//             document.body.removeChild(touchDraggedPartElement);
+//             touchDraggedPartElement = null;
+//             draggedPartConfig = null;
+//             stagingCanvasElement.classList.remove('drag-over');
+//         }
+//     });
+//     stagingCanvasElement.addEventListener('dragover', (event) => { event.preventDefault(); event.dataTransfer.dropEffect = 'copy'; stagingCanvasElement.classList.add('drag-over'); });
+//     stagingCanvasElement.addEventListener('dragenter', (event) => { event.preventDefault(); stagingCanvasElement.classList.add('drag-over'); });
+//     stagingCanvasElement.addEventListener('dragleave', () => { stagingCanvasElement.classList.remove('drag-over'); });
+// }
 
 function setupBuilderActionButtons() {
     if (domElements.clearStagingButton) { domElements.clearStagingButton.addEventListener('click', () => { currentShipPartsConfigRef.length = 0; drawStagingAreaRocket(); updateStagingStats(); });}

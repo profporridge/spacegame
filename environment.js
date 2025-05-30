@@ -7,11 +7,15 @@ import {
 } from './constants.js';
 
 
-export function generateClouds(cloudLayersArrayRef) { // Modifies the passed array
+
+
+export  function generateClouds(cloudLayersArrayRef) { 
+ 
+  
     cloudLayersArrayRef.length = 0; // Clear existing layers
     for (let layer = 0; layer < NUM_CLOUD_LAYERS; layer++) { 
         const layerClouds = []; 
-        const parallax = CLOUD_PARALLAX_FACTOR_MIN + (CLOUD_PARALLAX_FACTOR_MAX - CLOUD_PARALLAX_FACTOR_MIN) * (layer / (NUM_CLOUD_LAYERS -1 || 1)); 
+        const parallax = 0;// CLOUD_PARALLAX_FACTOR_MIN + (CLOUD_PARALLAX_FACTOR_MAX - CLOUD_PARALLAX_FACTOR_MIN) * (layer / (NUM_CLOUD_LAYERS -1 || 1)); 
         const layerAltitudeMin = MIN_CLOUD_ALTITUDE_M + (MAX_CLOUD_ALTITUDE_M - MIN_CLOUD_ALTITUDE_M) * (layer / NUM_CLOUD_LAYERS); 
         const layerAltitudeMax = MIN_CLOUD_ALTITUDE_M + (MAX_CLOUD_ALTITUDE_M - MIN_CLOUD_ALTITUDE_M) * ((layer + 1) / NUM_CLOUD_LAYERS); 
         for (let i = 0; i < CLOUDS_PER_LAYER; i++) { 
@@ -24,21 +28,21 @@ export function generateClouds(cloudLayersArrayRef) { // Modifies the passed arr
             const numPuffs = 4 + Math.floor(Math.random() * 6); 
             const puffs = []; 
             for(let j=0; j<numPuffs; j++) { puffs.push({ dx_m: (Math.random() - 0.5) * baseSize * 0.6, dy_m: (Math.random() - 0.5) * baseSize * 0.3, r_m: baseSize * (0.2 + Math.random() * 0.3) }); } 
-            layerClouds.push({ x_m, y_m, puffs, baseAlpha: 0.2 + Math.random() * 0.3 }); 
+            layerClouds.push({ x_m, y_m, puffs, baseAlpha: 0.2 + Math.random() * 0.3 ,  }); 
         } 
-        cloudLayersArrayRef.push({clouds: layerClouds, parallaxFactor: parallax}); 
+        cloudLayersArrayRef.push({clouds: layerClouds, parallaxFactor: parallax, spritesheet: spritesheet}); 
     } 
 }
 
-export function drawClouds(container, camX_m, camY_m, ppm, spacecraftAltitudeAGL, cloudLayersArray) { 
-    const canvasWidth = container.parent.view.width;
-    const canvasHeight = container.parent.view.height;
-    const viewCenterX_px = canvasWidth / 2;
-    const viewCenterY_px = canvasHeight / 2;
+export function drawClouds(container, camX_m, camY_m, ppm, spacecraftAltitudeAGL, cloudLayersArray,  cloudTextures, screenwidth, screenheight) { 
+    // const canvasWidth = container.parent.view.width;
+    // const canvasHeight = container.parent.view.height;
+    // const viewCenterX_px = canvasWidth / 2;
+    // const viewCenterY_px = canvasHeight / 2;
 
     cloudLayersArray.forEach(layer => { 
-        const parallaxOffsetX = camX_m * (1 - layer.parallaxFactor); 
-        const parallaxOffsetY = camY_m * (1 - layer.parallaxFactor); 
+        const parallaxOffsetX = 0;
+        const parallaxOffsetY = 0;
         layer.clouds.forEach(cloud => { 
             let overallAlpha = cloud.baseAlpha; 
             if (spacecraftAltitudeAGL > MAX_CLOUD_ALTITUDE_M + 10000) { 
@@ -51,23 +55,22 @@ export function drawClouds(container, camX_m, camY_m, ppm, spacecraftAltitudeAGL
             cloud.puffs.forEach(puff => { 
                 const puffWorldX = cloud.x_m + puff.dx_m; 
                 const puffWorldY = cloud.y_m + puff.dy_m; 
+
                 const viewX_px = (puffWorldX - (camX_m - parallaxOffsetX)) * ppm; 
                 const viewY_px = (puffWorldY - (camY_m - parallaxOffsetY)) * ppm; 
                 const radius_px = Math.max(1, puff.r_m * ppm ); 
                 
-                const screenX_px = viewCenterX_px + viewX_px; 
-                const screenY_px = viewCenterY_px - viewY_px; // Correcting for Pixi's Y-down system
+              //  const screenX_px = viewCenterX_px + viewX_px; 
+              //  const screenY_px = viewCenterY_px - viewY_px; // Correcting for Pixi's Y-down system
 
-                if (screenX_px + radius_px < 0 || screenX_px - radius_px > canvasWidth || 
-                    screenY_px + radius_px < 0 || screenY_px - radius_px > canvasHeight) return; 
+              //  if (screenX_px + radius_px < 0 || screenX_px - radius_px > canvasWidth || 
+              //      screenY_px + radius_px < 0 || screenY_px - radius_px > canvasHeight) return; 
                 
-                const puffGraphic = new PIXI.Graphics();
-                puffGraphic.beginFill(cloudPuffColor, overallAlpha);
-                puffGraphic.drawCircle(0, 0, radius_px);
-                puffGraphic.endFill();
-                puffGraphic.x = screenX_px;
-                puffGraphic.y = screenY_px;
-                container.addChild(puffGraphic);
+                const puffSprite = new PIXI.Sprite(layer.spritesheet.textures['cloud_1']);
+      
+                puffSprite.x = screenX_px;
+                puffSprite.y = screenY_px;
+                container.addChild(puffSprite);
             }); 
         }); 
     }); 

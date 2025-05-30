@@ -30,16 +30,19 @@ const insetCtx = insetCanvas.getContext('2d'); // Keep for inset, or refactor la
 const stagingCanvas = document.getElementById('stagingCanvas'); 
 const stagingCtx = stagingCanvas.getContext('2d'); // Keep for staging, or refactor later
 const dragImageElement = document.getElementById('dragImage');
-
+// Create a new renderer
+const sharedRenderer = await PIXI.autoDetectRenderer();
+const cloudTextures = await PIXI.Assets.load('images/clouds.json');
 // Initialize PixiJS Application
 const app = new PIXI.Application({
     view: canvas,
-    width: canvas.width, // Set initial width
-    height: canvas.height, // Set initial height
+    renderer:sharedRenderer,
     backgroundColor: 0x000000, 
     resolution: window.devicePixelRatio || 1,
     autoDensity: true,
+
 });
+globalThis.__PIXI_APP__ = app;
 
 let environmentContainer = new PIXI.Container();
 app.stage.addChild(environmentContainer);
@@ -75,6 +78,7 @@ const dom = {
     clearStagingButton: document.getElementById('clearStagingButton'), 
     launchCurrentBuildButton: document.getElementById('launchCurrentBuildButton'),
     undoLastPartButton: document.getElementById('undoLastPartButton'), 
+    stagingCanvas: document.getElementById('stagingCanvas'),
     stagingMass: document.getElementById('stagingMass'), 
     stagingThrust: document.getElementById('stagingThrust'), 
     stagingDeltaV: document.getElementById('stagingDeltaV'),
@@ -136,7 +140,7 @@ function initSimulation(launchSource = 'template') {
     simulationState.cameraX_m = comX; simulationState.cameraY_m = comY; 
     simulationState.controlFlags = { rotateLeft: false, rotateRight: false }; 
     simulationState.landed = true; spacecraftInstance.engineGimbalAngle_rad = 0;
-    
+
     currentDragForceMagnitude = 0; currentAirDensityValue = C.EARTH_SEA_LEVEL_AIR_DENSITY; 
     spacecraftInstance.calculateOrbitalParameters(apoapsisAGL, periapsisAGL); 
     
@@ -152,6 +156,7 @@ function initSimulation(launchSource = 'template') {
         const templateToLoadCfg = spacecraftDesigns[simulationState.currentDesignName] || spacecraftDesigns[Object.keys(spacecraftDesigns)[0]]; 
         currentShipPartsConfig = JSON.parse(JSON.stringify(templateToLoadCfg)); 
     }
+
  //   UI.drawWorld(ctx, canvas.width, canvas.height, simulationState.cameraX_m, simulationState.cameraY_m, simulationState.currentPixelsPerMeter);
     UI.drawStagingAreaRocket(); // UI module will use its stored refs for stagingCtx, etc.
     UI.updateStagingStats();   // UI module will use its stored ref for currentShipPartsConfig
@@ -259,7 +264,7 @@ function gameLoop(timestamp) {
     environmentContainer.removeChildren();
     ENV.drawSkyBackground(environmentContainer, spacecraftInstance ? spacecraftInstance.altitudeAGL_m : null, app.screen.width, app.screen.height);
     ENV.drawOrbitPath(environmentContainer, simulationState.cameraX_m, simulationState.cameraY_m, simulationState.currentPixelsPerMeter, spacecraftInstance, apoapsisAGL.value, periapsisAGL.value);  
-    ENV.drawClouds(environmentContainer, simulationState.cameraX_m, simulationState.cameraY_m, simulationState.currentPixelsPerMeter, spacecraftInstance ? spacecraftInstance.altitudeAGL_m : 0, cloudLayers); 
+    ENV.drawClouds(environmentContainer, simulationState.cameraX_m, simulationState.cameraY_m, simulationState.currentPixelsPerMeter, spacecraftInstance ? spacecraftInstance.altitudeAGL_m : 0, cloudLayers, cloudTextures, app.screen.width, app.screen.height); 
     ENV.drawPlanet(environmentContainer, simulationState.cameraX_m, simulationState.cameraY_m, simulationState.currentPixelsPerMeter); 
     ENV.drawSurfaceFeatures(environmentContainer, simulationState.cameraX_m, simulationState.cameraY_m, simulationState.currentPixelsPerMeter, surfaceFeatures);
     
@@ -402,7 +407,7 @@ function setupEventListeners() {
 }
 
 // --- Entry Point ---
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     // Initialize spacecraft module with dependencies it needs to call back
     initializeSpacecraftAndParts(
         (active, ratio) => AUDIO.playEngineSound(active, ratio, simulationState.soundMuted), 
@@ -419,7 +424,7 @@ document.addEventListener('DOMContentLoaded', () => {
         currentShipPartsConfig, 
         spacecraftDesigns, 
         initSimulation, 
-        stagingCtx,            
+        sharedRenderer,            
         stagingCanvas,         
         simulationState,
         partCatalog,
@@ -431,14 +436,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // app.renderer.resize(canvas.width, canvas.height);
     
     setupEventListeners(); 
-    initSimulation('template');
+    await initSimulation('template');
     // requestAnimationFrame(gameLoop); // PIXI.Application uses its own ticker by default
     app.ticker.add(gameLoop); // Add gameLoop to PixiJS ticker
 
     // Initialize Inset View Pixi Application
     if (insetCanvas) {
         insetApp = new PIXI.Application({
-            view: insetCanvas,
+            renderer: sharedRenderer,
             width: insetCanvas.width,
             height: insetCanvas.height,
             backgroundColor: 0x222222, // Darker background
