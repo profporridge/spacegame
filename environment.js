@@ -30,15 +30,15 @@ export  function generateClouds(cloudLayersArrayRef) {
             for(let j=0; j<numPuffs; j++) { puffs.push({ dx_m: (Math.random() - 0.5) * baseSize * 0.6, dy_m: (Math.random() - 0.5) * baseSize * 0.3, r_m: baseSize * (0.2 + Math.random() * 0.3) }); } 
             layerClouds.push({ x_m, y_m, puffs, baseAlpha: 0.2 + Math.random() * 0.3 ,  }); 
         } 
-        cloudLayersArrayRef.push({clouds: layerClouds, parallaxFactor: parallax, spritesheet: spritesheet}); 
+        cloudLayersArrayRef.push({clouds: layerClouds, parallaxFactor: parallax}); 
     } 
 }
 
 export function drawClouds(container, camX_m, camY_m, ppm, spacecraftAltitudeAGL, cloudLayersArray,  cloudTextures, screenwidth, screenheight) { 
-    // const canvasWidth = container.parent.view.width;
-    // const canvasHeight = container.parent.view.height;
-    // const viewCenterX_px = canvasWidth / 2;
-    // const viewCenterY_px = canvasHeight / 2;
+    const canvasWidth = screenwidth;//container.parent.view.width;
+    const canvasHeight = screenheight; // container.parent.view.height;
+    const viewCenterX_px = canvasWidth / 2;
+    const viewCenterY_px = canvasHeight / 2;
 
     cloudLayersArray.forEach(layer => { 
         const parallaxOffsetX = 0;
@@ -60,13 +60,13 @@ export function drawClouds(container, camX_m, camY_m, ppm, spacecraftAltitudeAGL
                 const viewY_px = (puffWorldY - (camY_m - parallaxOffsetY)) * ppm; 
                 const radius_px = Math.max(1, puff.r_m * ppm ); 
                 
-              //  const screenX_px = viewCenterX_px + viewX_px; 
-              //  const screenY_px = viewCenterY_px - viewY_px; // Correcting for Pixi's Y-down system
+               const screenX_px = viewCenterX_px + viewX_px; 
+               const screenY_px = viewCenterY_px - viewY_px; // Correcting for Pixi's Y-down system
 
-              //  if (screenX_px + radius_px < 0 || screenX_px - radius_px > canvasWidth || 
-              //      screenY_px + radius_px < 0 || screenY_px - radius_px > canvasHeight) return; 
+               if (screenX_px + radius_px < 0 || screenX_px - radius_px > canvasWidth || 
+                   screenY_px + radius_px < 0 || screenY_px - radius_px > canvasHeight) return; 
                 
-                const puffSprite = new PIXI.Sprite(layer.spritesheet.textures['cloud_1']);
+                const puffSprite = new PIXI.Sprite(cloudTextures['cloud_1']);
       
                 puffSprite.x = screenX_px;
                 puffSprite.y = screenY_px;
@@ -98,11 +98,11 @@ export function generateSurfaceFeatures(surfaceFeaturesArrayRef) {
     surfaceFeaturesArrayRef.sort((a, b) => a.angle - b.angle); 
 }
 
-export function drawSurfaceFeatures(container, camX_m, camY_m, ppm, surfaceFeaturesArray) {
+export function drawSurfaceFeatures(container, camX_m, camY_m, ppm, surfaceFeaturesArray, screenwidth, screenheight) {
     if (ppm < SURFACE_FEATURE_VISIBILITY_PPM) return;
 
-    const canvasWidth = container.parent.view.width;
-    const canvasHeight = container.parent.view.height;
+    const canvasWidth = screenwidth;
+    const canvasHeight = screenheight;
     const viewCenterX_px = canvasWidth / 2;
     const viewCenterY_px = canvasHeight / 2;
 
@@ -185,8 +185,8 @@ export function drawOrbitPath(mainCtx, camX_m, camY_m, ppm, spacecraftRef, apoap
 
     orbitPathGraphic.lineStyle(lineWidth, pathHexColor, pathColorData.alpha);
 
-    const canvasWidth = container.parent.view.width;
-    const canvasHeight = container.parent.view.height;
+    const canvasWidth = app.renderer.width;//container.parent.view.width;
+    const canvasHeight = app.renderer.height;//container.parent.view.height;
     const viewCenterX_px = canvasWidth / 2;
     const viewCenterY_px = canvasHeight / 2;
 
@@ -221,9 +221,9 @@ function parseRgba(rgbaString) {
     };
 }
 
-export function drawPlanet(container, camX_m, camY_m, ppm) { 
-    const canvasWidth = container.parent.view.width; 
-    const canvasHeight = container.parent.view.height;
+export function drawPlanet(container, camX_m, camY_m, ppm, screenwidth, screenheight) { 
+    const canvasWidth = screenwidth; // container.parent.view.width; 
+    const canvasHeight = screenheight; // container.parent.view.height;
     const viewCenterX_px = canvasWidth / 2; 
     const viewCenterY_px = canvasHeight / 2;
     const planetViewX_px = (0 - camX_m) * ppm;

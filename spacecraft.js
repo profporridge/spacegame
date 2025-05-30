@@ -2,7 +2,7 @@ import {
     GRAVITATIONAL_CONSTANT_G, planet, EARTH_MAX_ATMOSPHERE_ALTITUDE, EARTH_SEA_LEVEL_AIR_DENSITY,
     EARTH_ATMOSPHERE_SCALE_HEIGHT, DRAG_COEFFICIENT, MAX_GIMBAL_ANGLE_DEG, GIMBAL_RATE_DEG_S,
     BASE_REACTION_WHEEL_TORQUE, MAX_ANGULAR_VELOCITY, SMOKE_PARTICLES_PER_SECOND_BASE,
-    MAX_SMOKE_PARTICLES, SMOKE_EXHAUST_VELOCITY_FACTOR, SMOKE_PERSIST_CHANCE
+    MAX_SMOKE_PARTICLES, SMOKE_EXHAUST_VELOCITY_FACTOR, SMOKE_PERSIST_CHANCE, COLOR_NAMES
 } from './constants.js';
 import { SmokeParticle } from './smoke.js';
 import { CommandPod, FuelTank, Engine, Fairing } from './parts.js'; // To instantiate parts
@@ -185,7 +185,7 @@ export class Spacecraft {
                     flameGraphics.position.set(0, engineNozzle_y_local_px); // X is centered at CoM's X, Y is nozzle's Y
                     flameGraphics.rotation = this.engineGimbalAngle_rad;
                     
-                    const orange = parseRgba('orange');
+                    const orange = parseRgba(COLOR_NAMES['orange']);
                     flameGraphics.beginFill(orange.hex, orange.alpha);
                     flameGraphics.moveTo(-flameWidth_px / 2, 0); // Relative to flameGraphics origin (nozzle center)
                     flameGraphics.lineTo(flameWidth_px / 2, 0);
@@ -193,7 +193,7 @@ export class Spacecraft {
                     flameGraphics.closePath();
                     flameGraphics.endFill();
 
-                    const yellow = parseRgba('yellow');
+                    const yellow = parseRgba(COLOR_NAMES['yellow']);
                     const iFW = flameWidth_px * 0.5, iFH = flameHeight_px * 0.6;
                     flameGraphics.beginFill(yellow.hex, yellow.alpha);
                     flameGraphics.moveTo(-iFW / 2, 0);

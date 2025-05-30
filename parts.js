@@ -1,10 +1,14 @@
-import { ISP_VACUUM_DEFAULT } from './constants.js'; // Added import
+import { COLOR_NAMES, ISP_VACUUM_DEFAULT } from './constants.js'; // Added import
 
 // In parts.js
 
 // Helper function to parse rgba string (copied from environment.js)
 function parseRgba(rgbaString) {
     if (typeof rgbaString === 'number') return { hex: rgbaString, alpha: 1 }; // Already a hex
+    if (typeof COLOR_NAMES[rgbaString.toLowerCase()] != 'undefined')
+    {
+        return parseRgba(COLOR_NAMES[rgbaString.toLowerCase()]);
+    }
     if (rgbaString.startsWith('#')) {
         return { hex: parseInt(rgbaString.substring(1), 16), alpha: 1 };
     }
@@ -48,7 +52,7 @@ export class Part {
         const drawHeight_px = this.height_m * currentPPM;
         
         const mainColor = parseRgba(this.color);
-        const strokeColor = parseRgba('black'); // Standard stroke
+        const strokeColor = parseRgba('#000000'); // Standard stroke
         const nozzleColor = parseRgba('#777777');
         const tankStrokeColor = parseRgba('#555555');
 

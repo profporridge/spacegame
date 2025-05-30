@@ -40,9 +40,10 @@ const app = new PIXI.Application({
     backgroundColor: 0x000000, 
     resolution: window.devicePixelRatio || 1,
     autoDensity: true,
-
+   // width: canvas.width, // Set initial width
+   // height: canvas.height, // Set initial height
 });
-globalThis.__PIXI_APP__ = app;
+globalThis.__PIXI_APP__ =  app;
 
 let environmentContainer = new PIXI.Container();
 app.stage.addChild(environmentContainer);
@@ -262,11 +263,11 @@ function gameLoop(timestamp) {
     
     // --- Environment Drawing ---
     environmentContainer.removeChildren();
-    ENV.drawSkyBackground(environmentContainer, spacecraftInstance ? spacecraftInstance.altitudeAGL_m : null, app.screen.width, app.screen.height);
-    ENV.drawOrbitPath(environmentContainer, simulationState.cameraX_m, simulationState.cameraY_m, simulationState.currentPixelsPerMeter, spacecraftInstance, apoapsisAGL.value, periapsisAGL.value);  
-    ENV.drawClouds(environmentContainer, simulationState.cameraX_m, simulationState.cameraY_m, simulationState.currentPixelsPerMeter, spacecraftInstance ? spacecraftInstance.altitudeAGL_m : 0, cloudLayers, cloudTextures, app.screen.width, app.screen.height); 
-    ENV.drawPlanet(environmentContainer, simulationState.cameraX_m, simulationState.cameraY_m, simulationState.currentPixelsPerMeter); 
-    ENV.drawSurfaceFeatures(environmentContainer, simulationState.cameraX_m, simulationState.cameraY_m, simulationState.currentPixelsPerMeter, surfaceFeatures);
+  //  ENV.drawSkyBackground(environmentContainer, spacecraftInstance ? spacecraftInstance.altitudeAGL_m : null, app.screen.width, app.screen.height);
+  //  ENV.drawOrbitPath(environmentContainer, simulationState.cameraX_m, simulationState.cameraY_m, simulationState.currentPixelsPerMeter, spacecraftInstance, apoapsisAGL.value, periapsisAGL.value);  
+   // ENV.drawClouds(environmentContainer, simulationState.cameraX_m, simulationState.cameraY_m, simulationState.currentPixelsPerMeter, spacecraftInstance ? spacecraftInstance.altitudeAGL_m : 0, cloudLayers, cloudTextures, app.screen.width, app.screen.height); 
+  //  ENV.drawPlanet(environmentContainer, simulationState.cameraX_m, simulationState.cameraY_m, simulationState.currentPixelsPerMeter,  app.screen.width, app.screen.height); 
+  //  ENV.drawSurfaceFeatures(environmentContainer, simulationState.cameraX_m, simulationState.cameraY_m, simulationState.currentPixelsPerMeter, surfaceFeatures,  app.screen.width, app.screen.height);
     
     // --- Spacecraft Drawing ---
     spacecraftLayerContainer.removeChildren();
@@ -406,8 +407,10 @@ function setupEventListeners() {
     canvas.addEventListener('wheel', (e) => { if(!AUDIO.soundInitialized) AUDIO.initAudio(simulationState.soundMuted); e.preventDefault(); if (e.deltaY < 0) {simulationState.currentPixelsPerMeter *= 1.5; if(simulationState.currentPixelsPerMeter > 20) simulationState.currentPixelsPerMeter = 20;} else {simulationState.currentPixelsPerMeter /= 1.5; if(simulationState.currentPixelsPerMeter < 1e-7) simulationState.currentPixelsPerMeter = 1e-7;} });
 }
 
-// --- Entry Point ---
-document.addEventListener('DOMContentLoaded', async () => {
+function completeInitialization() {
+
+
+
     // Initialize spacecraft module with dependencies it needs to call back
     initializeSpacecraftAndParts(
         (active, ratio) => AUDIO.playEngineSound(active, ratio, simulationState.soundMuted), 
@@ -436,7 +439,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // app.renderer.resize(canvas.width, canvas.height);
     
     setupEventListeners(); 
-    await initSimulation('template');
+    initSimulation('template');
     // requestAnimationFrame(gameLoop); // PIXI.Application uses its own ticker by default
     app.ticker.add(gameLoop); // Add gameLoop to PixiJS ticker
 
@@ -455,4 +458,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else {
         console.error("Inset canvas not found for Pixi initialization.");
     }
-});
+}
+if (document.readyState !== 'loading') {completeInitialization(); }
+else { 
+    // If DOM is not ready, wait for it to load
+    document.addEventListener('DOMContentLoaded', completeInitialization); 
+}

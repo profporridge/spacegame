@@ -67,7 +67,7 @@ function initializeDragAndDropInternal(stagingCanvasElement, dragImageElementRef
             try {
                 const partConfigString = event.target.closest('.part-button').dataset.partConfig; 
                 if (!partConfigString) { console.error("No part config found on button:", event.target); return; }
-                draggedPartConfig = JSON.parse(partConfigString);
+              //  draggedPartConfig = JSON.parse(partConfigString);
                 
                 event.dataTransfer.setData('application/json', partConfigString); 
                 event.dataTransfer.effectAllowed = 'copy';
