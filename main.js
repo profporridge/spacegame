@@ -32,28 +32,65 @@ const stagingCtx = stagingCanvas.getContext('2d'); // Keep for staging, or refac
 const dragImageElement = document.getElementById('dragImage');
 // Create a new renderer
 const sharedRenderer = await PIXI.autoDetectRenderer();
-const cloudTextures = await PIXI.Assets.load('images/clouds.json');
+const allTextures = await PIXI.Assets.load(['images/clouds-0.json', 'images/clouds-0.png']);
 // Initialize PixiJS Application
 const app = new PIXI.Application({
-    view: canvas,
+    
     renderer:sharedRenderer,
     backgroundColor: 0x000000, 
     resolution: window.devicePixelRatio || 1,
     autoDensity: true,
+    resizeTo: window, // Automatically resize to window size
    // width: canvas.width, // Set initial width
    // height: canvas.height, // Set initial height
 });
+document.getElementById('gameAndUiContainer').appendChild(app.view); // Append PixiJS canvas to the DOM
 globalThis.__PIXI_APP__ =  app;
 
+    const container = new PIXI.Container();
+
+    container.x = app.screen.width / 2;
+    container.y = app.screen.height / 2;
+app.stage.eventMode = 'static';
+let frame = new PIXI.Graphics();
+frame.beginFill(0x666666);
+frame.lineStyle({ color: 0xffffff, width: 4, alignment: 0 });
+frame.drawRect(0, 0, 1000, 1000);
+frame.position.set(320, 180);
+app.stage.addChild(frame);
+// Create a graphics object to define our mask
+let mask = new PIXI.Graphics();
+// Add the rectangular area to show
+mask.beginFill(0xffffff);
+mask.drawRect(0,0,200,200);
+mask.endFill();
+
+
 let environmentContainer = new PIXI.Container();
+let orbitContainer = new PIXI.Container(); // For orbit path rendering
+environmentContainer.addChild(orbitContainer); // Add orbit container to environment
 app.stage.addChild(environmentContainer);
 
 let smokeLayerContainer = new PIXI.Container(); // For smoke particles - Add before spacecraft
 app.stage.addChild(smokeLayerContainer);
 
 let spacecraftLayerContainer = new PIXI.Container(); // For spacecraft rendering - Add after smoke
+let insetLayerContainer = new PIXI.Container(); // For inset view rendering
+insetLayerContainer.x = 10;
+insetLayerContainer.y = 10;
+insetLayerContainer.width = 200; // Set width for inset view
+insetLayerContainer.height = 200; // Set height for inset view
 app.stage.addChild(spacecraftLayerContainer);
 
+app.stage.addChild(insetLayerContainer); // Add inset view container to stage
+    // Let's create a moving shape mask
+    const thing = new PIXI.Graphics();
+
+    app.stage.addChild(thing);
+    thing.x = app.screen.width / 2;
+    thing.y = app.screen.height / 2;
+
+    container.mask = thing;
 // For Inset View
 let insetApp = null;
 let insetSpacecraftContainer = null;
@@ -160,7 +197,7 @@ function initSimulation(launchSource = 'template') {
 
  //   UI.drawWorld(ctx, canvas.width, canvas.height, simulationState.cameraX_m, simulationState.cameraY_m, simulationState.currentPixelsPerMeter);
     UI.drawStagingAreaRocket(); // UI module will use its stored refs for stagingCtx, etc.
-    UI.updateStagingStats();   // UI module will use its stored ref for currentShipPartsConfig
+   // UI.updateStagingStats();   // UI module will use its stored ref for currentShipPartsConfig
 }
 
 function updateCamera() { 
@@ -208,7 +245,7 @@ function gameLoop(timestamp) {
     updateCamera(); 
     
     // --- Smoke Particle Update, Draw, and Management ---
-    smokeLayerContainer.removeChildren(); // Clear container at the start of smoke processing
+   // smokeLayerContainer.removeChildren(); // Clear container at the start of smoke processing
 
     const currentActiveSmoke = [];
     const newlyRetiredToOld = []; // Particles that just expired from the main 'smokeParticles'
@@ -262,9 +299,9 @@ function gameLoop(timestamp) {
     }
     
     // --- Environment Drawing ---
-    environmentContainer.removeChildren();
+   // environmentContainer.removeChildren();
   //  ENV.drawSkyBackground(environmentContainer, spacecraftInstance ? spacecraftInstance.altitudeAGL_m : null, app.screen.width, app.screen.height);
-  //  ENV.drawOrbitPath(environmentContainer, simulationState.cameraX_m, simulationState.cameraY_m, simulationState.currentPixelsPerMeter, spacecraftInstance, apoapsisAGL.value, periapsisAGL.value);  
+    ENV.drawOrbitPath(environmentContainer, simulationState.cameraX_m, simulationState.cameraY_m, simulationState.currentPixelsPerMeter, spacecraftInstance, apoapsisAGL.value, periapsisAGL.value);  
    // ENV.drawClouds(environmentContainer, simulationState.cameraX_m, simulationState.cameraY_m, simulationState.currentPixelsPerMeter, spacecraftInstance ? spacecraftInstance.altitudeAGL_m : 0, cloudLayers, cloudTextures, app.screen.width, app.screen.height); 
   //  ENV.drawPlanet(environmentContainer, simulationState.cameraX_m, simulationState.cameraY_m, simulationState.currentPixelsPerMeter,  app.screen.width, app.screen.height); 
   //  ENV.drawSurfaceFeatures(environmentContainer, simulationState.cameraX_m, simulationState.cameraY_m, simulationState.currentPixelsPerMeter, surfaceFeatures,  app.screen.width, app.screen.height);
@@ -332,7 +369,7 @@ function gameLoop(timestamp) {
         // dom.launchButton might be null if removed, handle this
         // if(dom.launchButton) dom.launchButton.textContent = "Landed"; 
     } 
-    requestAnimationFrame(gameLoop); 
+ //   requestAnimationFrame(gameLoop); 
 }
         
 function setupEventListeners() {

@@ -45,6 +45,7 @@ function parseRgba(rgbaString) {
 
 export class Spacecraft {
     constructor(partsConfigArray) { 
+        this.partsConfigArray = partsConfigArray;
         this.parts = [];
         this.position_x_m = 0; this.position_y_m = planet.radius_m; 
         this.velocity_x_ms = 0; this.velocity_y_ms = 0; 
@@ -58,6 +59,7 @@ export class Spacecraft {
         this.maxGimbalAngle_rad = MAX_GIMBAL_ANGLE_DEG * Math.PI / 180;
         this.gimbalRate_rad_s = GIMBAL_RATE_DEG_S * Math.PI / 180;
         this.initialFuel_kg = 0; 
+        this.cachedGraphics = null; 
 
         partsConfigArray.forEach(partConfig => { 
             let partInstance; 
@@ -145,8 +147,17 @@ export class Spacecraft {
     }
 
     draw(passedSpacecraftContainer, targetCanvasWidth, targetCanvasHeight, sfcScreenX_px, sfcScreenY_px, currentPPM, isInsetView = false) {
-        const shipGraphicsContainer = new PIXI.Container();
-        shipGraphicsContainer.position.set(sfcScreenX_px, sfcScreenY_px);
+        // if (this.cachedGraphics && passedSpacecraftContainer)
+        // {
+        //     if (!passedSpacecraftContainer.children.includes(this.cachedGraphics)) {   
+        //     passedSpacecraftContainer.addChild(this.cachedGraphics);
+        //         return;
+        //     }
+                 //const shipGraphicsContainer = new PIXI.Container();
+
+       const shipGraphicsContainer = passedSpacecraftContainer;
+shipGraphicsContainer.removeChildren(); // Clear previous graphics  
+       shipGraphicsContainer.position.set(sfcScreenX_px, sfcScreenY_px);
         shipGraphicsContainer.rotation = this.angle_rad;
 
         const comOffset_m = this.getCoMOffset_m(); // Distance from stack bottom to CoM (Y-up)
@@ -206,6 +217,7 @@ export class Spacecraft {
                 }
             });
         }
+        this.cachedGraphics = shipGraphicsContainer.children;
         passedSpacecraftContainer.addChild(shipGraphicsContainer);
     }
 

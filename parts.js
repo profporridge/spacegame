@@ -34,6 +34,7 @@ export class Part {
         this.color = config.color || 'gray'; 
         this.cost = config.cost || 0; 
         this.relative_y_m = 0; 
+        this.cachedGraphics = null; // For caching graphics if needed
         // Default attachment nodes
         this.attachmentNodes = config.attachmentNodes || [ 
             { id: 'N', type: 'stack_top', position: { x: 0, y: 1 }, acceptedTypes: ['stack_bottom'], size: 'SML' }, // S, M, L sizes
@@ -46,68 +47,9 @@ export class Part {
     // targetTopLeftX_px, targetTopLeftY_px are the desired top-left coordinates of this part
     // within the parent `container` (which is shipGraphicsContainer, centered at CoM and rotated).
     draw(container, targetTopLeftX_px, targetTopLeftY_px, currentPPM, showNodes = false) {
-        const partGraphics = new PIXI.Graphics();
-
         const drawWidth_px = this.width_m * currentPPM;
         const drawHeight_px = this.height_m * currentPPM;
-        
-        const mainColor = parseRgba(this.color);
-        const strokeColor = parseRgba('#000000'); // Standard stroke
-        const nozzleColor = parseRgba('#777777');
-        const tankStrokeColor = parseRgba('#555555');
-
-        partGraphics.lineStyle(1, strokeColor.hex, strokeColor.alpha);
-        partGraphics.beginFill(mainColor.hex, mainColor.alpha);
-
-        if (this.type === 'pod') {
-            // Draw pod shape (triangle) relative to (0,0) of partGraphics
-            partGraphics.moveTo(0, drawHeight_px); // Bottom-left
-            partGraphics.lineTo(drawWidth_px, drawHeight_px); // Bottom-right
-            partGraphics.lineTo(drawWidth_px / 2, 0); // Top-center
-            partGraphics.closePath();
-        } else if (this.type === 'tank') {
-            const r = Math.min(drawWidth_px * 0.1, drawHeight_px * 0.1, 5 * (currentPPM / 0.5));
-            // For roundedRect, x,y is top-left corner
-            partGraphics.drawRoundedRect(0, 0, drawWidth_px, drawHeight_px, r);
-            // Overwrite linestyle for tank outline
-            partGraphics.lineStyle(1, tankStrokeColor.hex, tankStrokeColor.alpha);
-        } else if (this.type === 'engine') {
-            const housingHeight_px = drawHeight_px * 0.4;
-            const nozzleHeight_px = drawHeight_px * 0.6;
-            const nozzleExitWidth_px = drawWidth_px * 1.2; // Wider than base
-            
-            // Housing (drawn from 0,0 of partGraphics)
-            partGraphics.drawRect(0, 0, drawWidth_px, housingHeight_px);
-            partGraphics.endFill(); // End housing fill
-
-            // Nozzle (drawn relative to 0,0 of partGraphics)
-            partGraphics.beginFill(nozzleColor.hex, nozzleColor.alpha);
-            partGraphics.lineStyle(1, strokeColor.hex, strokeColor.alpha); // Reset stroke for nozzle
-            partGraphics.moveTo(drawWidth_px / 2 - drawWidth_px / 2, housingHeight_px);      // Top-left of nozzle base
-            partGraphics.lineTo(drawWidth_px / 2 + drawWidth_px / 2, housingHeight_px);      // Top-right of nozzle base
-            partGraphics.lineTo(drawWidth_px / 2 + nozzleExitWidth_px / 2, housingHeight_px + nozzleHeight_px); // Bottom-right of nozzle exit
-            partGraphics.lineTo(drawWidth_px / 2 - nozzleExitWidth_px / 2, housingHeight_px + nozzleHeight_px); // Bottom-left of nozzle exit
-            partGraphics.closePath();
-        } else if (this.type === 'fairing') {
-            // Fairings are typically wider at base, tapering to top
-            partGraphics.moveTo(0, drawHeight_px); // Bottom-left
-            partGraphics.lineTo(drawWidth_px, drawHeight_px); // Bottom-right
-            partGraphics.quadraticCurveTo(
-                drawWidth_px, drawHeight_px * 0.3, // Control point right
-                drawWidth_px / 2, 0  // Top-center
-            );
-            partGraphics.quadraticCurveTo(
-                0, drawHeight_px * 0.3, // Control point left
-                0, drawHeight_px // Back to Bottom-left (effectively)
-            );
-            partGraphics.closePath();
-        } else { // Default fallback: simple rectangle
-            partGraphics.drawRect(0, 0, drawWidth_px, drawHeight_px);
-        }
-        partGraphics.endFill(); // Must be called to finalize fill and stroke for current path
-
-        // Position the partGraphics object within its parent container
-        partGraphics.position.set(targetTopLeftX_px, targetTopLeftY_px);
+        const { partGraphics } = this.graphics(currentPPM, targetTopLeftX_px, targetTopLeftY_px, drawWidth_px, drawHeight_px);
         container.addChild(partGraphics);
 
         // --- Draw Attachment Nodes ---
@@ -138,6 +80,79 @@ export class Part {
                 container.addChild(nodeGraphics); // Add to the same container as the part (shipGraphicsContainer)
             });
         }
+    }
+
+   graphics(currentPPM, targetTopLeftX_px, targetTopLeftY_px, drawWidth_px, drawHeight_px) {
+    if (this.cachedGraphics) {
+        // If cached graphics exist, return them directly
+        return { partGraphics: this.cachedGraphics };
+    }    
+    const partGraphics = new PIXI.Graphics();
+
+
+
+        const mainColor = parseRgba(this.color);
+        const strokeColor = parseRgba('#000000'); // Standard stroke
+        const nozzleColor = parseRgba('#777777');
+        const tankStrokeColor = parseRgba('#555555');
+
+        partGraphics.lineStyle(1, strokeColor.hex, strokeColor.alpha);
+        partGraphics.beginFill(mainColor.hex, mainColor.alpha);
+
+        if (this.type === 'pod') {
+            // Draw pod shape (triangle) relative to (0,0) of partGraphics
+            partGraphics.moveTo(0, drawHeight_px); // Bottom-left
+            partGraphics.lineTo(drawWidth_px, drawHeight_px); // Bottom-right
+            partGraphics.lineTo(drawWidth_px / 2, 0); // Top-center
+            partGraphics.closePath();
+        } else if (this.type === 'tank') {
+            const r = Math.min(drawWidth_px * 0.1, drawHeight_px * 0.1, 5 * (currentPPM / 0.5));
+            // For roundedRect, x,y is top-left corner
+            partGraphics.drawRoundedRect(0, 0, drawWidth_px, drawHeight_px, r);
+            // Overwrite linestyle for tank outline
+            partGraphics.lineStyle(1, tankStrokeColor.hex, tankStrokeColor.alpha);
+        } else if (this.type === 'engine') {
+            const housingHeight_px = drawHeight_px * 0.4;
+            const nozzleHeight_px = drawHeight_px * 0.6;
+            const nozzleExitWidth_px = drawWidth_px * 1.2; // Wider than base
+
+
+            // Housing (drawn from 0,0 of partGraphics)
+            partGraphics.drawRect(0, 0, drawWidth_px, housingHeight_px);
+            partGraphics.endFill(); // End housing fill
+
+
+            // Nozzle (drawn relative to 0,0 of partGraphics)
+            partGraphics.beginFill(nozzleColor.hex, nozzleColor.alpha);
+            partGraphics.lineStyle(1, strokeColor.hex, strokeColor.alpha); // Reset stroke for nozzle
+            partGraphics.moveTo(drawWidth_px / 2 - drawWidth_px / 2, housingHeight_px); // Top-left of nozzle base
+            partGraphics.lineTo(drawWidth_px / 2 + drawWidth_px / 2, housingHeight_px); // Top-right of nozzle base
+            partGraphics.lineTo(drawWidth_px / 2 + nozzleExitWidth_px / 2, housingHeight_px + nozzleHeight_px); // Bottom-right of nozzle exit
+            partGraphics.lineTo(drawWidth_px / 2 - nozzleExitWidth_px / 2, housingHeight_px + nozzleHeight_px); // Bottom-left of nozzle exit
+            partGraphics.closePath();
+        } else if (this.type === 'fairing') {
+            // Fairings are typically wider at base, tapering to top
+            partGraphics.moveTo(0, drawHeight_px); // Bottom-left
+            partGraphics.lineTo(drawWidth_px, drawHeight_px); // Bottom-right
+            partGraphics.quadraticCurveTo(
+                drawWidth_px, drawHeight_px * 0.3, // Control point right
+                drawWidth_px / 2, 0 // Top-center
+            );
+            partGraphics.quadraticCurveTo(
+                0, drawHeight_px * 0.3, // Control point left
+                0, drawHeight_px // Back to Bottom-left (effectively)
+            );
+            partGraphics.closePath();
+        } else { // Default fallback: simple rectangle
+            partGraphics.drawRect(0, 0, drawWidth_px, drawHeight_px);
+        }
+        partGraphics.endFill(); // Must be called to finalize fill and stroke for current path
+
+
+        // Position the partGraphics object within its parent container
+        partGraphics.position.set(targetTopLeftX_px, targetTopLeftY_px);
+        this.cachedGraphics = partGraphics; // Cache the graphics object for future use
+        return { partGraphics};
     }
 }
 

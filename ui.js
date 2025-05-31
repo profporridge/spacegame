@@ -12,9 +12,11 @@ let simulationStateRef;
 let partCatalogRef = {};
 let audioModuleRef = null;
 
+
 // Object to hold UI-specific state, like the staging Pixi app
 const uiState = {
     stagingApp: null,
+    SpacecraftInstance: null, // To hold the current spacecraft instance
 };
 
 export function initializeUI(domRefs, shipPartsConfigRefFromMain, designsRef, initSimFunc, sharedRenderer, stagingCanvasElement, simState, catalog, audioMod) {
@@ -29,12 +31,13 @@ export function initializeUI(domRefs, shipPartsConfigRefFromMain, designsRef, in
         uiState.stagingApp = new PIXI.Application({
             renderer: sharedRenderer,// sharedRenderer, // Use the shared renderer from main.js
        //    view: stagingCanvasElement, // Use the canvas from domElements
-            width: stagingCanvasElement.width,
-            height: stagingCanvasElement.height,
+          //  width: stagingCanvasElement.width,
+           // height: stagingCanvasElement.height,
             backgroundColor: 0x383838, // Dark gray background like before
             resolution: window.devicePixelRatio || 1,
             autoDensity: true,
         });
+        document.getElementById('stagingArea').appendChild(uiState.stagingApp.view); // Append the Pixi canvas to the staging area
         stagingAppInstance = uiState.stagingApp; // Keep existing global-like reference if other functions use it
     } else {
         console.error("Staging canvas element not found in domElements for Pixi initialization!");
@@ -204,6 +207,18 @@ function populateDesignSelector() {
             simulationStateRef.currentDesignName = domElements.designSelect.value; // Update state
          }
     }
+    domElements.designSelect.addEventListener('change', (event) => {
+        const selectedDesign = event.target.value; 
+        if (spacecraftDesignsRef[selectedDesign]) { 
+            simulationStateRef.currentDesignName = selectedDesign; 
+            currentShipPartsConfigRef.length = 0; // Clear current parts
+            currentShipPartsConfigRef.push(...spacecraftDesignsRef[selectedDesign].parts); // Load new design parts
+            drawStagingAreaRocket(); 
+            updateStagingStats(); 
+        } else { 
+            console.warn("Selected design not found:", selectedDesign);
+        }
+    });
 }
 
 function populatePartPalette() {
@@ -221,6 +236,9 @@ function populatePartPalette() {
         { type: 'fairing', name: 'Payload Fairing', thumbnail: 'fairing1.png', defaultConfig: { type: 'fairing', name:'Payload Fairing', dryMass_kg: 100, width_m: 2.5, height_m: 3, color: '#f0f0f0' }}
     ];
 
+
+    // function createPartButton(partInfo) {
+    // }
     paletteParts.forEach(partInfo => {
         const button = document.createElement('button');
         button.classList.add('part-button');
