@@ -2,6 +2,8 @@ import { EARTH_MAX_ATMOSPHERE_ALTITUDE, EARTH_SEA_LEVEL_AIR_DENSITY, planet,
          SMOKE_LIFETIME_S_MIN, SMOKE_LIFETIME_S_MAX,
          SMOKE_INITIAL_SIZE_M_MIN, SMOKE_INITIAL_SIZE_M_MAX
        } from './constants.js';
+       
+import {PIXI} from './main.js'; // Import PIXI from main.js, assuming it's globally available
 // currentAirDensityValue will be passed from main.js or a global state
 let main_currentAirDensityValue = EARTH_SEA_LEVEL_AIR_DENSITY;
 

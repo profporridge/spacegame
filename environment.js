@@ -5,8 +5,7 @@ import {
     ORBIT_PATH_VISIBILITY_ALTITUDE_M, ORBIT_PATH_VISIBILITY_PPM, ORBIT_PATH_SEGMENTS,
     GRAVITATIONAL_CONSTANT_G, SKY_BLUE_COLOR, SPACE_BLACK_COLOR, EARTH_MAX_ATMOSPHERE_ALTITUDE
 } from './constants.js';
-
-
+import {PIXI} from './main.js'; // Import PIXI from main.js, assuming it's globally available
 
 
 export  function generateClouds(cloudLayersArrayRef) { 
@@ -163,6 +162,7 @@ export function drawSurfaceFeatures(container, camX_m, camY_m, ppm, surfaceFeatu
 export function drawOrbitPath(mainCtx, camX_m, camY_m, ppm, spacecraftRef, apoapsisAGL, periapsisAGL) { 
     if (!spacecraftRef || spacecraftRef.altitudeAGL_m < ORBIT_PATH_VISIBILITY_ALTITUDE_M && ppm > ORBIT_PATH_VISIBILITY_PPM) return;  
     if (apoapsisAGL === Infinity || isNaN(apoapsisAGL) || isNaN(periapsisAGL) || spacecraftRef.totalMass_kg <=0) return;
+    mainCtx.removeChildren(); // Clear previous orbit paths
     const mu = GRAVITATIONAL_CONSTANT_G * planet.mass_kg;
     const r_vec_x = spacecraftRef.position_x_m; const r_vec_y = spacecraftRef.position_y_m;
     const v_vec_x = spacecraftRef.velocity_x_ms; const v_vec_y = spacecraftRef.velocity_y_ms;
@@ -185,8 +185,8 @@ export function drawOrbitPath(mainCtx, camX_m, camY_m, ppm, spacecraftRef, apoap
 
     orbitPathGraphic.lineStyle(lineWidth, pathHexColor, pathColorData.alpha);
 
-    const canvasWidth = app.renderer.width;//container.parent.view.width;
-    const canvasHeight = app.renderer.height;//container.parent.view.height;
+    const canvasWidth = mainCtx.parent.width;
+    const canvasHeight = mainCtx.parent.height;
     const viewCenterX_px = canvasWidth / 2;
     const viewCenterY_px = canvasHeight / 2;
 
@@ -206,7 +206,7 @@ export function drawOrbitPath(mainCtx, camX_m, camY_m, ppm, spacecraftRef, apoap
         else orbitPathGraphic.lineTo(screenX_px, screenY_px);
     }
     // No stroke() needed, lineTo builds the path for lineStyle
-    container.addChild(orbitPathGraphic);
+    mainCtx.addChild(orbitPathGraphic);
 }
 
 // Helper function to parse rgba string
@@ -242,9 +242,9 @@ export function drawPlanet(container, camX_m, camY_m, ppm, screenwidth, screenhe
         const atmHexColor = (atmColorData.r << 16) + (atmColorData.g << 8) + atmColorData.b;
         
         const atmosphereGraphic = new PIXI.Graphics();
-        atmosphereGraphic.beginFill(atmHexColor, atmColorData.alpha);
-        atmosphereGraphic.drawCircle(0, 0, atmRadius_px); // Draw at origin, then position
-        atmosphereGraphic.endFill();
+       // atmosphereGraphic.beginFill(atmHexColor, atmColorData.alpha);
+        atmosphereGraphic.circle(0, 0, atmRadius_px); // Draw at origin, then position
+        atmosphereGraphic.fill({color:atmHexColor, alpha:atmColorData.alpha});
         atmosphereGraphic.x = planetScreenX_px;
         atmosphereGraphic.y = planetScreenY_px;
         container.addChild(atmosphereGraphic);
@@ -256,9 +256,9 @@ export function drawPlanet(container, camX_m, camY_m, ppm, screenwidth, screenhe
         const planetHexColor = parseInt(planet.color.substring(1), 16);
         
         const planetGraphic = new PIXI.Graphics();
-        planetGraphic.beginFill(planetHexColor);
-        planetGraphic.drawCircle(0, 0, planetRadius_px); // Draw at origin, then position
-        planetGraphic.endFill();
+       // planetGraphic.beginFill(planetHexColor);
+        planetGraphic.circle(0, 0, planetRadius_px); // Draw at origin, then position
+        planetGraphic.fill(planetHexColor);
         planetGraphic.x = planetScreenX_px;
         planetGraphic.y = planetScreenY_px;
         container.addChild(planetGraphic);

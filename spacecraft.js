@@ -6,6 +6,8 @@ import {
 } from './constants.js';
 import { SmokeParticle } from './smoke.js';
 import { CommandPod, FuelTank, Engine, Fairing } from './parts.js'; // To instantiate parts
+import {PIXI} from './main.js'; // Import PIXI from main.js, assuming it's globally available
+//import * as PIXI from 'https://cdn.jsdelivr.net/npm/pixi.js@8.9.2/dist/pixi.mjs';
 // Note: playEngineSound, playGimbalSound will be imported in main.js and passed or called globally
 
 // These will be set by main.js
@@ -218,7 +220,7 @@ shipGraphicsContainer.removeChildren(); // Clear previous graphics
             });
         }
         this.cachedGraphics = shipGraphicsContainer.children;
-        passedSpacecraftContainer.addChild(shipGraphicsContainer);
+       // passedSpacecraftContainer.addChild(shipGraphicsContainer);
     }
 
     updatePhysics(deltaTime_s, masterEngineCommandActive, gimbalLeft, gimbalRight, currentAirDensity, apoapsisRef, periapsisRef, smokeParticlesArray, simStateRef) { 

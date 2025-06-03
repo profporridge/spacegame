@@ -1,5 +1,6 @@
 import { COLOR_NAMES, ISP_VACUUM_DEFAULT } from './constants.js'; // Added import
 
+import {PIXI} from './main.js'; // Import PIXI from main.js, assuming it's globally available
 // In parts.js
 
 // Helper function to parse rgba string (copied from environment.js)
@@ -70,10 +71,10 @@ export class Part {
 
                 const nodeRadius_px = Math.max(2, nodeRadiusBase * currentPPM * Math.min(this.width_m, this.height_m));
 
-                nodeGraphics.lineStyle(1, nodeStroke.hex, nodeStroke.alpha);
-                nodeGraphics.beginFill(nodeColor.hex, nodeColor.alpha);
-                nodeGraphics.drawCircle(0, 0, nodeRadius_px); // Draw circle at its own (0,0)
-                nodeGraphics.endFill();
+                nodeGraphics.setStrokeStyle(1, nodeStroke.hex, nodeStroke.alpha);
+               // nodeGraphics.beginFill(nodeColor.hex, nodeColor.alpha);
+                nodeGraphics.circle(0, 0, nodeRadius_px); // Draw circle at its own (0,0)
+                nodeGraphics.fill({color:nodeColor.hex, alpha:nodeColor.alpha}); // Finalize fill
                 
                 // Position node relative to the part's top-left (targetTopLeftX_px, targetTopLeftY_px)
                 nodeGraphics.position.set(targetTopLeftX_px + nodeLocalX_relToPartTopLeft, targetTopLeftY_px + nodeLocalY_relToPartTopLeft);
@@ -95,9 +96,9 @@ export class Part {
         const strokeColor = parseRgba('#000000'); // Standard stroke
         const nozzleColor = parseRgba('#777777');
         const tankStrokeColor = parseRgba('#555555');
-
-        partGraphics.lineStyle(1, strokeColor.hex, strokeColor.alpha);
-        partGraphics.beginFill(mainColor.hex, mainColor.alpha);
+var fillColor = mainColor;
+        partGraphics.setStrokeStyle(1, strokeColor.hex, strokeColor.alpha);
+        //partGraphics.beginFill(mainColor.hex, mainColor.alpha);
 
         if (this.type === 'pod') {
             // Draw pod shape (triangle) relative to (0,0) of partGraphics
@@ -108,9 +109,9 @@ export class Part {
         } else if (this.type === 'tank') {
             const r = Math.min(drawWidth_px * 0.1, drawHeight_px * 0.1, 5 * (currentPPM / 0.5));
             // For roundedRect, x,y is top-left corner
-            partGraphics.drawRoundedRect(0, 0, drawWidth_px, drawHeight_px, r);
+            partGraphics.roundRect(0, 0, drawWidth_px, drawHeight_px, r);
             // Overwrite linestyle for tank outline
-            partGraphics.lineStyle(1, tankStrokeColor.hex, tankStrokeColor.alpha);
+            partGraphics.setStrokeStyle(1, tankStrokeColor.hex, tankStrokeColor.alpha);
         } else if (this.type === 'engine') {
             const housingHeight_px = drawHeight_px * 0.4;
             const nozzleHeight_px = drawHeight_px * 0.6;
@@ -118,13 +119,14 @@ export class Part {
 
 
             // Housing (drawn from 0,0 of partGraphics)
-            partGraphics.drawRect(0, 0, drawWidth_px, housingHeight_px);
-            partGraphics.endFill(); // End housing fill
+            partGraphics.rect(0, 0, drawWidth_px, housingHeight_px);
+            partGraphics.fill({color:mainColor.hex, alpha:mainColor.alpha}); // End housing fill
 
 
             // Nozzle (drawn relative to 0,0 of partGraphics)
-            partGraphics.beginFill(nozzleColor.hex, nozzleColor.alpha);
-            partGraphics.lineStyle(1, strokeColor.hex, strokeColor.alpha); // Reset stroke for nozzle
+           // partGraphics.beginFill(nozzleColor.hex, nozzleColor.alpha);
+           fillColor = nozzleColor;
+           // partGraphics.lineStyle(1, strokeColor.hex, strokeColor.alpha); // Reset stroke for nozzle
             partGraphics.moveTo(drawWidth_px / 2 - drawWidth_px / 2, housingHeight_px); // Top-left of nozzle base
             partGraphics.lineTo(drawWidth_px / 2 + drawWidth_px / 2, housingHeight_px); // Top-right of nozzle base
             partGraphics.lineTo(drawWidth_px / 2 + nozzleExitWidth_px / 2, housingHeight_px + nozzleHeight_px); // Bottom-right of nozzle exit
@@ -144,10 +146,10 @@ export class Part {
             );
             partGraphics.closePath();
         } else { // Default fallback: simple rectangle
-            partGraphics.drawRect(0, 0, drawWidth_px, drawHeight_px);
+            partGraphics.rect(0, 0, drawWidth_px, drawHeight_px);
         }
-        partGraphics.endFill(); // Must be called to finalize fill and stroke for current path
-
+        partGraphics.fill({color:fillColor.hex, alpha:fillColor.alpha}); // Must be called to finalize fill and stroke for current path
+partGraphics.stroke({color:strokeColor.hex});
 
         // Position the partGraphics object within its parent container
         partGraphics.position.set(targetTopLeftX_px, targetTopLeftY_px);

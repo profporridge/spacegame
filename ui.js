@@ -1,6 +1,7 @@
 import { Spacecraft } from './spacecraft.js'; 
 import { CommandPod, FuelTank, Engine, Fairing } from './parts.js';
 import { SPACECRAFT_INDICATOR_PPM_THRESHOLD, INSET_VIEW_PPM_THRESHOLD, INSET_VIEW_TARGET_SIZE_PX, ISP_VACUUM_DEFAULT } from './constants.js';
+import {PIXI} from './main.js'; // Import PIXI from main.js, assuming it's globally available
 
 let domElements = {}; 
 let currentShipPartsConfigRef = []; 
@@ -19,7 +20,7 @@ const uiState = {
     SpacecraftInstance: null, // To hold the current spacecraft instance
 };
 
-export function initializeUI(domRefs, shipPartsConfigRefFromMain, designsRef, initSimFunc, sharedRenderer, stagingCanvasElement, simState, catalog, audioMod) {
+export async function initializeUI(domRefs, shipPartsConfigRefFromMain, designsRef, initSimFunc, stagingCanvasElement, simState, catalog, audioMod) {
     domElements = domRefs;
     currentShipPartsConfigRef = shipPartsConfigRefFromMain; // Use the reference passed from main.js
     spacecraftDesignsRef = designsRef;
@@ -28,17 +29,19 @@ export function initializeUI(domRefs, shipPartsConfigRefFromMain, designsRef, in
    //  stagingCanvasRef = stagingCanvasElement; // Will get from domElements if needed, or directly use stagingCanvasElement
 
     if (stagingCanvasElement) { // Ensure stagingCanvas is available
-        uiState.stagingApp = new PIXI.Application({
-            renderer: sharedRenderer,// sharedRenderer, // Use the shared renderer from main.js
-       //    view: stagingCanvasElement, // Use the canvas from domElements
-          //  width: stagingCanvasElement.width,
-           // height: stagingCanvasElement.height,
+        uiState.stagingApp = new PIXI.Application();
+        await uiState.stagingApp.init({ // Initialize the Pixi app{
+          //  renderer: sharedRenderer,// sharedRenderer, // Use the shared renderer from main.js
+           canvas: stagingCanvasElement, // Use the canvas from domElements
+           // width: stagingCanvasElement.width,
+          //  height: stagingCanvasElement.height,
             backgroundColor: 0x383838, // Dark gray background like before
-            resolution: window.devicePixelRatio || 1,
-            autoDensity: true,
+            // resolution: window.devicePixelRatio || 1,
+            // autoDensity: true,
         });
-        document.getElementById('stagingArea').appendChild(uiState.stagingApp.view); // Append the Pixi canvas to the staging area
+        //stagingCanvasElement.appendChild(uiState.stagingApp.view); // Append the Pixi canvas to the staging area
         stagingAppInstance = uiState.stagingApp; // Keep existing global-like reference if other functions use it
+       
     } else {
         console.error("Staging canvas element not found in domElements for Pixi initialization!");
     }
@@ -132,7 +135,7 @@ function initializeDragAndDropInternal(stagingCanvasElement, dragImageElementRef
     }
 
     uiState.stagingApp.stage.eventMode = 'static';
-    uiState.stagingApp.stage.hitArea = uiState.stagingApp.screen;
+    //uiState.stagingApp.stage.hitArea = uiState.stagingApp.screen;
     uiState.stagingApp.stage.on('pointerup', onDragEnd);
     uiState.stagingApp.stage.on('pointerupoutside', onDragEnd);
     uiState.stagingApp.stage.on('drop', (event) => {
@@ -207,18 +210,18 @@ function populateDesignSelector() {
             simulationStateRef.currentDesignName = domElements.designSelect.value; // Update state
          }
     }
-    domElements.designSelect.addEventListener('change', (event) => {
-        const selectedDesign = event.target.value; 
-        if (spacecraftDesignsRef[selectedDesign]) { 
-            simulationStateRef.currentDesignName = selectedDesign; 
-            currentShipPartsConfigRef.length = 0; // Clear current parts
-            currentShipPartsConfigRef.push(...spacecraftDesignsRef[selectedDesign].parts); // Load new design parts
-            drawStagingAreaRocket(); 
-            updateStagingStats(); 
-        } else { 
-            console.warn("Selected design not found:", selectedDesign);
-        }
-    });
+    // domElements.designSelect.addEventListener('change', (event) => {
+    //     const selectedDesign = event.target.value; 
+    //     if (spacecraftDesignsRef[selectedDesign]) { 
+    //         simulationStateRef.currentDesignName = selectedDesign; 
+    //         currentShipPartsConfigRef.length = 0; // Clear current parts
+    //         currentShipPartsConfigRef.push(...spacecraftDesignsRef[selectedDesign].parts); // Load new design parts
+    //         drawStagingAreaRocket(); 
+    //         updateStagingStats(); 
+    //     } else { 
+    //         console.warn("Selected design not found:", selectedDesign);
+    //     }
+    // });
 }
 
 function populatePartPalette() {
@@ -317,16 +320,16 @@ export function drawHUD(mainCtx, sfc, simState) {
     mainCtx.restore();
 }
 
-export function drawStagingAreaRocket() { 
+export function drawStagingAreaRocket(currentShipPartsConfig) { 
     if (!uiState.stagingApp || !domElements.stagingCanvas) { 
         console.error("Staging Pixi App or canvas not initialized for drawing"); return; 
     }
     const stage = uiState.stagingApp.stage;
-    const screenWidth = uiState.stagingApp.screen.width;
-    const screenHeight = uiState.stagingApp.screen.height;
+   const screenWidth = uiState.stagingApp.width;
+   const screenHeight = uiState.stagingApp.height;
 
     stage.removeChildren(); // Clear previous drawing
-
+currentShipPartsConfigRef = currentShipPartsConfig;
     if (currentShipPartsConfigRef.length === 0) return; 
     
     const tempCraft = new Spacecraft(currentShipPartsConfigRef); 
