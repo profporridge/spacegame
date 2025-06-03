@@ -1,3 +1,7 @@
+import React from 'react';
+import ReactDOM from 'react-dom/client'; // For React 18+
+import App from './App.js'; // Assuming App.js is in the same directory
+
 import * as C from './constants.js';
 import { Part, CommandPod, FuelTank, Engine, Fairing } from './parts.js';
 import { Spacecraft, initializeSpacecraftAndParts } from './spacecraft.js';
@@ -5,9 +9,9 @@ import { SmokeParticle } from './smoke.js';
 import * as ENV from './environment.js';
 import * as AUDIO from './audio.js'; 
 import * as UI from './ui.js';
-import * as PIXI from 'https://esm.sh/pixi.js@>=8?target=es2022';
+import * as PIXI from 'pixi.js';
 //PIXI.extensions.remove("batcher");
-import {Viewport} from 'https://esm.sh/pixi-viewport@6.0.3';
+import { Viewport } from 'pixi-viewport';
 
 //import * as PIXI from "https://esm.sh/pixi.js@8.9.2";
 
@@ -16,129 +20,33 @@ export {PIXI};
 
 let spacecraftInstance = null; 
 let currentShipPartsConfig = []; 
-let simulationState = { 
+let simulationState = {
     isLaunched: false, engineActive: false, timeElapsed: 0, lastTimestamp: 0,
-    cameraX_m: 0, cameraY_m: 0, currentPixelsPerMeter: 0.05, 
+    cameraX_m: 0, cameraY_m: 0, currentPixelsPerMeter: 0.05,
     controlFlags: { rotateLeft: false, rotateRight: false }, landed: true,
-    soundMuted: false, currentDesignName: "DefaultOrbiter" 
+    soundMuted: false, currentDesignName: "DefaultOrbiter"
 };
-let currentDragForceMagnitude = 0; 
-let currentAirDensityValue = C.EARTH_SEA_LEVEL_AIR_DENSITY; 
-let apoapsisAGL = { value: 0 }; 
+let currentDragForceMagnitude = 0;
+let currentAirDensityValue = C.EARTH_SEA_LEVEL_AIR_DENSITY;
+let apoapsisAGL = { value: 0 };
 let periapsisAGL = { value: 0 };
 let smokeParticles = []; let oldSmokeParticles = []; // For smoke persistenceq
-let cloudLayers = []; 
+let cloudLayers = [];
 let surfaceFeatures = [];
 
-const canvas = document.getElementById('gameCanvas'); 
-// const ctx = canvas.getContext('2d'); // No longer primary context
-const insetCanvas = document.getElementById('insetCanvas'); 
-//const insetCtx = insetCanvas.getContext('2d'); // Keep for inset, or refactor later
-const stagingCanvas = document.getElementById('stagingCanvas'); 
-//const stagingCtx = stagingCanvas.getContext('2d'); // Keep for staging, or refactor later
-const dragImageElement = document.getElementById('dragImage');
-// Create a new renderer
-//const sharedRenderer = await autoDetectRenderer();
-const allTextures = await PIXI.Assets.load(['images/clouds-0.json', 'images/clouds-0.png']);
-// Initialize PixiJS Application
-const app = new PIXI.Application();
-
-    await app.init({
-
-    
- //   renderer:sharedRenderer,
-    backgroundColor: 0x000000, 
-    resolution: window.devicePixelRatio || 1,
-    autoDensity: true,
-    canvas: gameCanvas,
-   //resizeTo: window, // Automatically resize to window size
-   // width: gameCanvas.width, // Set initial width
-   // height: gameCanvas.height, // Set initial height
-});
-  const viewport = new Viewport({
-    passiveWheel: false,
-    events: app.renderer.events
-  })
-  // activate plugins
-  viewport
-    .drag()
-    .pinch()
-    .wheel()
-    .decelerate()
-
-  // add the viewport to the stage
-  app.stage.addChild(viewport);
-//gameCanvas.appendChild(app.view); // Append PixiJS canvas to the DOM
-
-
-//app.stage.eventMode = 'static';
-// let frame = new PIXI.Graphics();
-// frame.beginFill(0x666666);
-// frame.lineStyle({ color: 0xffffff, width: 4, alignment: 0 });
-// frame.drawRect(0, 0, 1000, 1000);
-// frame.position.set(320, 180);
-// app.stage.addChild(frame);
-// // Create a graphics object to define our mask
-// let mask = new PIXI.Graphics();
-// // Add the rectangular area to show
-// mask.beginFill(0xffffff);
-// mask.drawRect(0,0,200,200);
-// mask.endFill();
-
-
-let environmentContainer = new PIXI.Container();
-let orbitContainer = new PIXI.Container(); // For orbit path rendering
-environmentContainer.addChild(orbitContainer); // Add orbit container to environment
-app.stage.addChild(environmentContainer);
-
-let smokeLayerContainer = new PIXI.Container(); // For smoke particles - Add before spacecraft
-app.stage.addChild(smokeLayerContainer);
-
-let spacecraftLayerContainer = new PIXI.Container(); // For spacecraft rendering - Add after smoke
-// let insetLayerContainer = new PIXI.Container(); // For inset view rendering
-// insetLayerContainer.x = 10;
-// insetLayerContainer.y = 10;
-// insetLayerContainer.width = 200; // Set width for inset view
-// insetLayerContainer.height = 200; // Set height for inset view
-app.stage.addChild(spacecraftLayerContainer);
-
-// For Inset View
-
+// Canvas and DOM elements will be accessed after React renders them.
+// Global PIXI app instances
+let pixiApp = null;
+let viewport = null;
+let environmentContainer = null;
+let orbitContainer = null;
+let smokeLayerContainer = null;
+let spacecraftLayerContainer = null;
 let insetApp = null;
 let insetSpacecraftContainer = null;
-app.ticker.add(gameLoop);
-// No longer need ctx directly for PixiJS rendering for main canvas
-// const ctx = canvas.getContext('2d');
 
-
-const dom = {
-    time: document.getElementById('time'), apoapsis: document.getElementById('apoapsis'), 
-    periapsis: document.getElementById('periapsis'), angle: document.getElementById('angle'), 
-    gimbal: document.getElementById('gimbal'), mass: document.getElementById('mass'), 
-    thrust: document.getElementById('thrust'), zoomLevel: document.getElementById('zoomLevel'),
-    resetButton: document.getElementById('resetButton'),
-    muteButton: document.getElementById('muteButton'), 
-    designSelect: document.getElementById('designSelect'), 
-    rotateLeftButton: document.getElementById('rotateLeftButton'), 
-    rotateRightButton: document.getElementById('rotateRightButton'),
-    zoomInButton: document.getElementById('zoomInButton'), 
-    zoomOutButton: document.getElementById('zoomOutButton'),
-    fuelGaugeBar: document.getElementById('fuelGaugeBar'), 
-    fuelText: document.getElementById('fuelText'),
-    statsPanel: document.getElementById('stats'),
-    clearStagingButton: document.getElementById('clearStagingButton'), 
-    launchCurrentBuildButton: document.getElementById('launchCurrentBuildButton'),
-    undoLastPartButton: document.getElementById('undoLastPartButton'), 
-    stagingCanvas: document.getElementById('stagingCanvas'),
-    stagingMass: document.getElementById('stagingMass'), 
-    stagingThrust: document.getElementById('stagingThrust'), 
-    stagingDeltaV: document.getElementById('stagingDeltaV'),
-    dragImage: dragImageElement // Add dragImage to dom for ui.js
-};
-if (document.getElementById('launchButton')) { // Keep this if launchButton exists in HTML
-     dom.launchButton = document.getElementById('launchButton');
-}
-
+// This object will be populated AFTER React renders and completeInitialization is called
+const dom = {};
 
 const partCatalog = { // For ui.js to know how to instantiate parts for thumbnails/drag data
     'pod': CommandPod,
@@ -203,14 +111,13 @@ function initSimulation(launchSource = 'template') {
     
     UI.updateStatsDisplay(simulationState, spacecraftInstance, apoapsisAGL.value, periapsisAGL.value);
     
-    if(launchSource === 'template' || currentShipPartsConfig.length === 0) { 
-        const templateToLoadCfg = spacecraftDesigns[simulationState.currentDesignName] || spacecraftDesigns[Object.keys(spacecraftDesigns)[0]]; 
-        currentShipPartsConfig = JSON.parse(JSON.stringify(templateToLoadCfg)); 
+    if(launchSource === 'template' || currentShipPartsConfig.length === 0) {
+        const templateToLoadCfg = spacecraftDesigns[simulationState.currentDesignName] || spacecraftDesigns[Object.keys(spacecraftDesigns)[0]];
+        currentShipPartsConfig = JSON.parse(JSON.stringify(templateToLoadCfg));
     }
-    ENV.drawPlanet(environmentContainer, simulationState.cameraX_m, simulationState.cameraY_m, simulationState.currentPixelsPerMeter,  app.screen.width, app.screen.height); 
-    //UI.drawWorld(ctx, canvas.width, canvas.height, simulationState.cameraX_m, simulationState.cameraY_m, simulationState.currentPixelsPerMeter);
-    UI.drawStagingAreaRocket(currentShipPartsConfig); // UI module will use its stored refs for stagingCtx, etc.
-   // UI.updateStagingStats();   // UI module will use its stored ref for currentShipPartsConfig
+    ENV.drawPlanet(environmentContainer, simulationState.cameraX_m, simulationState.cameraY_m, simulationState.currentPixelsPerMeter,  pixiApp.screen.width, pixiApp.screen.height);
+    UI.drawStagingAreaRocket(currentShipPartsConfig);
+    // UI.updateStagingStats(); // Called within drawStagingAreaRocket or separately if needed
 
 }
 
@@ -268,33 +175,25 @@ function gameLoop(ticker) {
     for (const particle of smokeParticles) {
         particle.update(deltaTime_s, currentAirDensityValue);
         if (particle.age_s < particle.lifetime_s) {
-            particle.draw(smokeLayerContainer, simulationState.cameraX_m, simulationState.cameraY_m, simulationState.currentPixelsPerMeter, app.screen.width, app.screen.height);
+            particle.draw(smokeLayerContainer, simulationState.cameraX_m, simulationState.cameraY_m, simulationState.currentPixelsPerMeter, pixiApp.screen.width, pixiApp.screen.height);
             if (particle.graphics.visible) {
                 smokeLayerContainer.addChild(particle.graphics);
             }
             currentActiveSmoke.push(particle);
         } else {
-            // Particle has expired
-            particle.graphics.visible = false; // Ensure its graphics are not accidentally rendered
-            // Logic for moving to oldSmokeParticles:
-            // This logic was previously in Spacecraft.updatePhysics. It should be consolidated.
-            // For now, let's replicate the SMOKE_PERSIST_CHANCE logic here.
-            // Note: Spacecraft.updatePhysics also has a MAX_OLD_SMOKE_PARTICLES check when *adding* new particles.
-            if (Math.random() > C.SMOKE_PERSIST_CHANCE) { // From constants.js via C
-                 // This particle might become an "old" particle.
-                 // It needs to be added to oldSmokeParticles array, but not drawn this frame as "active".
+            particle.graphics.visible = false;
+            if (Math.random() > C.SMOKE_PERSIST_CHANCE) {
                  newlyRetiredToOld.push(particle);
             }
         }
     }
     smokeParticles = currentActiveSmoke;
 
-    // Process 'oldSmokeParticles'
     const stillOldAndVisible = [];
     for (const particle of oldSmokeParticles) {
-        particle.update(deltaTime_s, currentAirDensityValue); // They continue to age and fade
+        particle.update(deltaTime_s, currentAirDensityValue);
         if (particle.age_s < particle.lifetime_s) {
-            particle.draw(smokeLayerContainer, simulationState.cameraX_m, simulationState.cameraY_m, simulationState.currentPixelsPerMeter, app.screen.width, app.screen.height);
+            particle.draw(smokeLayerContainer, simulationState.cameraX_m, simulationState.cameraY_m, simulationState.currentPixelsPerMeter, pixiApp.screen.width, pixiApp.screen.height);
             if (particle.graphics.visible) {
                 smokeLayerContainer.addChild(particle.graphics);
             }
@@ -303,7 +202,6 @@ function gameLoop(ticker) {
             particle.graphics.visible = false;
         }
     }
-    // Combine still-living old particles with newly retired active particles
     oldSmokeParticles = stillOldAndVisible.concat(newlyRetiredToOld);
     
     // Optional: Limit the number of oldSmokeParticles (as was in Spacecraft.updatePhysics)
@@ -323,97 +221,111 @@ function gameLoop(ticker) {
     // --- Spacecraft Drawing ---
     spacecraftLayerContainer.removeChildren();
 
-    if(spacecraftInstance) { 
-        const comOffset_m = spacecraftInstance.getCoMOffset_m(); 
-        const sfcComX_world = spacecraftInstance.position_x_m + comOffset_m * Math.sin(spacecraftInstance.angle_rad); 
-        const sfcComY_world = spacecraftInstance.position_y_m + comOffset_m * Math.cos(spacecraftInstance.angle_rad); 
-        const sfcComScreenX_main = app.screen.width/2 + (sfcComX_world - simulationState.cameraX_m) * simulationState.currentPixelsPerMeter; 
-        const sfcComScreenY_main = app.screen.height/2 - (sfcComY_world - simulationState.cameraY_m) * simulationState.currentPixelsPerMeter; 
-        
+    if(spacecraftInstance) {
+        const comOffset_m = spacecraftInstance.getCoMOffset_m();
+        const sfcComX_world = spacecraftInstance.position_x_m + comOffset_m * Math.sin(spacecraftInstance.angle_rad);
+        const sfcComY_world = spacecraftInstance.position_y_m + comOffset_m * Math.cos(spacecraftInstance.angle_rad);
+        const sfcComScreenX_main = pixiApp.screen.width/2 + (sfcComX_world - simulationState.cameraX_m) * simulationState.currentPixelsPerMeter;
+        const sfcComScreenY_main = pixiApp.screen.height/2 - (sfcComY_world - simulationState.cameraY_m) * simulationState.currentPixelsPerMeter;
+
         if (simulationState.currentPixelsPerMeter >= C.SPACECRAFT_INDICATOR_PPM_THRESHOLD) {
              spacecraftInstance.draw(
-                spacecraftLayerContainer, 
-                app.screen.width, 
-                app.screen.height, 
-                sfcComScreenX_main, 
-                sfcComScreenY_main, 
+                spacecraftLayerContainer,
+                pixiApp.screen.width,
+                pixiApp.screen.height,
+                sfcComScreenX_main,
+                sfcComScreenY_main,
                 simulationState.currentPixelsPerMeter
             );
         } else {
-            // Spacecraft indicator drawing - needs to be converted to PIXI.Graphics
-            // For now, this means small spacecraft won't be visible.
-            // Example for later:
-            // const indicator = new PIXI.Graphics();
-            // indicator.beginFill(0xFFFF00); // Yellow
-            // indicator.drawCircle(sfcComScreenX_main, sfcComScreenY_main, 3);
-            // indicator.endFill();
-            // spacecraftLayerContainer.addChild(indicator); 
-            // // Similar for the velocity vector line
+            // Placeholder for small spacecraft indicator
         }
-        
-        
     }
-    
-    // UI.drawHUD(ctx, spacecraftInstance, simulationState); // Commented out, uses ctx
+
     UI.updateStatsDisplay(simulationState, spacecraftInstance, apoapsisAGL.value, periapsisAGL.value);
-    
-    if (spacecraftInstance && simulationState.landed && !simulationState.engineActive && simulationState.isLaunched) {
-        // dom.launchButton might be null if removed, handle this
-        // if(dom.launchButton) dom.launchButton.textContent = "Landed"; 
-    } 
-  //  requestAnimationFrame(gameLoop); 
-   
+
+    // Inset view drawing
+    if (insetApp && spacecraftInstance && simulationState.currentPixelsPerMeter < C.INSET_VIEW_PPM_THRESHOLD) {
+        if(dom.insetCanvas) dom.insetCanvas.style.display = 'block'; // Check if dom.insetCanvas exists
+        insetSpacecraftContainer.removeChildren();
+
+        const largerCraftDim_m = Math.max(spacecraftInstance.logicalStackHeight_m, spacecraftInstance.maxWidth_m, 1);
+        const insetPPM = C.INSET_VIEW_TARGET_SIZE_PX / largerCraftDim_m;
+        const insetSfcScreenX = insetApp.screen.width / 2;
+        const insetSfcScreenY = insetApp.screen.height / 2;
+
+        spacecraftInstance.draw(
+            insetSpacecraftContainer,
+            insetApp.screen.width,
+            insetApp.screen.height,
+            insetSfcScreenX,
+            insetSfcScreenY,
+            insetPPM,
+            true // isInsetView = true
+        );
+    } else {
+        if(dom.insetCanvas) dom.insetCanvas.style.display = 'none'; // Check if dom.insetCanvas exists
+    }
 }
         
 function setupEventListeners() {
-    if(dom.launchButton) { 
-        dom.launchButton.addEventListener('click', () => { 
-            if(!AUDIO.soundInitialized) AUDIO.initAudio(simulationState.soundMuted); 
-            initSimulation('template'); 
-            if (spacecraftInstance) { 
-                simulationState.isLaunched = true; simulationState.landed = false; 
-                simulationState.engineActive = spacecraftInstance.currentFuel_kg > 0; 
-                dom.launchButton.textContent = simulationState.engineActive ? "Engine Active (TPL)" : (spacecraftInstance.currentFuel_kg > 0 ? "Engine Off (TPL)" : "Out of Fuel (TPL)"); 
-                dom.launchButton.disabled = spacecraftInstance.currentFuel_kg <=0 && !simulationState.engineActive; 
-            } 
+    // Note: 'dom.launchButton' might not exist if it was removed from the JSX.
+    // The event listeners will only be attached if the elements are found by their ID in the React-rendered DOM.
+
+    if(dom.launchButton) { // This specific button might be removed in JSX
+        dom.launchButton.addEventListener('click', () => {
+            if(!AUDIO.soundInitialized) AUDIO.initAudio(simulationState.soundMuted);
+            initSimulation('template');
+            if (spacecraftInstance) {
+                simulationState.isLaunched = true; simulationState.landed = false;
+                simulationState.engineActive = spacecraftInstance.currentFuel_kg > 0;
+                dom.launchButton.textContent = simulationState.engineActive ? "Engine Active (TPL)" : (spacecraftInstance.currentFuel_kg > 0 ? "Engine Off (TPL)" : "Out of Fuel (TPL)");
+                dom.launchButton.disabled = spacecraftInstance.currentFuel_kg <=0 && !simulationState.engineActive;
+            }
         });
     }
 
-    dom.launchCurrentBuildButton.addEventListener('click', () => { 
-        if(!AUDIO.soundInitialized) AUDIO.initAudio(simulationState.soundMuted); 
-        if (currentShipPartsConfig.length === 0) { alert("Staging area is empty!"); return; } 
-        initSimulation('staging'); 
-        if (spacecraftInstance) { 
-            simulationState.isLaunched = true; simulationState.landed = false; 
-            simulationState.engineActive = spacecraftInstance.currentFuel_kg > 0; 
-            if(dom.launchButton) dom.launchButton.disabled = true; 
-        } 
-    });
-    dom.resetButton.addEventListener('click', () => { 
-        if(!AUDIO.soundInitialized) AUDIO.initAudio(simulationState.soundMuted); 
-        initSimulation('template'); 
-        if(dom.launchButton) dom.launchButton.disabled = false; 
-    }); 
-    dom.muteButton.addEventListener('click', () => AUDIO.toggleMuteAudio(simulationState.soundMuted, simulationState.engineActive, spacecraftInstance ? spacecraftInstance.currentThrust_N / (spacecraftInstance.maxThrust_N || 1) : 0, simulationState) ); 
-    
-    dom.designSelect.addEventListener('change', (event) => { 
-        simulationState.currentDesignName = event.target.value; 
-        const selectedDesign = spacecraftDesigns[simulationState.currentDesignName]; 
-        if (selectedDesign) { currentShipPartsConfig = JSON.parse(JSON.stringify(selectedDesign)); } 
-        else { currentShipPartsConfig = []; } 
-        UI.drawStagingAreaRocket(currentShipPartsConfig); // UI will use its internal refs
-        UI.updateStagingStats();   // UI will use its internal refs
-        initSimulation('template'); 
-    });
-    // Event listeners for builder actions are now in ui.js setupBuilderActionButtons
-    
-    document.addEventListener('keydown', (e) => { 
-        if(!AUDIO.soundInitialized && (e.key === 'q' || e.key === 'Q' || e.key === 'e' || e.key === 'E' || e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === ' ')) AUDIO.initAudio(simulationState.soundMuted); 
-        if (e.key === 'q' || e.key === 'Q' || e.key === 'ArrowLeft') simulationState.controlFlags.rotateLeft = true; 
-        if (e.key === 'e' || e.key === 'E' || e.key === 'ArrowRight') simulationState.controlFlags.rotateRight = true; 
-        if (e.key === '+' || e.key === '=') { if(!AUDIO.soundInitialized) AUDIO.initAudio(simulationState.soundMuted); simulationState.currentPixelsPerMeter *= 1.5; if(simulationState.currentPixelsPerMeter > 20) simulationState.currentPixelsPerMeter = 20;} 
-        if (e.key === '-' || e.key === '_') { if(!AUDIO.soundInitialized) AUDIO.initAudio(simulationState.soundMuted); simulationState.currentPixelsPerMeter /= 1.5; if(simulationState.currentPixelsPerMeter < 1e-7) simulationState.currentPixelsPerMeter = 1e-7; } 
-        if (e.key === ' ') { e.preventDefault(); if(currentShipPartsConfig.length > 0 && !dom.launchCurrentBuildButton.disabled) dom.launchCurrentBuildButton.click(); else if (dom.launchButton && !dom.launchButton.disabled) dom.launchButton.click(); }  
+    if(dom.launchCurrentBuildButton) {
+      dom.launchCurrentBuildButton.addEventListener('click', () => {
+          if(!AUDIO.soundInitialized) AUDIO.initAudio(simulationState.soundMuted);
+          if (currentShipPartsConfig.length === 0) { alert("Staging area is empty!"); return; }
+          initSimulation('staging');
+          if (spacecraftInstance) {
+              simulationState.isLaunched = true; simulationState.landed = false;
+              simulationState.engineActive = spacecraftInstance.currentFuel_kg > 0;
+              if(dom.launchButton) dom.launchButton.disabled = true;
+          }
+      });
+    }
+    if(dom.resetButton) {
+      dom.resetButton.addEventListener('click', () => {
+          if(!AUDIO.soundInitialized) AUDIO.initAudio(simulationState.soundMuted);
+          initSimulation('template');
+          if(dom.launchButton) dom.launchButton.disabled = false;
+      });
+    }
+    if(dom.muteButton) {
+      dom.muteButton.addEventListener('click', () => AUDIO.toggleMuteAudio(simulationState.soundMuted, simulationState.engineActive, spacecraftInstance ? spacecraftInstance.currentThrust_N / (spacecraftInstance.maxThrust_N || 1) : 0, simulationState) );
+    }
+    if(dom.designSelect) {
+      dom.designSelect.addEventListener('change', (event) => {
+          simulationState.currentDesignName = event.target.value;
+          const selectedDesign = spacecraftDesigns[simulationState.currentDesignName];
+          if (selectedDesign) { currentShipPartsConfig = JSON.parse(JSON.stringify(selectedDesign)); }
+          else { currentShipPartsConfig = []; }
+          UI.drawStagingAreaRocket(currentShipPartsConfig);
+          UI.updateStagingStats();
+          initSimulation('template');
+      });
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if(!AUDIO.soundInitialized && (e.key === 'q' || e.key === 'Q' || e.key === 'e' || e.key === 'E' || e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === ' ')) AUDIO.initAudio(simulationState.soundMuted);
+        if (e.key === 'q' || e.key === 'Q' || e.key === 'ArrowLeft') simulationState.controlFlags.rotateLeft = true;
+        if (e.key === 'e' || e.key === 'E' || e.key === 'ArrowRight') simulationState.controlFlags.rotateRight = true;
+        if (e.key === '+' || e.key === '=') { if(!AUDIO.soundInitialized) AUDIO.initAudio(simulationState.soundMuted); simulationState.currentPixelsPerMeter *= 1.5; if(simulationState.currentPixelsPerMeter > 20) simulationState.currentPixelsPerMeter = 20;}
+        if (e.key === '-' || e.key === '_') { if(!AUDIO.soundInitialized) AUDIO.initAudio(simulationState.soundMuted); simulationState.currentPixelsPerMeter /= 1.5; if(simulationState.currentPixelsPerMeter < 1e-7) simulationState.currentPixelsPerMeter = 1e-7; }
+        if (e.key === ' ') { e.preventDefault(); if(dom.launchCurrentBuildButton && currentShipPartsConfig.length > 0 && !dom.launchCurrentBuildButton.disabled) dom.launchCurrentBuildButton.click(); else if (dom.launchButton && !dom.launchButton.disabled) dom.launchButton.click(); }
     });
     document.addEventListener('keyup', (e) => { 
         if (e.key === 'q' || e.key === 'Q' || e.key === 'ArrowLeft') simulationState.controlFlags.rotateLeft = false; 
@@ -429,97 +341,142 @@ function setupEventListeners() {
         buttonElem.addEventListener('touchstart', (e) => { e.preventDefault(); action(); }, {passive: false}); 
         buttonElem.addEventListener('touchend', (e) => { e.preventDefault(); simulationState.controlFlags[flagName] = false; }); 
     };
-    makePressReleaseButton(dom.rotateLeftButton, 'rotateLeft'); 
+    makePressReleaseButton(dom.rotateLeftButton, 'rotateLeft');
     makePressReleaseButton(dom.rotateRightButton, 'rotateRight');
-    
-    if(dom.zoomInButton) dom.zoomInButton.addEventListener('click', () => { if(!AUDIO.soundInitialized) AUDIO.initAudio(simulationState.soundMuted); simulationState.currentPixelsPerMeter *= 1.5; if(simulationState.currentPixelsPerMeter > 20) simulationState.currentPixelsPerMeter = 20;}); 
+
+    if(dom.zoomInButton) dom.zoomInButton.addEventListener('click', () => { if(!AUDIO.soundInitialized) AUDIO.initAudio(simulationState.soundMuted); simulationState.currentPixelsPerMeter *= 1.5; if(simulationState.currentPixelsPerMeter > 20) simulationState.currentPixelsPerMeter = 20;});
     if(dom.zoomOutButton) dom.zoomOutButton.addEventListener('click', () => { if(!AUDIO.soundInitialized) AUDIO.initAudio(simulationState.soundMuted); simulationState.currentPixelsPerMeter /= 1.5; if(simulationState.currentPixelsPerMeter < 1e-7) simulationState.currentPixelsPerMeter = 1e-7; });
-    canvas.addEventListener('wheel', (e) => { if(!AUDIO.soundInitialized) AUDIO.initAudio(simulationState.soundMuted); e.preventDefault(); if (e.deltaY < 0) {simulationState.currentPixelsPerMeter *= 1.5; if(simulationState.currentPixelsPerMeter > 20) simulationState.currentPixelsPerMeter = 20;} else {simulationState.currentPixelsPerMeter /= 1.5; if(simulationState.currentPixelsPerMeter < 1e-7) simulationState.currentPixelsPerMeter = 1e-7;} });
+
+    // Attach wheel event to gameCanvas if it exists
+    if(dom.gameCanvas) {
+        dom.gameCanvas.addEventListener('wheel', (e) => {
+            if(!AUDIO.soundInitialized) AUDIO.initAudio(simulationState.soundMuted);
+            e.preventDefault();
+            if (e.deltaY < 0) {simulationState.currentPixelsPerMeter *= 1.5; if(simulationState.currentPixelsPerMeter > 20) simulationState.currentPixelsPerMeter = 20;}
+            else {simulationState.currentPixelsPerMeter /= 1.5; if(simulationState.currentPixelsPerMeter < 1e-7) simulationState.currentPixelsPerMeter = 1e-7;}
+        });
+    }
 }
 
 async function completeInitialization() {
+    // Populate the dom object now that React has rendered the HTML structure
+    dom.gameCanvas = document.getElementById('gameCanvas');
+    dom.insetCanvas = document.getElementById('insetCanvas');
+    dom.stagingCanvas = document.getElementById('stagingCanvas');
+    dom.dragImage = document.getElementById('dragImage');
 
+    dom.time = document.getElementById('time');
+    dom.apoapsis = document.getElementById('apoapsis');
+    dom.periapsis = document.getElementById('periapsis');
+    dom.angle = document.getElementById('angle');
+    dom.gimbal = document.getElementById('gimbal');
+    dom.mass = document.getElementById('mass');
+    dom.thrust = document.getElementById('thrust');
+    dom.zoomLevel = document.getElementById('zoomLevel');
+    dom.resetButton = document.getElementById('resetButton');
+    dom.muteButton = document.getElementById('muteButton');
+    dom.designSelect = document.getElementById('designSelect');
+    dom.rotateLeftButton = document.getElementById('rotateLeftButton');
+    dom.rotateRightButton = document.getElementById('rotateRightButton');
+    dom.zoomInButton = document.getElementById('zoomInButton');
+    dom.zoomOutButton = document.getElementById('zoomOutButton');
+    dom.fuelGaugeBar = document.getElementById('fuelGaugeBar');
+    dom.fuelText = document.getElementById('fuelText');
+    dom.statsPanel = document.getElementById('stats');
+    dom.clearStagingButton = document.getElementById('clearStagingButton');
+    dom.launchCurrentBuildButton = document.getElementById('launchCurrentBuildButton');
+    dom.undoLastPartButton = document.getElementById('undoLastPartButton');
+    dom.stagingMass = document.getElementById('stagingMass');
+    dom.stagingThrust = document.getElementById('stagingThrust');
+    dom.stagingDeltaV = document.getElementById('stagingDeltaV');
+    // dom.launchButton = document.getElementById('launchButton'); // Example if it was kept
 
+    // Check if essential canvas elements exist
+    if (!dom.gameCanvas || !dom.stagingCanvas) {
+        console.error("Essential canvas elements (gameCanvas or stagingCanvas) not found in the DOM after React render. Game cannot initialize.");
+        return;
+    }
 
-    // Initialize spacecraft module with dependencies it needs to call back
+    // const allTextures = await PIXI.Assets.load(['images/clouds-0.json', 'images/clouds-0.png']); // Already loaded globally if needed or move here.
+
+    pixiApp = new PIXI.Application();
+    await pixiApp.init({
+        backgroundColor: 0x000000,
+        resolution: window.devicePixelRatio || 1,
+        autoDensity: true,
+        canvas: dom.gameCanvas, // Use the canvas from the React-rendered DOM
+    });
+
+    viewport = new Viewport({
+        passiveWheel: false,
+        events: pixiApp.renderer.events
+    });
+    viewport.drag().pinch().wheel().decelerate();
+    pixiApp.stage.addChild(viewport);
+
+    environmentContainer = new PIXI.Container();
+    orbitContainer = new PIXI.Container();
+    environmentContainer.addChild(orbitContainer);
+    pixiApp.stage.addChild(environmentContainer); // viewport.addChild(environmentContainer) if viewport controls this layer
+
+    smokeLayerContainer = new PIXI.Container();
+    pixiApp.stage.addChild(smokeLayerContainer); // viewport.addChild(smokeLayerContainer)
+
+    spacecraftLayerContainer = new PIXI.Container();
+    pixiApp.stage.addChild(spacecraftLayerContainer); // viewport.addChild(spacecraftLayerContainer)
+
+    globalThis.__PIXI_APP__ = pixiApp; // For PIXI dev tools
+
     initializeSpacecraftAndParts(
-        (active, ratio) => AUDIO.playEngineSound(active, ratio, simulationState.soundMuted), 
-        () => AUDIO.playGimbalSound(simulationState.soundMuted), 
-        simulationState, // Pass the main simulationState object
-        smokeParticles,  // Pass the main smokeParticles array
-        oldSmokeParticles, // Pass the main oldSmokeParticles array
-        currentAirDensityValue // Pass the main air density value (primitive, so it's a copy)
-                               // Spacecraft.updatePhysics will return new airDensity
+        (active, ratio) => AUDIO.playEngineSound(active, ratio, simulationState.soundMuted),
+        () => AUDIO.playGimbalSound(simulationState.soundMuted),
+        simulationState, smokeParticles, oldSmokeParticles, currentAirDensityValue
     );
-    
+
     await UI.initializeUI(
-        dom, 
-        currentShipPartsConfig, 
-        spacecraftDesigns, 
-        initSimulation, 
-       // sharedRenderer,            
-        stagingCanvas,         
-        simulationState,
-        partCatalog,
-        AUDIO // Pass the AUDIO module to ui.js for touch event audio init
+        dom, currentShipPartsConfig, spacecraftDesigns, initSimulation,
+        dom.stagingCanvas, simulationState, partCatalog, AUDIO
     );
-     globalThis.__PIXI_APP__ =  app;
-    // Drag and Drop listeners are now set up inside initializeUI using initializeDragAndDropInternal
-    
-    // Update PixiJS app dimensions if canvas size changed by logic elsewhere (though it's set once now)
-    // app.renderer.resize(canvas.width, canvas.height);
-    
-    setupEventListeners(); 
-    initSimulation('template');
-    // requestAnimationFrame(gameLoop); // PIXI.Application uses its own ticker by default
-   // app.ticker.add(gameLoop); // Add gameLoop to PixiJS ticker
+
+    setupEventListeners();
+    initSimulation('template'); // Initial simulation setup
+    pixiApp.ticker.add(gameLoop); // Start the game loop
 
     // Initialize Inset View Pixi Application
-    if (insetCanvas) {
+    if (dom.insetCanvas) {
         insetApp = new PIXI.Application();
         await insetApp.init({
-            canvas: insetCanvas,
-            // resizeTo: insetCanvas, // Optional, if you want it to resize with the canvas
-            // sharedRenderer: sharedRenderer, // If you want to share the renderer{
-         //   renderer: sharedRenderer,
-            width: insetCanvas.width,
-            height: insetCanvas.height,
-            backgroundColor: 0x222222, // Darker background
+            canvas: dom.insetCanvas,
+            width: dom.insetCanvas.width,
+            height: dom.insetCanvas.height,
+            backgroundColor: 0x222222,
             resolution: window.devicePixelRatio || 1,
             autoDensity: true,
         });
         insetSpacecraftContainer = new PIXI.Container();
         insetApp.stage.addChild(insetSpacecraftContainer);
+        // The gameLoop itself will handle insetApp.ticker logic for drawing.
+        // No need to add gameLoop to insetApp.ticker, it's driven by the main ticker.
     } else {
-        console.error("Inset canvas not found for Pixi initialization.");
+        console.warn("Inset canvas not found for Pixi initialization. Inset view will be disabled.");
     }
+}
 
-    insetApp.ticker.add(() => {
-        // Inset view drawing
-        if (insetApp && spacecraftInstance && simulationState.currentPixelsPerMeter < C.INSET_VIEW_PPM_THRESHOLD) {
-            insetCanvas.style.display = 'block';
-            insetSpacecraftContainer.removeChildren();
-            
-            const largerCraftDim_m = Math.max(spacecraftInstance.logicalStackHeight_m, spacecraftInstance.maxWidth_m, 1);
-            const insetPPM = C.INSET_VIEW_TARGET_SIZE_PX / largerCraftDim_m;
-            const insetSfcScreenX = insetApp.screen.width / 2;
-            const insetSfcScreenY = insetApp.screen.height / 2;
+// --- React Application Setup ---
+const rootElement = document.getElementById('root');
+if (rootElement) {
+    const reactRoot = ReactDOM.createRoot(rootElement);
+    reactRoot.render(
+        <React.StrictMode>
+            <App />
+        </React.StrictMode>
+    );
 
-            spacecraftInstance.draw(
-                insetSpacecraftContainer,
-                insetApp.screen.width,
-                insetApp.screen.height,
-                insetSfcScreenX,
-                insetSfcScreenY,
-                insetPPM,
-                true // isInsetView = true
-            );
-        } else {
-            insetCanvas.style.display = 'none';
-        }
-});}
-if (document.readyState !== 'loading') {completeInitialization(); }
-else { 
-    // If DOM is not ready, wait for it to load
-    document.addEventListener('DOMContentLoaded', completeInitialization); 
+    // Ensure the game logic initializes after React has rendered the DOM structure
+    // For simple cases, a timeout of 0 can work to push execution to after the current render cycle.
+    // A more robust solution might involve a callback from App.js after its first render (e.g., via useEffect).
+    setTimeout(completeInitialization, 0);
+
+} else {
+    console.error("Failed to find the root element for React. App cannot start.");
 }

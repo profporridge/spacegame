@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "start": "node server.js",
+    "build": "webpack --mode development",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
@@ -20,7 +21,15 @@
     "express": "^5.1.0"
   },
   "devDependencies": {
+    "@babel/core": "^7.27.4",
+    "@babel/preset-env": "^7.27.2",
+    "@babel/preset-react": "^7.27.1",
+    "babel-loader": "^10.0.0",
     "pixi-viewport": "^6.0.3",
-    "pixi.js": "^8.9.2"
+    "pixi.js": "^8.9.2",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "webpack": "^5.99.9",
+    "webpack-cli": "^6.0.1"
   }
 }
