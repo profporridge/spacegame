@@ -1,0 +1,26 @@
+{
+  "name": "2d-spacecraft-prototype-nodejs",
+  "version": "1.0.0",
+  "description": "2D Spacecraft Prototype converted to a Node.js application",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "pixijs",
+    "game",
+    "spacecraft",
+    "node"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "pixi-viewport": "^6.0.3",
+    "pixi.js": "^8.9.2"
+  }
+}
