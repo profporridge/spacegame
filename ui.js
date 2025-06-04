@@ -325,8 +325,8 @@ export function drawStagingAreaRocket(currentShipPartsConfig) {
         console.error("Staging Pixi App or canvas not initialized for drawing"); return; 
     }
     const stage = uiState.stagingApp.stage;
-   const screenWidth = uiState.stagingApp.width;
-   const screenHeight = uiState.stagingApp.height;
+   const screenWidth = 200; //uiState.stagingApp.width;
+   const screenHeight = 350; //uiState.stagingApp.height;
 
     stage.removeChildren(); // Clear previous drawing
 currentShipPartsConfigRef = currentShipPartsConfig;
@@ -370,7 +370,7 @@ currentShipPartsConfigRef = currentShipPartsConfig;
         stagingSfcScreenX, 
         stagingSfcScreenY, 
         stagingPPM, 
-        true // isInsetView = true (hides nodes, good for staging)
+        true 
     );
     tempCraft.angle_rad = originalAngle; // Restore if needed, though tempCraft is local
 }

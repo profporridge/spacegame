@@ -23,14 +23,22 @@ module.exports = {
         test: /\.css$/, // Example for handling CSS files
         use: ['style-loader', 'css-loader'],
       },
+       {
+         test: /\.(png|svg|jpg|jpeg|gif)$/i,
+         type: 'asset/resource',
+       },
     ],
   },
   resolve: {
+    alias:{
+      images: path.resolve(__dirname, 'images'), // Alias for images directory
+    },
     extensions: ['.js', '.jsx'], // Automatically resolve these extensions
   },
   devServer: {
     static: {
       directory: path.join(__dirname, 'public'), // Serve files from public directory
+      directory: path.join(__dirname, 'images'), // Serve files from public directory
     },
     compress: true,
     port: 3000, // Development server port

@@ -233,11 +233,11 @@ export function drawPlanet(container, camX_m, camY_m, ppm, screenwidth, screenhe
     const planetScreenX_px = viewCenterX_px + planetViewX_px; 
     const planetScreenY_px = viewCenterY_px - planetViewY_px; // Correcting for Pixi's Y-down system.
     
-    const planetRadius_px = planet.radius_m * ppm;
-
+    const planetRadius_px = planet.radius_m ;
+if (container.getChildByLabel('planet')) {return;} // If planet already drawn, skip
     // Draw Atmosphere
     if (planet.maxAtmosphereRadius_m * ppm > 2) { 
-        const atmRadius_px = planet.maxAtmosphereRadius_m * ppm;
+        const atmRadius_px = planet.maxAtmosphereRadius_m ;
         const atmColorData = parseRgba(planet.atmosphereColor);
         const atmHexColor = (atmColorData.r << 16) + (atmColorData.g << 8) + atmColorData.b;
         
@@ -245,8 +245,9 @@ export function drawPlanet(container, camX_m, camY_m, ppm, screenwidth, screenhe
        // atmosphereGraphic.beginFill(atmHexColor, atmColorData.alpha);
         atmosphereGraphic.circle(0, 0, atmRadius_px); // Draw at origin, then position
         atmosphereGraphic.fill({color:atmHexColor, alpha:atmColorData.alpha});
-        atmosphereGraphic.x = planetScreenX_px;
-        atmosphereGraphic.y = planetScreenY_px;
+        atmosphereGraphic.label = 'atmosphere'; // Optional label for identification
+     //   atmosphereGraphic.x = planetScreenX_px;
+     //   atmosphereGraphic.y = planetScreenY_px;
         container.addChild(atmosphereGraphic);
     }
 
@@ -259,8 +260,9 @@ export function drawPlanet(container, camX_m, camY_m, ppm, screenwidth, screenhe
        // planetGraphic.beginFill(planetHexColor);
         planetGraphic.circle(0, 0, planetRadius_px); // Draw at origin, then position
         planetGraphic.fill(planetHexColor);
-        planetGraphic.x = planetScreenX_px;
-        planetGraphic.y = planetScreenY_px;
+        planetGraphic.label = 'planet'; // Optional label for identification
+       // planetGraphic.x = planetScreenX_px;
+       // planetGraphic.y = planetScreenY_px;
         container.addChild(planetGraphic);
     }
 }
