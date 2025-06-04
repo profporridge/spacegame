@@ -40,6 +40,7 @@ export const MAX_SMOKE_PARTICLES = 50;
 export const MAX_OLD_SMOKE_PARTICLES = 10;        
 export const SMOKE_PERSIST_CHANCE = 0.07;
 export const ISP_VACUUM_DEFAULT = 300;
+export const LANDING_GEAR_MAX_ABSORPTION_SPEED_M_S = 5.0; // Max safe landing speed in m/s
 
 export const planet = { 
     mass_kg: EARTH_MASS_KG, radius_m: EARTH_RADIUS_M, color: '#3A8D3A', 
