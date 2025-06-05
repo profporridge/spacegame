@@ -88,7 +88,7 @@ function initSimulation(launchSource = 'template') {
     }
     spacecraftInstance = new Spacecraft(designToLoad); 
     
-    spacecraftInstance.position_x_m = 0; spacecraftInstance.position_y_m = C.planet.radius_m; 
+    spacecraftInstance.position_x_m = 0; spacecraftInstance.position_y_m = -1 *  C.planet.radius_m; 
     spacecraftInstance.angle_rad = 0; spacecraftInstance.velocity_x_ms = 0; spacecraftInstance.velocity_y_ms = 0;
     spacecraftInstance.angularVelocity_rad_s = 0; 
     
@@ -115,6 +115,7 @@ function initSimulation(launchSource = 'template') {
         const templateToLoadCfg = spacecraftDesigns[simulationState.currentDesignName] || spacecraftDesigns[Object.keys(spacecraftDesigns)[0]];
         currentShipPartsConfig = JSON.parse(JSON.stringify(templateToLoadCfg));
     }
+    
     ENV.drawPlanet(environmentContainer, simulationState.cameraX_m, simulationState.cameraY_m, simulationState.currentPixelsPerMeter,  pixiApp.screen.width, pixiApp.screen.height);
     UI.drawStagingAreaRocket(currentShipPartsConfig);
     // UI.updateStagingStats(); // Called within drawStagingAreaRocket or separately if needed
@@ -123,15 +124,20 @@ function initSimulation(launchSource = 'template') {
 
 function updateCamera() { 
     if(!spacecraftInstance) return; 
+
+
     const comOffset_m = spacecraftInstance.getCoMOffset_m(); 
     const comX = spacecraftInstance.position_x_m + comOffset_m * Math.sin(spacecraftInstance.angle_rad); 
-    const comY = spacecraftInstance.position_y_m + comOffset_m * Math.cos(spacecraftInstance.angle_rad); 
-    const targetCameraX_m = comX; const targetCameraY_m = comY; 
-    const lerpFactor = 0.1; 
-    simulationState.cameraX_m += (targetCameraX_m - simulationState.cameraX_m) * lerpFactor; 
-    simulationState.cameraY_m += (targetCameraY_m - simulationState.cameraY_m) * lerpFactor; 
+    const comY = spacecraftInstance.position_y_m - comOffset_m * Math.cos(spacecraftInstance.angle_rad); 
+   viewport.ensureVisible(comX,comY, 1,1 ,true);
+   
+    // const targetCameraX_m = comX; const targetCameraY_m = comY; 
+    // const lerpFactor = 0.1; 
+    // simulationState.cameraX_m += (targetCameraX_m - simulationState.cameraX_m) * lerpFactor; 
+    // simulationState.cameraY_m += (targetCameraY_m - simulationState.cameraY_m) * lerpFactor; 
 }
-
+let smokeTrailDeltaTime_s = 0; // For smoke trail timing
+let smokeTrailPoints = []; // For smoke trail points
 function gameLoop(ticker) {  
    // if(!spacecraftInstance && currentShipPartsConfig.length === 0 && !simulationState.isLaunched) { requestAnimationFrame(gameLoop); return; } 
     //if(!spacecraftInstance && simulationState.isLaunched) { requestAnimationFrame(gameLoop); return; } 
@@ -166,50 +172,76 @@ function gameLoop(ticker) {
     updateCamera(); 
     
     // --- Smoke Particle Update, Draw, and Management ---
-    smokeLayerContainer.removeChildren(); // Clear container at the start of smoke processing
+   // smokeLayerContainer.removeChildren(); // Clear container at the start of smoke processing
 
     const currentActiveSmoke = [];
     const newlyRetiredToOld = []; // Particles that just expired from the main 'smokeParticles'
 
-    // Process active 'smokeParticles'
-    for (const particle of smokeParticles) {
-        particle.update(deltaTime_s, currentAirDensityValue);
-        if (particle.age_s < particle.lifetime_s) {
-            particle.draw(smokeLayerContainer, simulationState.cameraX_m, simulationState.cameraY_m, simulationState.currentPixelsPerMeter, pixiApp.screen.width, pixiApp.screen.height);
-            if (particle.graphics.visible) {
-                smokeLayerContainer.addChild(particle.graphics);
-            }
-            currentActiveSmoke.push(particle);
-        } else {
-            particle.graphics.visible = false;
-            if (Math.random() > C.SMOKE_PERSIST_CHANCE) {
-                 newlyRetiredToOld.push(particle);
-            }
-        }
-    }
-    smokeParticles = currentActiveSmoke;
+    // // Process active 'smokeParticles'
+    // for (const particle of smokeParticles) {
+    //     particle.update(deltaTime_s, currentAirDensityValue);
+    //     if (particle.age_s < particle.lifetime_s) {
+    //         particle.draw(smokeLayerContainer, comX, comY, 1, );
+    //         if (particle.graphics.visible) {
+    //             smokeLayerContainer.addChild(particle.graphics);
+    //         }
+    //         currentActiveSmoke.push(particle);
+    //     } else {
+    //         particle.graphics.visible = false;
+    //         if (Math.random() > C.SMOKE_PERSIST_CHANCE) {
+    //              newlyRetiredToOld.push(particle);
+    //         }
+    //     }
+    // }
+    // smokeParticles = currentActiveSmoke;
 
-    const stillOldAndVisible = [];
-    for (const particle of oldSmokeParticles) {
-        particle.update(deltaTime_s, currentAirDensityValue);
-        if (particle.age_s < particle.lifetime_s) {
-            particle.draw(smokeLayerContainer, simulationState.cameraX_m, simulationState.cameraY_m, simulationState.currentPixelsPerMeter, pixiApp.screen.width, pixiApp.screen.height);
-            if (particle.graphics.visible) {
-                smokeLayerContainer.addChild(particle.graphics);
-            }
-            stillOldAndVisible.push(particle);
-        } else {
-            particle.graphics.visible = false;
-        }
-    }
-    oldSmokeParticles = stillOldAndVisible.concat(newlyRetiredToOld);
+    // const stillOldAndVisible = [];
+    // for (const particle of oldSmokeParticles) {
+    //     particle.update(deltaTime_s, currentAirDensityValue);
+    //     if (particle.age_s < particle.lifetime_s) {
+    //         particle.draw(smokeLayerContainer, simulationState.cameraX_m, simulationState.cameraY_m, simulationState.currentPixelsPerMeter, pixiApp.screen.width, pixiApp.screen.height);
+    //         if (particle.graphics.visible) {
+    //             smokeLayerContainer.addChild(particle.graphics);
+    //         }
+    //         stillOldAndVisible.push(particle);
+    //     } else {
+    //         particle.graphics.visible = false;
+    //     }
+    // }
+    // oldSmokeParticles = stillOldAndVisible.concat(newlyRetiredToOld);
     
     // Optional: Limit the number of oldSmokeParticles (as was in Spacecraft.updatePhysics)
-    while (oldSmokeParticles.length > C.MAX_OLD_SMOKE_PARTICLES) {
-        const removedParticle = oldSmokeParticles.shift(); // Remove the oldest from the array
-        // Its graphics are already removed from container due to removeChildren() or will be next frame.
-    }
-    
+    // while (oldSmokeParticles.length > C.MAX_OLD_SMOKE_PARTICLES) {
+    //     const removedParticle = oldSmokeParticles.shift(); // Remove the oldest from the array
+    //     // Its graphics are already removed from container due to removeChildren() or will be next frame.
+    // }
+    smokeTrailDeltaTime_s += ticker.deltaMS;
+    if (smokeTrailDeltaTime_s >= 1000.0 / C.SMOKE_PARTICLES_PER_SECOND_BASE) {
+        smokeTrailDeltaTime_s = 0; // Reset the delta time for smoke trail
+        var smokeTrail = smokeLayerContainer.getChildByName('smokeTrail');
+        if (!smokeTrail) {
+            smokeTrail = new PIXI.Graphics();
+            smokeTrail.name = 'smokeTrail';
+            smokeLayerContainer.addChild(smokeTrail);
+        }
+        smokeTrail.clear();
+        smokeTrail.lineStyle(2, 0x808080, 0.5); // Gray color with some transparency
+        smokeTrail.moveTo(spacecraftInstance.position_x_m, spacecraftInstance.position_y_m);
+        smokeTrailPoints.push({
+            x: spacecraftInstance.position_x_m,
+            y: spacecraftInstance.position_y_m,
+            age_s: 0});
+         for (let i = smokeTrailPoints.length - 1; i >= 0; i--) {
+            const point = smokeTrailPoints[i];
+            point.age_s += 1.0 / C.SMOKE_PARTICLES_PER_SECOND_BASE; // Increment age by 1 second per frame
+            if (point.age_s > C.SMOKE_LIFETIME_S_MAX) {
+                smokeTrailPoints.splice(i, 1); // Remove old points
+            } else {
+                smokeTrail.lineTo(point.x, point.y);
+            }
+        }
+        ;
+    }// Adjusted for base rate
     // --- Environment Drawing ---
    // environmentContainer.removeChildren();
   //  ENV.drawSkyBackground(environmentContainer, spacecraftInstance ? spacecraftInstance.altitudeAGL_m : null, app.screen.width, app.screen.height);
@@ -219,27 +251,28 @@ function gameLoop(ticker) {
   //  ENV.drawSurfaceFeatures(environmentContainer, simulationState.cameraX_m, simulationState.cameraY_m, simulationState.currentPixelsPerMeter, surfaceFeatures,  app.screen.width, app.screen.height);
     
     // --- Spacecraft Drawing ---
-    spacecraftLayerContainer.removeChildren();
+   // spacecraftLayerContainer.removeChildren();
 
     if(spacecraftInstance) {
         const comOffset_m = spacecraftInstance.getCoMOffset_m();
         const sfcComX_world = spacecraftInstance.position_x_m + comOffset_m * Math.sin(spacecraftInstance.angle_rad);
-        const sfcComY_world = spacecraftInstance.position_y_m + comOffset_m * Math.cos(spacecraftInstance.angle_rad);
+        const sfcComY_world = (spacecraftInstance.position_y_m + comOffset_m * Math.cos(spacecraftInstance.angle_rad));
+       // sfcComY_world = -1 * sfcComY_world; // Invert Y for PIXI coordinate system
         const sfcComScreenX_main = pixiApp.screen.width/2 + (sfcComX_world - simulationState.cameraX_m) * simulationState.currentPixelsPerMeter;
         const sfcComScreenY_main = pixiApp.screen.height/2 - (sfcComY_world - simulationState.cameraY_m) * simulationState.currentPixelsPerMeter;
 
-        if (simulationState.currentPixelsPerMeter >= C.SPACECRAFT_INDICATOR_PPM_THRESHOLD) {
+        //if (simulationState.currentPixelsPerMeter >= C.SPACECRAFT_INDICATOR_PPM_THRESHOLD) {
              spacecraftInstance.draw(
                 spacecraftLayerContainer,
                 pixiApp.screen.width,
                 pixiApp.screen.height,
-                sfcComScreenX_main,
-                sfcComScreenY_main,
-                simulationState.currentPixelsPerMeter
+                sfcComX_world, //sfcComScreenX_main,
+                sfcComY_world, // sfcComScreenY_main,
+                1 //simulationState.currentPixelsPerMeter
             );
-        } else {
-            // Placeholder for small spacecraft indicator
-        }
+        // } else {
+        //     // Placeholder for small spacecraft indicator
+        // }
     }
 
     UI.updateStatsDisplay(simulationState, spacecraftInstance, apoapsisAGL.value, periapsisAGL.value);
@@ -278,6 +311,7 @@ function setupEventListeners() {
             initSimulation('template');
             if (spacecraftInstance) {
                 simulationState.isLaunched = true; simulationState.landed = false;
+                pixiApp.ticker.start(); // Start the PIXI ticker if not already runningapp
                 simulationState.engineActive = spacecraftInstance.currentFuel_kg > 0;
                 dom.launchButton.textContent = simulationState.engineActive ? "Engine Active (TPL)" : (spacecraftInstance.currentFuel_kg > 0 ? "Engine Off (TPL)" : "Out of Fuel (TPL)");
                 dom.launchButton.disabled = spacecraftInstance.currentFuel_kg <=0 && !simulationState.engineActive;
@@ -288,6 +322,7 @@ function setupEventListeners() {
     if(dom.launchCurrentBuildButton) {
       dom.launchCurrentBuildButton.addEventListener('click', () => {
           if(!AUDIO.soundInitialized) AUDIO.initAudio(simulationState.soundMuted);
+           pixiApp.ticker.start(); // Start the PIXI ticker if not already runningapp
           if (currentShipPartsConfig.length === 0) { alert("Staging area is empty!"); return; }
           initSimulation('staging');
           if (spacecraftInstance) {
@@ -349,12 +384,12 @@ function setupEventListeners() {
 
     // Attach wheel event to gameCanvas if it exists
     if(dom.gameCanvas) {
-        dom.gameCanvas.addEventListener('wheel', (e) => {
-            if(!AUDIO.soundInitialized) AUDIO.initAudio(simulationState.soundMuted);
-            e.preventDefault();
-            if (e.deltaY < 0) {simulationState.currentPixelsPerMeter *= 1.5; if(simulationState.currentPixelsPerMeter > 20) simulationState.currentPixelsPerMeter = 20;}
-            else {simulationState.currentPixelsPerMeter /= 1.5; if(simulationState.currentPixelsPerMeter < 1e-7) simulationState.currentPixelsPerMeter = 1e-7;}
-        });
+        // dom.gameCanvas.addEventListener('wheel', (e) => {
+        //     if(!AUDIO.soundInitialized) AUDIO.initAudio(simulationState.soundMuted);
+        //     e.preventDefault();
+        //     if (e.deltaY < 0) {simulationState.currentPixelsPerMeter *= 1.5; if(simulationState.currentPixelsPerMeter > 20) simulationState.currentPixelsPerMeter = 20;}
+        //     else {simulationState.currentPixelsPerMeter /= 1.5; if(simulationState.currentPixelsPerMeter < 1e-7) simulationState.currentPixelsPerMeter = 1e-7;}
+        // });
     }
 }
 
@@ -406,24 +441,29 @@ async function completeInitialization() {
         autoDensity: true,
         canvas: dom.gameCanvas, // Use the canvas from the React-rendered DOM
     });
-
+pixiApp.ticker.stop(); // Stop the ticker until we explicitly start it in gameLoop
     viewport = new Viewport({
         passiveWheel: false,
         events: pixiApp.renderer.events
     });
     viewport.drag().pinch().wheel().decelerate();
-    pixiApp.stage.addChild(viewport);
+  viewport.addEventListener('zoomed', (event) => {
+        simulationState.currentPixelsPerMeter = event.viewport.scale.x;
+        if (dom.zoomLevel) dom.zoomLevel.textContent = `Zoom: ${simulationState.currentPixelsPerMeter.toFixed(6)} px/m`;
+    });
 
     environmentContainer = new PIXI.Container();
     orbitContainer = new PIXI.Container();
     environmentContainer.addChild(orbitContainer);
-    pixiApp.stage.addChild(environmentContainer); // viewport.addChild(environmentContainer) if viewport controls this layer
+    viewport.addChild(environmentContainer); // viewport.addChild(environmentContainer) if viewport controls this layer
 
     smokeLayerContainer = new PIXI.Container();
-    pixiApp.stage.addChild(smokeLayerContainer); // viewport.addChild(smokeLayerContainer)
+    smokeLayerContainer.label = 'smokeLayerContainer'; // Name for easier debugging
+    smokeLayerContainer.addChild(new PIXI.Graphics({ label:"smokeTrail"})); // Placeholder for smoke graphics
+    viewport.addChild(smokeLayerContainer); // viewport.addChild(smokeLayerContainer)
 
     spacecraftLayerContainer = new PIXI.Container();
-    pixiApp.stage.addChild(spacecraftLayerContainer); // viewport.addChild(spacecraftLayerContainer)
+    viewport.addChild(spacecraftLayerContainer); // viewport.addChild(spacecraftLayerContainer)
 
     globalThis.__PIXI_APP__ = pixiApp; // For PIXI dev tools
 
@@ -437,11 +477,13 @@ async function completeInitialization() {
         dom, currentShipPartsConfig, spacecraftDesigns, initSimulation,
         dom.stagingCanvas, simulationState, partCatalog, AUDIO
     );
-
+  pixiApp.stage.addChild(viewport);
     setupEventListeners();
     initSimulation('template'); // Initial simulation setup
     pixiApp.ticker.add(gameLoop); // Start the game loop
-
+pixiApp.ticker.add((delta) => {
+    var trail = smokeLayerContainer.getChildByName('smokeTrail'); 
+}); // Add a PIXI ticker listener for smoke trail drawing
     // Initialize Inset View Pixi Application
     if (dom.insetCanvas) {
         insetApp = new PIXI.Application();
@@ -475,7 +517,11 @@ if (rootElement) {
     // Ensure the game logic initializes after React has rendered the DOM structure
     // For simple cases, a timeout of 0 can work to push execution to after the current render cycle.
     // A more robust solution might involve a callback from App.js after its first render (e.g., via useEffect).
-    setTimeout(completeInitialization, 0);
+    if (document.readyState !== 'loading') {completeInitialization(); }
+else { 
+    // If DOM is not ready, wait for it to load
+    document.addEventListener('DOMContentLoaded', completeInitialization); }
+   // setTimeout(completeInitialization, 0);
 
 } else {
     console.error("Failed to find the root element for React. App cannot start.");
