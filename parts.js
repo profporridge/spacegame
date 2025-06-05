@@ -1,6 +1,6 @@
 import { COLOR_NAMES, ISP_VACUUM_DEFAULT } from './constants.js'; // Added import
 
-// import {PIXI} from './main.js'; // Import PIXI from main.js, assuming it's globally available
+import {PIXI} from './main.js'; // Import PIXI from main.js, assuming it's globally available
 // In parts.js
 
 // Mock PIXI.Graphics for testing environment
@@ -23,7 +23,7 @@ const MockGraphics = function() {
         self: this, // To allow chaining like partGraphics.fill().stroke()
     };
 };
-const PIXI = { Graphics: MockGraphics }; // Replace actual PIXI.Graphics with the mock
+//const PIXI = { Graphics: MockGraphics }; // Replace actual PIXI.Graphics with the mock
 
 // Helper function to parse rgba string (copied from environment.js)
 function parseRgba(rgbaString) {
