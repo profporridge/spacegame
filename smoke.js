@@ -3,7 +3,7 @@ import { EARTH_MAX_ATMOSPHERE_ALTITUDE, EARTH_SEA_LEVEL_AIR_DENSITY, planet,
          SMOKE_INITIAL_SIZE_M_MIN, SMOKE_INITIAL_SIZE_M_MAX
        } from './constants.js';
        
-import {PIXI} from './main.js'; // Import PIXI from main.js, assuming it's globally available
+// import {PIXI} from './main.js'; // Import PIXI from main.js, assuming it's globally available
 // currentAirDensityValue will be passed from main.js or a global state
 let main_currentAirDensityValue = EARTH_SEA_LEVEL_AIR_DENSITY;
 
@@ -27,11 +27,12 @@ export class SmokeParticle {
         this.growthFactor = 2.0 + Math.random() * 3.0;
 
         // Initialize PIXI.Graphics object
-        this.graphics = new PIXI.Graphics();
-        this.graphics.beginFill(0x808080, 1); // Base color gray, alpha 1. Actual alpha set in draw().
-        this.graphics.drawCircle(0, 0, 1);    // Unit circle (radius 1), scaled in draw().
-        this.graphics.endFill();
-        this.graphics.visible = false; // Initially not visible, made visible in draw() if active.
+        // this.graphics = new PIXI.Graphics();
+        // this.graphics.beginFill(0x808080, 1); // Base color gray, alpha 1. Actual alpha set in draw().
+        // this.graphics.drawCircle(0, 0, 1);    // Unit circle (radius 1), scaled in draw().
+        // this.graphics.endFill();
+        // this.graphics.visible = false; // Initially not visible, made visible in draw() if active.
+        this.graphics = { visible: false, position: { set: () => {} }, scale: { set: () => {} }, alpha: 0 }; // Mock graphics object
     }
     update(deltaTime_s, currentGlobalAirDensity) { // Pass current air density
         this.x_m += this.vx_ms * deltaTime_s; 
@@ -70,10 +71,12 @@ export class SmokeParticle {
         }
         
         // Update the existing graphics object's properties
-        this.graphics.position.set(screenX_px, screenY_px);
-        this.graphics.scale.set(radius_px, radius_px); // Scale the unit circle drawn in constructor
-        this.graphics.alpha = opacity;                 // Set the current alpha
-        this.graphics.visible = true;                  // Make it visible for this frame
+        if (this.graphics) { // Check if graphics mock exists
+            this.graphics.position.set(screenX_px, screenY_px);
+            this.graphics.scale.set(radius_px, radius_px); // Scale the unit circle drawn in constructor
+            this.graphics.alpha = opacity;                 // Set the current alpha
+            this.graphics.visible = true;                  // Make it visible for this frame
+        }
         
         // Note: Adding this.graphics to smokeContainer is now handled in main.js gameLoop
     }

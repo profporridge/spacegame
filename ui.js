@@ -329,7 +329,11 @@ export function drawStagingAreaRocket(currentShipPartsConfig) {
    const screenHeight = 350; //uiState.stagingApp.height;
 
     stage.removeChildren(); // Clear previous drawing
-currentShipPartsConfigRef = currentShipPartsConfig;
+    currentShipPartsConfigRef = currentShipPartsConfig;
+    if (!currentShipPartsConfigRef || !Array.isArray(currentShipPartsConfigRef)) {
+        console.error("Invalid currentShipPartsConfigRef for staging area rocket drawing");
+        return;
+    }
     if (currentShipPartsConfigRef.length === 0) return; 
     
     const tempCraft = new Spacecraft(currentShipPartsConfigRef); 
