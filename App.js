@@ -78,8 +78,20 @@ function App() {
           </div>
         </div>
       </div>
-      {/* JavaScript Modules - Handled by React build process */}
-      {/* <script type="module" src="main.js"></script> */}
+
+      {/* Crash Notification Modal */}
+      <div id="crashModal" className="modal-overlay" style={{ display: 'none' }}>
+        <div className="modal-content">
+          <h2 className="modal-title">Mission Failed!</h2>
+          <p className="modal-message">
+            Your spacecraft has crashed. The impact was too severe for the landing gear to handle.
+          </p>
+          <div className="modal-buttons">
+            <button className="modal-button primary" id="restartButton">Try Again</button>
+            <button className="modal-button secondary" id="designButton">New Design</button>
+          </div>
+        </div>
+      </div>
     </React.Fragment>
   );
 }

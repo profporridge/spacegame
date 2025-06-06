@@ -13,13 +13,15 @@ let main_playGimbalSound = () => { };
 let main_simulationState = {};
 let main_smokeParticles = [];
 let main_oldSmokeParticles = [];
+let main_initSimulation = () => { };
 
-export function initializeSpacecraftAndParts(playEngineSoundFunc, playGimbalSoundFunc, simState, smokeArray, oldSmokeArray, airDensityVar, constantsToUse) {
+export function initializeSpacecraftAndParts(playEngineSoundFunc, playGimbalSoundFunc, simState, smokeArray, oldSmokeArray, airDensityVar, constantsToUse, initSimFunc) {
     main_playEngineSound = playEngineSoundFunc;
     main_playGimbalSound = playGimbalSoundFunc;
     main_simulationState = simState;
     main_smokeParticles = smokeArray;
     main_oldSmokeParticles = oldSmokeArray;
+    main_initSimulation = initSimFunc;
     if (constantsToUse) {
         CurrentConstants = constantsToUse;
     } else {
@@ -47,6 +49,8 @@ function parseRgba(rgbaString) {
 
 export class Spacecraft {
     constructor(partsConfigArray) {
+        this.dirty = true;
+        this.comDirty = true;
         this.partsConfigArray = partsConfigArray;
         this.parts = [];
         this.position_x_m = 0; this.position_y_m = CurrentConstants.planet.radius_m;
@@ -79,8 +83,11 @@ export class Spacecraft {
         this.logicalStackHeight_m = 0;
         this.maxWidth_m = 0;
         this.momentOfInertia_kg_m2 = 100; // Default from _reassemble
-
+        this.comOffset_m = 0;
         if (partsConfigArray && Array.isArray(partsConfigArray)) {
+            if (partsConfigArray !== this.partsConfigArray) {
+                this.dirty = true; this.comDirty = true;
+            }
             this.partsConfigArray = partsConfigArray; // Store for updatePhysics fallback if needed
             partsConfigArray.forEach(partConfig => {
                 let partInstance;
@@ -165,12 +172,15 @@ export class Spacecraft {
     }
     getCoMOffset_m() {
         if (this.totalMass_kg === 0) return this.logicalStackHeight_m / 2;
+        if (!this.comDirty) return this.comOffset_m;
         let weightedHeightSum = 0;
         this.parts.forEach(p => {
             const partCenterY = p.relative_y_m + p.height_m / 2;
             weightedHeightSum += p.mass * partCenterY;
         });
-        return weightedHeightSum / this.totalMass_kg;
+        this.comOffset_m = weightedHeightSum / this.totalMass_kg;
+        this.comDirty = false;
+        return this.comOffset_m;
     }
     calculateOrbitalParameters(apoapsisVar, periapsisVar) {
         if (this.totalMass_kg <= 0) {
@@ -214,22 +224,23 @@ export class Spacecraft {
     }
 
     draw(passedSpacecraftContainer, targetCanvasWidth, targetCanvasHeight, sfcScreenX_px, sfcScreenY_px, currentPPM, isStagingView = false) {
-        // if (this.cachedGraphics && passedSpacecraftContainer)
-        // {
-        //     if (!passedSpacecraftContainer.children.includes(this.cachedGraphics)) {   
-        //     passedSpacecraftContainer.addChild(this.cachedGraphics);
-        //         return;
-        //     }
-        //const shipGraphicsContainer = new PIXI.Container();
-        const comOffset_m = this.getCoMOffset_m(); // Distance from stack bottom to CoM (Y-up)
-        const shipGraphicsContainer = passedSpacecraftContainer;
-        if (shipGraphicsContainer.children.length > 0) {
-            shipGraphicsContainer.position.set(sfcScreenX_px, sfcScreenY_px);
-            shipGraphicsContainer.rotation = this.angle_rad;
+
+
+        var spacecraftContainer = passedSpacecraftContainer.getChildByLabel("spacecraftContainer");
+        if (!spacecraftContainer) {
+            spacecraftContainer = new PIXI.Container();
+            spacecraftContainer.label = "spacecraftContainer";
+            passedSpacecraftContainer.addChild(spacecraftContainer);
         }
-        else {
-            // shipGraphicsContainer.removeChildren(); // Clear previous graphics
-            shipGraphicsContainer.label = 'Spacecraft'; // Label for debugging
+    
+        var shipGraphicsContainer = spacecraftContainer.getChildByLabel("SpacecraftGraphicsContainer");
+        if (shipGraphicsContainer && this.dirty) {shipGraphicsContainer.removeChildren();shipGraphicsContainer.destroy(); }
+        if (!shipGraphicsContainer || this.dirty) {
+            shipGraphicsContainer = new PIXI.Container();
+            shipGraphicsContainer.label = "SpacecraftGraphicsContainer";
+            spacecraftContainer.addChild(shipGraphicsContainer);
+            this.dirty = false; 
+
             shipGraphicsContainer.position.set(sfcScreenX_px, sfcScreenY_px);
             shipGraphicsContainer.rotation = this.angle_rad;
 
@@ -243,7 +254,7 @@ export class Spacecraft {
                 // CoM is (0,0) in shipGraphicsContainer.
                 // part.relative_y_m is bottom of part from stack bottom (Y-up model).
                 // part_top_from_com_m is part's top edge distance from CoM (Y-up model).
-                const part_top_from_com_m = (part.relative_y_m + part.height_m) - comOffset_m;
+                const part_top_from_com_m = (part.relative_y_m + part.height_m) - this.getCoMOffset_m();
 
                 // Convert to Pixi's coordinate system (Y-down) for local positions within shipGraphicsContainer
                 const partTopLeftX_local = -drawWidth_px / 2; // Centered
@@ -251,9 +262,9 @@ export class Spacecraft {
 
                 part.draw(shipGraphicsContainer, partTopLeftX_local, partTopLeftY_local, currentPPM, isStagingView); // Show nodes if not inset
             });
-        }
+            }
         shipGraphicsContainer.getChildByLabel('Flame')?.destroy(); // Remove previous flame graphics if any
-        if (this.currentThrust_N > 0) {
+        if (this.currentThrust_N > 0 && !isStagingView) {
             this.parts.forEach(p => {
                 if (p.type === 'engine' && p.isActive) {
 
@@ -261,7 +272,7 @@ export class Spacecraft {
 
                     // Engine's nozzle (bottom of engine part) position relative to CoM
                     // p.relative_y_m is bottom of engine from stack bottom (Y-up model)
-                    const engineNozzle_y_from_com_m = p.relative_y_m - comOffset_m;
+                    const engineNozzle_y_from_com_m = p.relative_y_m - this.getCoMOffset_m;
                     // Convert to Pixi's Y-down, relative to CoM (shipGraphicsContainer origin)
                     const engineNozzle_y_local_px = -engineNozzle_y_from_com_m * currentPPM;
 
@@ -292,7 +303,7 @@ export class Spacecraft {
                 }
             });
         }
-        this.cachedGraphics = shipGraphicsContainer.children;
+     //   this.cachedGraphics = shipGraphicsContainer.children;
         // passedSpacecraftContainer.addChild(shipGraphicsContainer);
     }
 
@@ -525,6 +536,30 @@ export class Spacecraft {
                 const normY = this.position_y_m / distanceToPlanetCenter_m;
                 this.position_x_m = normX * CurrentConstants.planet.radius_m; // Use CurrentConstants
                 this.position_y_m = normY * CurrentConstants.planet.radius_m; // Use CurrentConstants
+            }
+
+            // Show crash modal
+            const crashModal = document.getElementById('crashModal');
+            if (crashModal) {
+                crashModal.style.display = 'flex';
+                
+                // Add event listeners for modal buttons
+                const restartButton = document.getElementById('restartButton');
+                const designButton = document.getElementById('designButton');
+                
+                if (restartButton) {
+                    restartButton.onclick = () => {
+                        crashModal.style.display = 'none';
+                        main_initSimulation('template');
+                    };
+                }
+                
+                if (designButton) {
+                    designButton.onclick = () => {
+                        crashModal.style.display = 'none';
+                        main_initSimulation('staging');
+                    };
+                }
             }
         }
 

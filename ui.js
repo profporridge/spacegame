@@ -33,8 +33,8 @@ export async function initializeUI(domRefs, shipPartsConfigRefFromMain, designsR
         await uiState.stagingApp.init({ // Initialize the Pixi app{
           //  renderer: sharedRenderer,// sharedRenderer, // Use the shared renderer from main.js
            canvas: stagingCanvasElement, // Use the canvas from domElements
-           // width: stagingCanvasElement.width,
-          //  height: stagingCanvasElement.height,
+            width: 200,
+           height: 350,
             backgroundColor: 0x383838, // Dark gray background like before
             // resolution: window.devicePixelRatio || 1,
             // autoDensity: true,

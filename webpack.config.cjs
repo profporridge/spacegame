@@ -38,11 +38,11 @@ module.exports = {
   devServer: {
     static: {
       directory: path.join(__dirname, 'public'), // Serve files from public directory
-      directory: path.join(__dirname, 'images'), // Serve files from public directory
     },
     compress: true,
     port: 3000, // Development server port
     historyApiFallback: true, // Redirect all 404s to index.html
+ 
   },
   devtool: 'source-map', // Optional: for better debugging
 };

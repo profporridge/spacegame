@@ -41,11 +41,93 @@ export const MAX_OLD_SMOKE_PARTICLES = 10;
 export const SMOKE_PERSIST_CHANCE = 0.07;
 export const ISP_VACUUM_DEFAULT = 300;
 export const LANDING_GEAR_MAX_ABSORPTION_SPEED_M_S = 5.0; // Max safe landing speed in m/s
+export const MOON_MASS_KG = 7.34767309e22;
+export const MOON_RADIUS_M = 1737100;
+export const MOON_ORBIT_RADIUS_M = 384400000; // Average distance from Earth
+export const MOON_ORBITAL_PERIOD_S = 27.322 * 24 * 3600; // 27.322 days in seconds
+export const PLANET_ROTATION_PERIOD_S = 24 * 3600; // 24 hours in seconds
+
+// Simplified continent data (approximate shapes)
+export const CONTINENTS = [
+    {
+        name: "North America",
+        color: "#4CAF50",
+        points: [
+            {x: -0.4, y: 0.3}, {x: -0.3, y: 0.4}, {x: -0.2, y: 0.35},
+            {x: -0.1, y: 0.4}, {x: 0, y: 0.35}, {x: 0.1, y: 0.3},
+            {x: 0.2, y: 0.25}, {x: 0.3, y: 0.2}, {x: 0.2, y: 0.1},
+            {x: 0.1, y: 0.05}, {x: -0.1, y: 0}, {x: -0.2, y: 0.1},
+            {x: -0.3, y: 0.15}, {x: -0.4, y: 0.2}
+        ]
+    },
+    {
+        name: "South America",
+        color: "#8BC34A",
+        points: [
+            {x: -0.2, y: -0.1}, {x: -0.15, y: -0.2}, {x: -0.1, y: -0.3},
+            {x: -0.05, y: -0.4}, {x: 0, y: -0.45}, {x: 0.1, y: -0.4},
+            {x: 0.15, y: -0.3}, {x: 0.1, y: -0.2}, {x: 0, y: -0.15},
+            {x: -0.1, y: -0.1}
+        ]
+    },
+    {
+        name: "Europe",
+        color: "#CDDC39",
+        points: [
+            {x: 0.1, y: 0.3}, {x: 0.2, y: 0.35}, {x: 0.3, y: 0.3},
+            {x: 0.35, y: 0.25}, {x: 0.3, y: 0.2}, {x: 0.25, y: 0.15},
+            {x: 0.2, y: 0.2}, {x: 0.15, y: 0.25}, {x: 0.1, y: 0.3}
+        ]
+    },
+    {
+        name: "Africa",
+        color: "#FFC107",
+        points: [
+            {x: 0.1, y: 0.1}, {x: 0.2, y: 0.05}, {x: 0.3, y: 0},
+            {x: 0.35, y: -0.1}, {x: 0.3, y: -0.2}, {x: 0.2, y: -0.25},
+            {x: 0.1, y: -0.2}, {x: 0, y: -0.15}, {x: -0.1, y: -0.1},
+            {x: -0.05, y: 0}, {x: 0, y: 0.05}, {x: 0.1, y: 0.1}
+        ]
+    },
+    {
+        name: "Asia",
+        color: "#FF9800",
+        points: [
+            {x: 0.3, y: 0.2}, {x: 0.4, y: 0.15}, {x: 0.45, y: 0.1},
+            {x: 0.5, y: 0}, {x: 0.45, y: -0.1}, {x: 0.4, y: -0.15},
+            {x: 0.3, y: -0.1}, {x: 0.25, y: 0}, {x: 0.2, y: 0.1},
+            {x: 0.25, y: 0.15}, {x: 0.3, y: 0.2}
+        ]
+    },
+    {
+        name: "Australia",
+        color: "#FF5722",
+        points: [
+            {x: 0.4, y: -0.2}, {x: 0.45, y: -0.25}, {x: 0.5, y: -0.3},
+            {x: 0.45, y: -0.35}, {x: 0.4, y: -0.3}, {x: 0.35, y: -0.25},
+            {x: 0.4, y: -0.2}
+        ]
+    }
+];
 
 export const planet = { 
-    mass_kg: EARTH_MASS_KG, radius_m: EARTH_RADIUS_M, color: '#3A8D3A', 
+    mass_kg: EARTH_MASS_KG, 
+    radius_m: EARTH_RADIUS_M, 
+    color: '#3A8D3A', 
     atmosphereColor: 'rgba(173, 216, 230, 0.15)', 
-    maxAtmosphereRadius_m: EARTH_RADIUS_M + EARTH_MAX_ATMOSPHERE_ALTITUDE
+    maxAtmosphereRadius_m: EARTH_RADIUS_M + EARTH_MAX_ATMOSPHERE_ALTITUDE,
+    rotationPeriod_s: PLANET_ROTATION_PERIOD_S,
+    currentRotation_rad: 0,
+    moon: {
+        mass_kg: MOON_MASS_KG,
+        radius_m: MOON_RADIUS_M,
+        orbitRadius_m: MOON_ORBIT_RADIUS_M,
+        orbitalPeriod_s: MOON_ORBITAL_PERIOD_S,
+        color: '#CCCCCC',
+        currentAngle_rad: 0, 
+        moonX_m: 0,
+        moonY_m: 0, 
+    }
 };
 
 export const COLOR_NAMES = {"aliceblue":"#f0f8ff", "antiquewhite":"#faebd7", "aqua":"#00ffff", "aquamarine":"#7fffd4", "azure":"#f0ffff", "beige":"#f5f5dc", "bisque":"#ffe4c4", "black":"#000000", "blanchedalmond":"#ffebcd", "blue":"#0000ff", "blueviolet":"#8a2be2", "brown":"#a52a2a", "burlywood":"#deb887", "cadetblue":"#5f9ea0", "chartreuse":"#7fff00", "chocolate":"#d2691e", "coral":"#ff7f50", "cornflowerblue":"#6495ed", "cornsilk":"#fff8dc", "crimson":"#dc143c", "cyan":"#00ffff", "darkblue":"#00008b", "darkcyan":"#008b8b", "darkgoldenrod":"#b8860b", "darkgray":"#a9a9a9", "darkgreen":"#006400", "darkkhaki":"#bdb76b", "darkmagenta":"#8b008b", "darkolivegreen":"#556b2f", "darkorange":"#ff8c00", "darkorchid":"#9932cc", "darkred":"#8b0000", "darksalmon":"#e9967a", "darkseagreen":"#8fbc8f", "darkslateblue":"#483d8b", "darkslategray":"#2f4f4f", "darkturquoise":"#00ced1", "darkviolet":"#9400d3", "deeppink":"#ff1493", "deepskyblue":"#00bfff", "dimgray":"#696969", "dodgerblue":"#1e90ff", "firebrick":"#b22222", "floralwhite":"#fffaf0", "forestgreen":"#228b22", "fuchsia":"#ff00ff", "gainsboro":"#dcdcdc", "ghostwhite":"#f8f8ff", "gold":"#ffd700", "goldenrod":"#daa520", "gray":"#808080", "green":"#008000", "greenyellow":"#adff2f",
