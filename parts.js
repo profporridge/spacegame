@@ -111,9 +111,9 @@ export class Part {
     }
 
    graphics(currentPPM, targetTopLeftX_px, targetTopLeftY_px, drawWidth_px, drawHeight_px) {
-    // if (this.cachedGraphics) { // Caching might be problematic with mock
-    //     return { partGraphics: this.cachedGraphics };
-    // }
+    if (this.cachedGraphics) { // Caching might be problematic with mock
+        return { partGraphics: this.cachedGraphics };
+    }
     const partGraphics = new PIXI.Graphics(); // Uses MockGraphics
 
         const mainColor = parseRgba(this.color);

@@ -3,11 +3,14 @@ import {
     CLOUD_PARALLAX_FACTOR_MIN, CLOUD_PARALLAX_FACTOR_MAX, CLOUD_BASE_SIZE_MIN, CLOUD_BASE_SIZE_MAX,
     NUM_SURFACE_FEATURES, MAX_MOUNTAIN_HEIGHT_M, MAX_TREE_HEIGHT_M, SURFACE_FEATURE_VISIBILITY_PPM,
     ORBIT_PATH_VISIBILITY_ALTITUDE_M, ORBIT_PATH_VISIBILITY_PPM, ORBIT_PATH_SEGMENTS,
-    GRAVITATIONAL_CONSTANT_G, SKY_BLUE_COLOR, SPACE_BLACK_COLOR, EARTH_MAX_ATMOSPHERE_ALTITUDE, CONTINENTS
+    GRAVITATIONAL_CONSTANT_G, SKY_BLUE_COLOR, SPACE_BLACK_COLOR, EARTH_MAX_ATMOSPHERE_ALTITUDE, CONTINENTS, EARTH_SVG
 } from './constants.js';
-import { PIXI } from './main.js'; // Import PIXI from main.js, assuming it's globally available
-
-
+import * as PIXI from 'pixi.js';
+import earth_svg from './images/Asset 1.svg';
+// Basic progress logging
+const onProgress = (progress) => {
+    console.log(`Loading: ${Math.round(progress * 100)}%`);
+};
 export function generateClouds(cloudLayersArrayRef) {
 
 
@@ -224,7 +227,7 @@ function parseRgba(rgbaString) {
 function drawContinents(container) {
     const planetScreenX = 0;
     const planetScreenY = 0;
-    const planetRadius_px = planet.radius_m;//* pixelsPerMeter;
+    const planetRadius_px = 2 * planet.radius_m;//* pixelsPerMeter;
 
     // // Only draw if planet is visible
     // if (planetScreenX + planetRadius_px < 0 || planetScreenX - planetRadius_px > screenWidth ||
@@ -238,7 +241,7 @@ function drawContinents(container) {
     var continentsContainer = container.getChildByLabel("continents");
     if (!continentsContainer) {
         continentsContainer = new PIXI.Container();
-        continentsContainer.name = "continents";
+        continentsContainer.label = "continents";
         container.addChild(continentsContainer);
 
         CONTINENTS.forEach(continent => {
@@ -295,10 +298,10 @@ let X = 0;
 let Y = 0;
 export function updateplanetPosition(deltaTime_s) {
     updatePlanetRotation(deltaTime_s);
-    X = planet.radius_m * Math.sin(planet.currentRotation_rad);
-    Y = -planet.radius_m * Math.cos(planet.currentRotation_rad);
+    //X = planet.radius_m * Math.sin(planet.currentRotation_rad);
+    //Y = -planet.radius_m * Math.cos(planet.currentRotation_rad);
 }
-export function drawPlanet(container, deltaTime_s = 0) {
+export async function drawPlanet(container, deltaTime_s = 0) {
     // Draw planet base
 
     const planetRadius_px = planet.radius_m;
@@ -311,12 +314,21 @@ export function drawPlanet(container, deltaTime_s = 0) {
     var planetGraphics = planetContainer.getChildByLabel("planet");
     if (!planetGraphics) {
         planetGraphics = new PIXI.Graphics();
-        planetGraphics.name = "planet";
         planetContainer.addChild(planetGraphics);
-
-        planetGraphics.circle(0, 0, planetRadius_px)
-            .fill(planet.color);
-        drawContinents(planetGraphics);
+        planetGraphics.pivot.set(500,500);
+        planetGraphics.svg(EARTH_SVG);
+        planetGraphics.scale.set(
+            planetRadius_px / 500,
+            planetRadius_px / 500
+        );
+       // planetGraphics.pivot.set(0.5);
+        planetGraphics.label = "planet";
+        
+        
+        planetGraphics.position.set(0, 0);
+        // planetGraphics.circle(0, 0, planetRadius_px)
+        //     .fill(planet.color);
+      //  drawContinents(planetGraphics);
     }
 
 
@@ -326,15 +338,15 @@ export function drawPlanet(container, deltaTime_s = 0) {
     // Draw continents
 
     updateplanetPosition(deltaTime_s);
-    planetGraphics.rotation = planet.currentRotation_rad;
-    if (!container.getChildByLabel("atmosphere")) {
+    planetContainer.rotation = planet.currentRotation_rad;
+    if (!planetContainer.getChildByLabel("atmosphere")) {
         // Draw atmosphere
         const atmosphereGraphics = new PIXI.Graphics();
         atmosphereGraphics.beginFill(planet.atmosphereColor);
         atmosphereGraphics.drawCircle(0, 0, planetRadius_px + EARTH_MAX_ATMOSPHERE_ALTITUDE); // Slightly larger than planet
         atmosphereGraphics.endFill();
         atmosphereGraphics.label = "atmosphere";
-        container.addChild(atmosphereGraphics);
+        planetContainer.addChild(atmosphereGraphics);
     }
 }
 

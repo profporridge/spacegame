@@ -67,38 +67,40 @@ const spacecraftDesigns = {
     "SmallProbe": [{ type: 'engine', name: 'Small Engine', thrust_N: 50000, fuelConsumptionRate_kg_s: 20, dryMass_kg: 200, width_m: 1, height_m: 1, isp: 280 }, { type: 'tank', name: 'Small Tank', fuelCapacity_kg: 1000, dryMass_kg: 100, width_m: 1, height_m: 2 }, { type: 'fairing', name: '1.2m Fairing', dryMass_kg: 50, width_m: 1.2, height_m: 1.5 }, { type: 'pod', name: 'Probe Core', dryMass_kg: 150, width_m: 0.8, height_m: 0.8, color: 'gold' }],
     "HeavyLifter_Lower": [{ type: 'engine', name: 'Heavy Engine', thrust_N: 1000000, fuelConsumptionRate_kg_s: 300, dryMass_kg: 5000, width_m: 4, height_m: 3, isp: 300 }, { type: 'tank', name: 'Large Tank', fuelCapacity_kg: 50000, dryMass_kg: 5000, width_m: 4, height_m: 15 },]
 };
+const PLANET_CONTAINER = "planetContainer";
 // Object.keys(spacecraftDesigns).forEach(key => spacecraftDesigns[key].reverse());
 
 
-function initSimulation(launchSource = 'template') {
+async function initSimulation(launchSource = 'template') {
     const urlParams = new URLSearchParams(window.location.search);
     if (dom.statsPanel) { dom.statsPanel.style.display = (urlParams.get('stats') === 'true') ? 'block' : 'none'; }
 
-    let designToLoad;
-    if (launchSource === 'staging' && currentShipPartsConfig.length > 0) {
-        designToLoad = currentShipPartsConfig;
-    } else {
-        const selectedDesignName = dom.designSelect.value || simulationState.currentDesignName;
-        simulationState.currentDesignName = selectedDesignName;
-        designToLoad = spacecraftDesigns[selectedDesignName];
-    }
-    if (!designToLoad || designToLoad.length === 0) {
-        if (Object.keys(spacecraftDesigns).length > 0) {
-            designToLoad = spacecraftDesigns[Object.keys(spacecraftDesigns)[0]];
-        } else {
-            alert("Error: No spacecraft designs available."); return;
-        }
-    }
-    spacecraftInstance = new Spacecraft(designToLoad);
+    // let designToLoad;
+    // if (launchSource === 'staging' && currentShipPartsConfig.length > 0) {
+    //     designToLoad = currentShipPartsConfig;
+    // } else {
+    //     const selectedDesignName = dom.designSelect.value || simulationState.currentDesignName;
+    //     simulationState.currentDesignName = selectedDesignName;
+    //     designToLoad = spacecraftDesigns[selectedDesignName];
+    // }
+    // if (!designToLoad || designToLoad.length === 0) {
+    //     if (Object.keys(spacecraftDesigns).length > 0) {
+    //         designToLoad = spacecraftDesigns[Object.keys(spacecraftDesigns)[0]];
+    //     } else {
+    //         alert("Error: No spacecraft designs available."); return;
+    //     }
+    // }
+    // spacecraftInstance = new Spacecraft(designToLoad);
 
     // Generate random angle for position on Earth's perimeter
     const randomAngle = Math.random() * 2 * Math.PI;
-    spacecraftInstance.position_x_m = C.planet.radius_m * Math.sin(randomAngle);
-    spacecraftInstance.position_y_m = -C.planet.radius_m * Math.cos(randomAngle);
-    spacecraftInstance.angle_rad = randomAngle; // Align spacecraft with surface
-    spacecraftInstance.velocity_x_ms = 0; spacecraftInstance.velocity_y_ms = 0;
-    spacecraftInstance.angularVelocity_rad_s = 0;
-    viewport.follow(spacecraftLayerContainer);
+    // 
+    spacecraftInstance.resetToPostionOnSurface(randomAngle);
+    resetViewport();
+    viewport.fitHeight(4*C.EARTH_RADIUS_M, true);
+    //spacecraftInstance.angularVelocity_rad_s = 0;
+   // viewport.follow(spacecraftLayerContainer);
+//   viewport.onDragStart = () => {viewport.stopFollow();}
     simulationState.isLaunched = false; simulationState.engineActive = false;
     simulationState.timeElapsed = 0; simulationState.lastTimestamp = 0;
     const comX = spacecraftInstance.position_x_m + spacecraftInstance.getCoMOffset_m() * Math.sin(spacecraftInstance.angle_rad);
@@ -123,33 +125,68 @@ function initSimulation(launchSource = 'template') {
         currentShipPartsConfig = JSON.parse(JSON.stringify(templateToLoadCfg));
     }
 
-    ENV.drawPlanet(environmentContainer, 0);
+    await ENV.drawPlanet(environmentContainer, 0);
+    viewport.fitWidth(4 * C.EARTH_RADIUS_M, true);
+
     UI.drawStagingAreaRocket(currentShipPartsConfig);
-    // UI.updateStagingStats(); // Called within drawStagingAreaRocket or separately if needed
+       // --- Spacecraft Drawing ---
+       if (spacecraftInstance) {
+
+         spacecraftInstance.draw(
+            environmentContainer.getChildByLabel(C.PLANET_CONTAINER,true),
+            false
+         );
+         console.log("SPACECRAFT_GRAPHICS_CONTAINER", environmentContainer.getChildByLabel(C.SPACECRAFT_GRAPHICS_CONTAINER, true));
+
+        let spacecraftContainer =   viewport.getChildByLabel(C.SPACECRAFT_GRAPHICS_CONTAINER, true);
+        spacecraftInstance.position = spacecraftContainer?.getGlobalPosition();
+    viewport.moveCenter( spacecraftInstance.position.x, spacecraftInstance.position.y); 
+    initParticles();
+
+    }
+
+}
+
+function initParticles(){
 
 }
 
 function updateCamera() {
     if (!spacecraftInstance) return;
-
-
-    const comOffset_m = spacecraftInstance.getCoMOffset_m();
-    const comX = spacecraftInstance.position_x_m + comOffset_m * Math.sin(spacecraftInstance.angle_rad);
-    const comY = spacecraftInstance.position_y_m - comOffset_m * Math.cos(spacecraftInstance.angle_rad);
-    viewport.ensureVisible(comX, comY, 1, 1, true);
+let spacecraftContainer =   viewport.getChildByLabel(C.SPACECRAFT_GRAPHICS_CONTAINER, true);
+let newPos = new PIXI.Point(spacecraftContainer._position.x, spacecraftContainer._position.y);
+spacecraftInstance.position = spacecraftContainer?.getGlobalPosition();
+   viewport.moveCenter(spacecraftInstance.position.x, spacecraftInstance.position.y); 
+    //console.log("spacecraftInstance.position", spacecraftInstance.position);
+    //const comOffset_m = spacecraftInstance.getCoMOffset_m();
+    //const comX = spacecraftInstance.position_x_m + comOffset_m * Math.sin(spacecraftInstance.angle_rad);
+    //const comY = spacecraftInstance.position_y_m - comOffset_m * Math.cos(spacecraftInstance.angle_rad);
+   // viewport.ensureVisible(spacecraftInstance.position.x, spacecraftInstance.position.y, 1, 1, true);
 
     // const targetCameraX_m = comX; const targetCameraY_m = comY; 
     // const lerpFactor = 0.1; 
     // simulationState.cameraX_m += (targetCameraX_m - simulationState.cameraX_m) * lerpFactor; 
     // simulationState.cameraY_m += (targetCameraY_m - simulationState.cameraY_m) * lerpFactor; 
 }
+
+function resetViewport(){
+    if(spacecraftInstance.position)
+    viewport.animate({
+        x: spacecraftInstance.position?.x,
+        y: spacecraftInstance.position?.y,
+        duration: 5000,
+        //ease: 'power2.inOut',
+        width: 250
+    });
+}
 let smokeTrailDeltaTime_s = 0; // For smoke trail timing
 let smokeTrailPoints = []; // For smoke trail points
 function gameLoop(ticker) {
     var deltaTime_s = ticker.deltaTime
-    if (!simulationState.lastTimestamp) simulationState.lastTimestamp = ticker.timeElapsed;
+    //if (!simulationState.lastTimestamp) simulationState.lastTimestamp = ticker.last;
+    simulationState.timeElapsed =  ticker.elapsedMS
     
-    simulationState.lastTimestamp = ticker.timeElapsed;
+    simulationState.lastTimestamp = ticker.lastTime;
 
     // Update graphics
     //updateGraphics(deltaTime_s);
@@ -166,11 +203,11 @@ function gameLoop(ticker) {
 
   //  const scaledDeltaTime_s = (deltaTime_ms / 1000) * C.TIME_SCALE;
 
-    if (spacecraftInstance && simulationState.isLaunched && !simulationState.landed) {
-        simulationState.timeElapsed += deltaTime_s; // Update time elapsed in seconds
-    }
+    // if (spacecraftInstance && simulationState.isLaunched && !simulationState.landed) {
+    //     simulationState.timeElapsed += deltaTime_s; // Update time elapsed in seconds
+    // }
 
-    if (spacecraftInstance) {
+    if (spacecraftInstance && simulationState.isLaunched) {
         const physicsResult = spacecraftInstance.updatePhysics(
             deltaTime_s,
             simulationState.engineActive,
@@ -180,8 +217,10 @@ function gameLoop(ticker) {
             apoapsisAGL, periapsisAGL,
             smokeParticles, simulationState
         );
-        currentAirDensityValue = physicsResult.currentAirDensity;
-        currentDragForceMagnitude = physicsResult.currentDrag;
+      //  currentAirDensityValue = physicsResult.currentAirDensity;
+       // currentDragForceMagnitude = physicsResult.currentDrag;
+           // --- Spacecraft Drawing ---
+  
     }
 
     updateCamera();
@@ -234,7 +273,7 @@ function gameLoop(ticker) {
     //     var smokeTrail = smokeLayerContainer.getChildByName('smokeTrail');
     //     if (!smokeTrail) {
     //         smokeTrail = new PIXI.Graphics();
-    //         smokeTrail.name = 'smokeTrail';
+    //         smokeTrail.label = 'smokeTrail';
     //         smokeLayerContainer.addChild(smokeTrail);
     //     }
     //     smokeTrail.clear();
@@ -259,7 +298,7 @@ function gameLoop(ticker) {
     //pixiApp.stage.removeChildren();
 
     // Draw environment (Earth, atmosphere, etc.)
-    ENV.drawPlanet(environmentContainer, deltaTime_s);
+    
 
     // Draw moon
 
@@ -268,33 +307,15 @@ function gameLoop(ticker) {
     // calculateLighting(environmentContainer, simulationState.cameraX_m, simulationState.cameraY_m,
     //     simulationState.currentPixelsPerMeter, pixiApp.screen.width, pixiApp.screen.height);
 
-    // --- Spacecraft Drawing ---
-    if (spacecraftInstance) {
-        const comOffset_m = spacecraftInstance.getCoMOffset_m();
-        const sfcComX_world = spacecraftInstance.position_x_m + comOffset_m * Math.sin(spacecraftInstance.angle_rad);
-        const sfcComY_world = (spacecraftInstance.position_y_m + comOffset_m * Math.cos(spacecraftInstance.angle_rad));
-        const sfcComScreenX_main = pixiApp.screen.width / 2 + (sfcComX_world - simulationState.cameraX_m) * simulationState.currentPixelsPerMeter;
-        const sfcComScreenY_main = pixiApp.screen.height / 2 - (sfcComY_world - simulationState.cameraY_m) * simulationState.currentPixelsPerMeter;
-
-  
-        // Initial spacecraft draw
-        spacecraftInstance.draw(
-            spacecraftLayerContainer,
-            pixiApp.screen.width,
-            pixiApp.screen.height,
-            0, // Initial position will be set by updateGraphics
-            0,
-            simulationState.currentPixelsPerMeter
-        );
-    }
-
+ 
+    ENV.drawPlanet(environmentContainer, deltaTime_s);
     UI.updateStatsDisplay(simulationState, spacecraftInstance, apoapsisAGL.value, periapsisAGL.value);
 
     // Inset view drawing
     if (insetApp && spacecraftInstance && simulationState.currentPixelsPerMeter < C.INSET_VIEW_PPM_THRESHOLD) {
         if (dom.insetCanvas) dom.insetCanvas.style.display = 'block'; // Check if dom.insetCanvas exists
         insetSpacecraftContainer.removeChildren();
-
+        environmentContainer.getChildByLabel(C.SPACECRAFT_GRAPHICS_CONTAINER,true).scale.set(1000);
         const largerCraftDim_m = Math.max(spacecraftInstance.logicalStackHeight_m, spacecraftInstance.maxWidth_m, 1);
         const insetPPM = C.INSET_VIEW_TARGET_SIZE_PX / largerCraftDim_m;
         const insetSfcScreenX = insetApp.screen.width / 2;
@@ -314,41 +335,53 @@ function gameLoop(ticker) {
     }
 }
 
+
+
 function setupEventListeners() {
     // Note: 'dom.launchButton' might not exist if it was removed from the JSX.
     // The event listeners will only be attached if the elements are found by their ID in the React-rendered DOM.
 
     if (dom.launchButton) { // This specific button might be removed in JSX
-        dom.launchButton.addEventListener('click', () => {
+        dom.launchButton.addEventListener('click', async () => {
             if (!AUDIO.soundInitialized) AUDIO.initAudio(simulationState.soundMuted);
-            initSimulation('template');
+           // await initSimulation('template');
             if (spacecraftInstance) {
                 simulationState.isLaunched = true; simulationState.landed = false;
-                pixiApp.ticker.start(); // Start the PIXI ticker if not already runningapp
                 simulationState.engineActive = spacecraftInstance.currentFuel_kg > 0;
                 dom.launchButton.textContent = simulationState.engineActive ? "Engine Active (TPL)" : (spacecraftInstance.currentFuel_kg > 0 ? "Engine Off (TPL)" : "Out of Fuel (TPL)");
                 dom.launchButton.disabled = spacecraftInstance.currentFuel_kg <= 0 && !simulationState.engineActive;
+                pixiApp.ticker.start(); 
             }
         });
     }
 
     if (dom.launchCurrentBuildButton) {
-        dom.launchCurrentBuildButton.addEventListener('click', () => {
+        dom.launchCurrentBuildButton.addEventListener('click', async () => {
             if (!AUDIO.soundInitialized) AUDIO.initAudio(simulationState.soundMuted);
-            pixiApp.ticker.start(); // Start the PIXI ticker if not already runningapp
+          //  stopSimulation();
+            viewport.fitWidth(4 * C.EARTH_RADIUS_M, true);
             if (currentShipPartsConfig.length === 0) { alert("Staging area is empty!"); return; }
-            initSimulation('staging');
+           // await initSimulation('staging');
             if (spacecraftInstance) {
+                var planetContainer = environmentContainer?.getChildByLabel(C.PLANET_CONTAINER);
+                // on Launch we reparent the spacecraft into the parent of the planet container so that it no longer rotates with the planet
+                if( planetContainer)
+                environmentContainer?.reparentChildAt(planetContainer?.getChildByLabel(C.SPACECRAFT_GRAPHICS_CONTAINER,true), 0);
+                //environmentContainer.getChildByLabel(SPACECRAFT_GRAPHICS_CONTAINER,true).reparentAt( environmentContainer.getChildByLabel("planetContainer",true), 0);
+                resetViewport();
                 simulationState.isLaunched = true; simulationState.landed = false;
                 simulationState.engineActive = spacecraftInstance.currentFuel_kg > 0;
                 if (dom.launchButton) dom.launchButton.disabled = true;
+                  pixiApp.ticker.start(); // Start the PIXI ticker if not already runningapp
             }
         });
     }
     if (dom.resetButton) {
-        dom.resetButton.addEventListener('click', () => {
+        dom.resetButton.addEventListener('click', async () => {
+            stopSimulation();
+            viewport.fit(true);
             if (!AUDIO.soundInitialized) AUDIO.initAudio(simulationState.soundMuted);
-            initSimulation('template');
+            await initSimulation('template');
             if (dom.launchButton) dom.launchButton.disabled = false;
         });
     }
@@ -356,15 +389,23 @@ function setupEventListeners() {
         dom.muteButton.addEventListener('click', () => AUDIO.toggleMuteAudio(simulationState.soundMuted, simulationState.engineActive, spacecraftInstance ? spacecraftInstance.currentThrust_N / (spacecraftInstance.maxThrust_N || 1) : 0, simulationState));
     }
     if (dom.designSelect) {
-        dom.designSelect.addEventListener('change', (event) => {
+        dom.designSelect.addEventListener('change', async (event) => {
+            stopSimulation();
             simulationState.currentDesignName = event.target.value;
             const selectedDesign = spacecraftDesigns[simulationState.currentDesignName];
-            if (selectedDesign) { currentShipPartsConfig = JSON.parse(JSON.stringify(selectedDesign)); }
+            if (selectedDesign) { 
+                currentShipPartsConfig = JSON.parse(JSON.stringify(selectedDesign)); 
+                spacecraftInstance = new Spacecraft(currentShipPartsConfig, simulationState, C, initSimulation);
+                UI.drawStagingAreaRocket(currentShipPartsConfig);
+                UI.updateStagingStats();
+                await initSimulation('template');
+            }
             else { currentShipPartsConfig = []; }
-            UI.drawStagingAreaRocket(currentShipPartsConfig);
-            UI.updateStagingStats();
-            initSimulation('template');
+           
         });
+        dom.designSelect.selectedIndex = 0;
+        const event = new Event('change');
+        dom.designSelect.dispatchEvent(event);
     }
 
     document.addEventListener('keydown', (e) => {
@@ -392,8 +433,20 @@ function setupEventListeners() {
     makePressReleaseButton(dom.rotateLeftButton, 'rotateLeft');
     makePressReleaseButton(dom.rotateRightButton, 'rotateRight');
 
-    if (dom.zoomInButton) dom.zoomInButton.addEventListener('click', () => { if (!AUDIO.soundInitialized) AUDIO.initAudio(simulationState.soundMuted); simulationState.currentPixelsPerMeter *= 1.5; if (simulationState.currentPixelsPerMeter > 20) simulationState.currentPixelsPerMeter = 20; });
-    if (dom.zoomOutButton) dom.zoomOutButton.addEventListener('click', () => { if (!AUDIO.soundInitialized) AUDIO.initAudio(simulationState.soundMuted); simulationState.currentPixelsPerMeter /= 1.5; if (simulationState.currentPixelsPerMeter < 1e-7) simulationState.currentPixelsPerMeter = 1e-7; });
+    if (dom.zoomInButton) dom.zoomInButton.addEventListener('click', () => { 
+        if (!AUDIO.soundInitialized) 
+            AUDIO.initAudio(simulationState.soundMuted); 
+        //viewport.
+        simulationState.currentPixelsPerMeter *= 1.5;
+         if (simulationState.currentPixelsPerMeter > 20)
+            simulationState.currentPixelsPerMeter = 20; 
+        });
+    if (dom.zoomOutButton) dom.zoomOutButton.addEventListener('click', () => {
+         if (!AUDIO.soundInitialized) 
+            AUDIO.initAudio(simulationState.soundMuted); 
+        simulationState.currentPixelsPerMeter /= 1.5; 
+        if (simulationState.currentPixelsPerMeter < 1e-7) 
+            simulationState.currentPixelsPerMeter = 1e-7; });
 
     // Attach wheel event to gameCanvas if it exists
     if (dom.gameCanvas) {
@@ -404,6 +457,10 @@ function setupEventListeners() {
         //     else {simulationState.currentPixelsPerMeter /= 1.5; if(simulationState.currentPixelsPerMeter < 1e-7) simulationState.currentPixelsPerMeter = 1e-7;}
         // });
     }
+}
+
+function stopSimulation() {
+    pixiApp.ticker.stop();
 }
 
 async function completeInitialization() {
@@ -437,6 +494,10 @@ async function completeInitialization() {
     dom.stagingMass = document.getElementById('stagingMass');
     dom.stagingThrust = document.getElementById('stagingThrust');
     dom.stagingDeltaV = document.getElementById('stagingDeltaV');
+    dom.spacecraftPosition_x = document.getElementById('spacecraftPosition_x');
+    dom.spacecraftPosition_y = document.getElementById('spacecraftPosition_y');
+    dom.viewportPosition_x = document.getElementById('viewportPosition_x');
+    dom.viewportPosition_y = document.getElementById('viewportPosition_y');
     // dom.launchButton = document.getElementById('launchButton'); // Example if it was kept
 
     // Check if essential canvas elements exist
@@ -464,7 +525,14 @@ async function completeInitialization() {
         simulationState.currentPixelsPerMeter = event.viewport.scale.x;
         if (dom.zoomLevel) dom.zoomLevel.textContent = `Zoom: ${simulationState.currentPixelsPerMeter.toFixed(6)} px/m`;
     });
-
+    viewport.addEventListener('moved', (event) => {
+        simulationState.viewportPosition_x = event.viewport.center.x;
+        simulationState.viewportPosition_y = event.viewport.center.y;
+    });
+// Initialize the asset system
+await PIXI.Assets.init({
+    basePath: 'images/',
+});
     environmentContainer = new PIXI.Container();
     environmentContainer.label = "environmentContainer";
     orbitContainer = new PIXI.Container();
@@ -484,7 +552,7 @@ async function completeInitialization() {
     // // Create continent containers
     // C.CONTINENTS.forEach(continent => {
     //     const continentContainer = new PIXI.Container();
-    //     continentContainer.label = `continent_${continent.name}`;
+    //     continentContainer.label = `continent_${continent.label}`;
 
     //     const continentGraphics = new PIXI.Graphics();
     //     continentGraphics.moveTo(continent.points[0].x * C.planet.radius_m, continent.points[0].y * C.planet.radius_m);
@@ -524,6 +592,7 @@ async function completeInitialization() {
         (active, ratio) => AUDIO.playEngineSound(active, ratio, simulationState.soundMuted),
         () => AUDIO.playGimbalSound(simulationState.soundMuted),
         simulationState, smokeParticles, oldSmokeParticles, currentAirDensityValue,
+        C,
         initSimulation  // Pass the initSimulation function
     );
 
@@ -533,7 +602,7 @@ async function completeInitialization() {
     );
     pixiApp.stage.addChild(viewport);
     setupEventListeners();
-    initSimulation('template'); // Initial simulation setup
+    
     pixiApp.ticker.add(gameLoop); // Start the game loop
     // Add a PIXI ticker listener for smoke trail drawing
     // Initialize Inset View Pixi Application
@@ -623,7 +692,7 @@ let moonContainer = null;
 //     // Create continent containers
 //     C.CONTINENTS.forEach(continent => {
 //         const continentContainer = new PIXI.Container();
-//         continentContainer.label = `continent_${continent.name}`;
+//         continentContainer.label = `continent_${continent.label}`;
 
 //         const continentGraphics = new PIXI.Graphics();
 //         continentGraphics.moveTo(continent.points[0].x * C.planet.radius_m, continent.points[0].y * C.planet.radius_m);

@@ -2,6 +2,7 @@ import { Spacecraft } from './spacecraft.js';
 import { CommandPod, FuelTank, Engine, Fairing } from './parts.js';
 import { SPACECRAFT_INDICATOR_PPM_THRESHOLD, INSET_VIEW_PPM_THRESHOLD, INSET_VIEW_TARGET_SIZE_PX, ISP_VACUUM_DEFAULT } from './constants.js';
 import {PIXI} from './main.js'; // Import PIXI from main.js, assuming it's globally available
+import { Viewport } from 'pixi-viewport';
 
 let domElements = {}; 
 let currentShipPartsConfigRef = []; 
@@ -9,6 +10,7 @@ let spacecraftDesignsRef = {};
 let initSimulationFuncRef = () => {}; 
 // let stagingCtxRef, stagingCanvasRef; // Will be replaced by stagingAppInstance
 let stagingAppInstance = null; // To store the Pixi Application for staging canvas
+let stagingViewportRef = null;
 let simulationStateRef; 
 let partCatalogRef = {};
 let audioModuleRef = null;
@@ -39,6 +41,12 @@ export async function initializeUI(domRefs, shipPartsConfigRefFromMain, designsR
             // resolution: window.devicePixelRatio || 1,
             // autoDensity: true,
         });
+        stagingViewportRef = new Viewport({
+            passiveWheel: false,
+            events: uiState.stagingApp.renderer.events
+        });
+        stagingViewportRef.drag().pinch().wheel().decelerate();
+        uiState.stagingApp.stage.addChild(stagingViewportRef);
         //stagingCanvasElement.appendChild(uiState.stagingApp.view); // Append the Pixi canvas to the staging area
         stagingAppInstance = uiState.stagingApp; // Keep existing global-like reference if other functions use it
        
@@ -268,7 +276,11 @@ function populatePartPalette() {
 
 export function updateStatsDisplay(simState, sfc, apo, peri) { 
     if(!domElements.time || !sfc) return; 
-    domElements.time.textContent = simState.timeElapsed.toFixed(1); 
+    if(domElements.time) domElements.time.textContent = simState.timeElapsed.toFixed(1); 
+    if(domElements.spacecraftPosition_x && sfc.position) domElements.spacecraftPosition_x.textContent = sfc.position.x.toFixed(0); 
+    if(domElements.spacecraftPosition_y && sfc.position) domElements.spacecraftPosition_y.textContent = sfc.position.y.toFixed(0); 
+    if(domElements.viewportPosition_x && simState.viewportPosition_x) domElements.viewportPosition_x.textContent = simState.viewportPosition_x.toFixed(0); 
+    if(domElements.viewportPosition_y && simState.viewportPosition_y) domElements.viewportPosition_y.textContent = simState.viewportPosition_y.toFixed(0); 
     if(domElements.apoapsis) domElements.apoapsis.textContent = apo >= 1e7 ? (apo/1e3).toFixed(0) + " km" : (apo === Infinity ? "Escape" : apo.toFixed(0) + " m"); 
     if(domElements.periapsis) domElements.periapsis.textContent = peri >= 1e7 ? (peri/1e3).toFixed(0) + " km" : peri.toFixed(0) + " m"; 
     if(domElements.angle) domElements.angle.textContent = ((sfc.angle_rad * 180 / Math.PI)%360).toFixed(2); 
@@ -369,14 +381,14 @@ export function drawStagingAreaRocket(currentShipPartsConfig) {
 
     tempCraft.draw(
         stagingRocketContainer, 
-        screenWidth, 
-        screenHeight, 
-        stagingSfcScreenX, 
-        stagingSfcScreenY, 
-        stagingPPM, 
         true 
     );
     tempCraft.angle_rad = originalAngle; // Restore if needed, though tempCraft is local
+    stagingViewportRef.fit(stagingRocketContainer, {
+        minScale: 0.5,
+        maxScale: 2,
+        duration: 1000
+    });
 }
 
 export function updateStagingStats() {
