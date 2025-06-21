@@ -234,7 +234,7 @@ export class Spacecraft {
             }
             if (p.type === 'engine') {
                 this.maxThrust_N += p.effectiveThrust;
-                this.specificImpulse_s += p.specificImpulse_s || 0;
+                this.specificImpulse_s += p.isp || 0;
                 totalEngineCount++;
             }
             if (p.width_m > this.maxWidth_m) this.maxWidth_m = p.width_m;
@@ -337,7 +337,7 @@ export class Spacecraft {
     refuel(){
         this.currentFuel_kg = this.initialFuel_kg;
     }
-    
+
     graphics(){var graphics = [];
         this.parts.forEach(part => {
             const drawWidth_px = part.width_m ;
@@ -545,7 +545,7 @@ if (!main_simulationState.isLaunched){return;}
                     this.currentThrust_N += engineActualThrust;
                     
                     // Calculate fuel consumption based on specific impulse
-                    const massFlowRate = engineActualThrust / (p.specificImpulse_s * CurrentConstants.GRAVITATIONAL_CONSTANT_G);
+                    const massFlowRate = engineActualThrust / (p.isp * CurrentConstants.GRAVITATIONAL_CONSTANT_G);
                     totalFuelConsumedThisFrame_kg += massFlowRate * p.thrustLimiter * deltaTime_s;
                     activeEnginesThrusting = true;
                 }

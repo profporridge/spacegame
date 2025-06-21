@@ -279,6 +279,8 @@ export function updateStatsDisplay(simState, sfc, apo, peri) {
     if(domElements.time) domElements.time.textContent = simState.timeElapsed.toFixed(1); 
     if(domElements.spacecraftPosition_x && sfc.position) domElements.spacecraftPosition_x.textContent = sfc.position.x.toFixed(0); 
     if(domElements.spacecraftPosition_y && sfc.position) domElements.spacecraftPosition_y.textContent = sfc.position.y.toFixed(0); 
+    if(domElements.spacecraftPosition_x_local && sfc.localPosition) domElements.spacecraftPosition_x_local.textContent = sfc.localPosition.x.toFixed(0); 
+    if(domElements.spacecraftPosition_y_local && sfc.localPosition) domElements.spacecraftPosition_y_local.textContent = sfc.localPosition.y.toFixed(0); 
     if(domElements.viewportPosition_x && simState.viewportPosition_x) domElements.viewportPosition_x.textContent = simState.viewportPosition_x.toFixed(0); 
     if(domElements.viewportPosition_y && simState.viewportPosition_y) domElements.viewportPosition_y.textContent = simState.viewportPosition_y.toFixed(0); 
     if(domElements.apoapsis) domElements.apoapsis.textContent = apo >= 1e7 ? (apo/1e3).toFixed(0) + " km" : (apo === Infinity ? "Escape" : apo.toFixed(0) + " m"); 

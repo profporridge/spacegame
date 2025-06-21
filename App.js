@@ -50,6 +50,7 @@ function App() {
                   {/* Stats content will be populated by JS or can be simplified */}
                   <div className="stat-item"><span className="stat-label">Time:</span> <span id="time">0.0</span> s</div>
                   <div className="stat-item"><span className="stat-label">Spacecraft Position:</span> <span id="spacecraftPosition_x">0</span>,<span id="spacecraftPosition_y">0</span></div>
+                  <div className="stat-item"><span className="stat-label">Spacecraft Position (Local):</span> <span id="spacecraftPosition_x_local">0</span>,<span id="spacecraftPosition_y_local">0</span></div>
                   <div className="stat-item"><span className="stat-label">Camera Position:</span> <span id="viewportPosition_x">0</span>,<span id="viewportPosition_y">0</span></div>
                   <div className="stat-item"><span className="stat-label">Apoapsis:</span> <span id="apoapsis">0.00</span> m</div>
                   <div className="stat-item"><span className="stat-label">Periapsis:</span> <span id="periapsis">0.00</span> m</div>
