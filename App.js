@@ -67,6 +67,7 @@ function App() {
               </div>
             </div>
             <div id="controls">
+              <button id="recenter">RecenterView</button>
               <button id="resetButton">Reset Sim</button>
               <button id="muteButton">Mute 🔇</button>
               <div className="control-group">

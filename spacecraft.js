@@ -330,8 +330,8 @@ export class Spacecraft {
         this.currentThrust_N = 0;
         //this.currentFuel_kg = 0;
         this.engineGimbalAngle_rad = 0;
+        this.refuel();
         this._reassemble();
-        this.refuel()
     }
 
     refuel(){
@@ -358,22 +358,22 @@ export class Spacecraft {
         return graphics;
     }
 
-    draw(passedSpacecraftContainer, isStagingView = false) {
-        var currentPPM = 1;
+    draw(passedSpacecraftContainer, width = null, height = null, screenX = null, screenY = null, currentPPM = 1, viewType = "main") {
+        //var currentPPM = 1;
 
-        // var spacecraftContainer = passedSpacecraftContainer.getChildByLabel("spacecraftContainer");
-        // if (!spacecraftContainer) {
-        //     spacecraftContainer = new PIXI.Container();
-        //     spacecraftContainer.label = "spacecraftContainer";
-        //     passedSpacecraftContainer.addChildAt(spacecraftContainer, 0);
-        // }
+        var spacecraftContainer = passedSpacecraftContainer.getChildByLabel("spacecraftContainer");
+        if (!spacecraftContainer) {
+            spacecraftContainer = new PIXI.Container();
+            spacecraftContainer.label = "spacecraftContainer";
+            passedSpacecraftContainer.addChildAt(spacecraftContainer, 0);
+        }
     
         var shipGraphicsContainer = passedSpacecraftContainer.getChildByLabel(CurrentConstants.SPACECRAFT_GRAPHICS_CONTAINER);
         if (shipGraphicsContainer && this.dirty) {shipGraphicsContainer.removeChildren();shipGraphicsContainer.destroy(); }
         if (!shipGraphicsContainer || this.dirty) {
             shipGraphicsContainer = new PIXI.Container();
             shipGraphicsContainer.label = CurrentConstants.SPACECRAFT_GRAPHICS_CONTAINER;
-            passedSpacecraftContainer.addChildAt(shipGraphicsContainer, 0);
+            spacecraftContainer.addChildAt(shipGraphicsContainer, 0);
             this.dirty = false;
 
             
@@ -394,7 +394,7 @@ export class Spacecraft {
                 const partTopLeftX_local = -drawWidth_px / 2; // Centered
                 const partTopLeftY_local = -part_top_from_com_m ; // Y positive downwards
 
-                part.draw(shipGraphicsContainer, partTopLeftX_local, partTopLeftY_local, 1, isStagingView); // Show nodes if not inset
+                part.draw(shipGraphicsContainer, partTopLeftX_local, partTopLeftY_local, 1, viewType == "staging"); // Show nodes if not inset
             });
             shipGraphicsContainer.pivot.set(this.maxWidth_m/2, this.getCoMOffset_m());
         }
@@ -439,7 +439,8 @@ export class Spacecraft {
                 }
             });
         }
-        shipGraphicsContainer.position.set(this.position_x_m, this.position_y_m);
+        if (viewType == "main")
+        spacecraftContainer.position.set(this.position_x_m, this.position_y_m);
         shipGraphicsContainer.rotation = this.angle_rad;
         //   this.cachedGraphics = shipGraphicsContainer.children;
         // passedSpacecraftContainer.addChild(shipGraphicsContainer);

@@ -289,7 +289,7 @@ export function updateStatsDisplay(simState, sfc, apo, peri) {
     if(domElements.gimbal) domElements.gimbal.textContent = (sfc.engineGimbalAngle_rad * 180 / Math.PI).toFixed(2); 
     if(domElements.mass) domElements.mass.textContent = sfc.totalMass_kg.toFixed(2); 
     if(domElements.thrust) domElements.thrust.textContent = sfc.currentThrust_N.toFixed(0); 
-    if(domElements.zoomLevel) domElements.zoomLevel.textContent = simState.currentPixelsPerMeter.toExponential(1); 
+    if(domElements.zoomLevel) domElements.zoomLevel.textContent = simState.currentPixelsPerMeter.toExponential(3); 
     const fuelPercent = sfc.initialFuel_kg > 0 ? (sfc.currentFuel_kg / sfc.initialFuel_kg) * 100 : 0; 
     if(domElements.fuelGaugeBar) domElements.fuelGaugeBar.style.width = `${fuelPercent}%`; 
     if(domElements.fuelText) domElements.fuelText.textContent = `Fuel: ${fuelPercent.toFixed(0)}%`; 
