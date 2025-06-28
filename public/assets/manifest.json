@@ -1,0 +1,188 @@
+{
+  "bundles": [
+    {
+      "name": "default",
+      "assets": []
+    },
+    {
+      "name": "clouds",
+      "assets": [
+        {
+          "alias": [
+            "clouds"
+          ],
+          "src": [
+            "clouds-yKfarQ@0.5x.webp.json",
+            "clouds-ltBzUw.png.json",
+            "clouds-ktzVcg.webp.json",
+            "clouds-k3f6dw@0.5x.png.json"
+          ],
+          "data": {
+            "tags": {
+              "m": true,
+              "tps": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "parts",
+      "assets": [
+        {
+          "alias": [
+            "parts/engines/engines-01.png",
+            "engines-01.png"
+          ],
+          "src": [
+            "parts/engines/engines-01-vUtLbw.webp",
+            "parts/engines/engines-01-o5Xgdg@0.5x.png",
+            "parts/engines/engines-01-mUqUnw.png",
+            "parts/engines/engines-01-_AaJ0g@0.5x.webp"
+          ],
+          "data": {
+            "tags": {
+              "m": true
+            }
+          }
+        },
+        {
+          "alias": [
+            "parts/engines/engines-02.png",
+            "engines-02.png"
+          ],
+          "src": [
+            "parts/engines/engines-02-oYjZoQ@0.5x.png",
+            "parts/engines/engines-02-n_XHsw.webp",
+            "parts/engines/engines-02-lHsSog.png",
+            "parts/engines/engines-02-L1EWgw@0.5x.webp"
+          ],
+          "data": {
+            "tags": {
+              "m": true
+            }
+          }
+        },
+        {
+          "alias": [
+            "parts/engines/engines-03.png",
+            "engines-03.png"
+          ],
+          "src": [
+            "parts/engines/engines-03-U_ZLpw.png",
+            "parts/engines/engines-03-QE2UgQ.webp",
+            "parts/engines/engines-03-NlgJgA@0.5x.webp",
+            "parts/engines/engines-03-aOCDPw@0.5x.png"
+          ],
+          "data": {
+            "tags": {
+              "m": true
+            }
+          }
+        },
+        {
+          "alias": [
+            "parts/engines/engines-04.png",
+            "engines-04.png"
+          ],
+          "src": [
+            "parts/engines/engines-04-S0sZbw@0.5x.webp",
+            "parts/engines/engines-04-NLSgYg.png",
+            "parts/engines/engines-04-f8Z7VQ.webp",
+            "parts/engines/engines-04-0ehaIA@0.5x.png"
+          ],
+          "data": {
+            "tags": {
+              "m": true
+            }
+          }
+        },
+        {
+          "alias": [
+            "parts/engines/engines-05.png",
+            "engines-05.png"
+          ],
+          "src": [
+            "parts/engines/engines-05-wdKM.webp",
+            "parts/engines/engines-05-jWHC0w.png",
+            "parts/engines/engines-05-ilLb@0.5x.png",
+            "parts/engines/engines-05-5CGtlQ@0.5x.webp"
+          ],
+          "data": {
+            "tags": {
+              "m": true
+            }
+          }
+        },
+        {
+          "alias": [
+            "parts/fairings/fairing1.png",
+            "fairing1.png"
+          ],
+          "src": [
+            "parts/fairings/fairing1-y9meqw@0.5x.png",
+            "parts/fairings/fairing1-Y1YIQA.webp",
+            "parts/fairings/fairing1-rTAu8g.png",
+            "parts/fairings/fairing1-4UEjOw@0.5x.webp"
+          ],
+          "data": {
+            "tags": {
+              "m": true
+            }
+          }
+        },
+        {
+          "alias": [
+            "parts/pods/pod1.png",
+            "pod1.png"
+          ],
+          "src": [
+            "parts/pods/pod1-SClVng.webp",
+            "parts/pods/pod1-p_uMCw.png",
+            "parts/pods/pod1-ORIF@0.5x.webp",
+            "parts/pods/pod1-gY3GDQ@0.5x.png"
+          ],
+          "data": {
+            "tags": {
+              "m": true
+            }
+          }
+        },
+        {
+          "alias": [
+            "parts/tanks/tanks-01.png",
+            "tanks-01.png"
+          ],
+          "src": [
+            "parts/tanks/tanks-01-pQRO@0.5x.webp",
+            "parts/tanks/tanks-01-iHpMcA@0.5x.png",
+            "parts/tanks/tanks-01-dQ1R8A.webp",
+            "parts/tanks/tanks-01-9WSbHA.png"
+          ],
+          "data": {
+            "tags": {
+              "m": true
+            }
+          }
+        },
+        {
+          "alias": [
+            "parts/tanks/tanks-02.png",
+            "tanks-02.png"
+          ],
+          "src": [
+            "parts/tanks/tanks-02-OtpdiQ@0.5x.webp",
+            "parts/tanks/tanks-02-jql3Bg.png",
+            "parts/tanks/tanks-02-82xh2Q.webp",
+            "parts/tanks/tanks-02-6e2uBA@0.5x.png"
+          ],
+          "data": {
+            "tags": {
+              "m": true
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

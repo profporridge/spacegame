@@ -1,0 +1,1799 @@
+{
+    "assets": {
+        "J:/code/spacegame/raw-assets": {
+            "isFolder": true,
+            "metaData": {},
+            "inheritedMetaData": {},
+            "transformData": {},
+            "stats": {
+                "date": 1750842963178,
+                "duration": 11.549800000000005,
+                "success": true
+            }
+        },
+        "J:/code/spacegame/raw-assets/clouds{m}{tps}": {
+            "isFolder": true,
+            "parent": "J:/code/spacegame/raw-assets",
+            "metaData": {
+                "m": true,
+                "tps": true
+            },
+            "inheritedMetaData": {},
+            "transformData": {},
+            "stats": {
+                "date": 1750837790739,
+                "duration": 309.5627000000002,
+                "success": true
+            }
+        },
+        "J:/code/spacegame/raw-assets/clouds{m}{tps}/clouds-01.png": {
+            "isFolder": false,
+            "parent": "J:/code/spacegame/raw-assets/clouds{m}{tps}",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true,
+                "tps": true
+            },
+            "transformData": {},
+            "hash": "TV_e3w"
+        },
+        "J:/code/spacegame/raw-assets/clouds{m}{tps}/clouds-02.png": {
+            "isFolder": false,
+            "parent": "J:/code/spacegame/raw-assets/clouds{m}{tps}",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true,
+                "tps": true
+            },
+            "transformData": {},
+            "hash": "rfFnUQ"
+        },
+        "J:/code/spacegame/raw-assets/clouds{m}{tps}/clouds-03.png": {
+            "isFolder": false,
+            "parent": "J:/code/spacegame/raw-assets/clouds{m}{tps}",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true,
+                "tps": true
+            },
+            "transformData": {},
+            "hash": "VL6-6w"
+        },
+        "J:/code/spacegame/raw-assets/clouds{m}{tps}/clouds-04.png": {
+            "isFolder": false,
+            "parent": "J:/code/spacegame/raw-assets/clouds{m}{tps}",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true,
+                "tps": true
+            },
+            "transformData": {},
+            "hash": "53y3wQ"
+        },
+        ".assetpack/texture-packer/clouds@0.5x.png": {
+            "isFolder": false,
+            "transformParent": "J:/code/spacegame/raw-assets/clouds{m}{tps}",
+            "metaData": {
+                "mIgnore": true,
+                "nomip": true
+            },
+            "inheritedMetaData": {
+                "m": true,
+                "tps": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/compress/clouds@0.5x.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/texture-packer/clouds@0.5x.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true,
+                "tps": true,
+                "mIgnore": true,
+                "nomip": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/cache-buster/clouds-gwOwvQ@0.5x.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/compress/clouds@0.5x.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true,
+                "tps": true,
+                "mIgnore": true,
+                "nomip": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/public/assets/clouds-gwOwvQ@0.5x.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/clouds-gwOwvQ@0.5x.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true,
+                "tps": true,
+                "mIgnore": true,
+                "nomip": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/compress/clouds@0.5x.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/texture-packer/clouds@0.5x.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true,
+                "tps": true,
+                "mIgnore": true,
+                "nomip": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/cache-buster/clouds-O4A3bA@0.5x.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/compress/clouds@0.5x.webp",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true,
+                "tps": true,
+                "mIgnore": true,
+                "nomip": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/public/assets/clouds-O4A3bA@0.5x.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/clouds-O4A3bA@0.5x.webp",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true,
+                "tps": true,
+                "mIgnore": true,
+                "nomip": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/texture-packer/clouds@0.5x.json": {
+            "isFolder": false,
+            "transformParent": "J:/code/spacegame/raw-assets/clouds{m}{tps}",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true,
+                "tps": true
+            },
+            "transformData": {
+                "page": 0
+            }
+        },
+        ".assetpack/texture-packer-compress/clouds@0.5x.png.json": {
+            "isFolder": false,
+            "transformParent": ".assetpack/texture-packer/clouds@0.5x.json",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true,
+                "tps": true
+            },
+            "transformData": {
+                "page": 0
+            }
+        },
+        ".assetpack/json/clouds@0.5x.png.json": {
+            "isFolder": false,
+            "transformParent": ".assetpack/texture-packer-compress/clouds@0.5x.png.json",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true,
+                "tps": true
+            },
+            "transformData": {
+                "page": 0
+            }
+        },
+        ".assetpack/cache-buster/clouds-zVh2MA@0.5x.png.json": {
+            "isFolder": false,
+            "transformParent": ".assetpack/json/clouds@0.5x.png.json",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true,
+                "tps": true
+            },
+            "transformData": {
+                "page": 0
+            }
+        },
+        "J:/code/spacegame/public/assets/clouds-k3f6dw@0.5x.png.json": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/clouds-zVh2MA@0.5x.png.json",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true,
+                "tps": true
+            },
+            "transformData": {
+                "page": 0
+            }
+        },
+        ".assetpack/texture-packer-compress/clouds@0.5x.webp.json": {
+            "isFolder": false,
+            "transformParent": ".assetpack/texture-packer/clouds@0.5x.json",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true,
+                "tps": true
+            },
+            "transformData": {
+                "page": 0
+            }
+        },
+        ".assetpack/json/clouds@0.5x.webp.json": {
+            "isFolder": false,
+            "transformParent": ".assetpack/texture-packer-compress/clouds@0.5x.webp.json",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true,
+                "tps": true
+            },
+            "transformData": {
+                "page": 0
+            }
+        },
+        ".assetpack/cache-buster/clouds-MtQ8iQ@0.5x.webp.json": {
+            "isFolder": false,
+            "transformParent": ".assetpack/json/clouds@0.5x.webp.json",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true,
+                "tps": true
+            },
+            "transformData": {
+                "page": 0
+            }
+        },
+        "J:/code/spacegame/public/assets/clouds-yKfarQ@0.5x.webp.json": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/clouds-MtQ8iQ@0.5x.webp.json",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true,
+                "tps": true
+            },
+            "transformData": {
+                "page": 0
+            }
+        },
+        ".assetpack/texture-packer/clouds.png": {
+            "isFolder": false,
+            "transformParent": "J:/code/spacegame/raw-assets/clouds{m}{tps}",
+            "metaData": {
+                "mIgnore": true,
+                "nomip": true
+            },
+            "inheritedMetaData": {
+                "m": true,
+                "tps": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/compress/clouds.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/texture-packer/clouds.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true,
+                "tps": true,
+                "mIgnore": true,
+                "nomip": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/cache-buster/clouds-HcDj6g.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/compress/clouds.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true,
+                "tps": true,
+                "mIgnore": true,
+                "nomip": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/public/assets/clouds-HcDj6g.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/clouds-HcDj6g.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true,
+                "tps": true,
+                "mIgnore": true,
+                "nomip": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/compress/clouds.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/texture-packer/clouds.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true,
+                "tps": true,
+                "mIgnore": true,
+                "nomip": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/cache-buster/clouds-wzom0g.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/compress/clouds.webp",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true,
+                "tps": true,
+                "mIgnore": true,
+                "nomip": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/public/assets/clouds-wzom0g.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/clouds-wzom0g.webp",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true,
+                "tps": true,
+                "mIgnore": true,
+                "nomip": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/texture-packer/clouds.json": {
+            "isFolder": false,
+            "transformParent": "J:/code/spacegame/raw-assets/clouds{m}{tps}",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true,
+                "tps": true
+            },
+            "transformData": {
+                "page": 0
+            }
+        },
+        ".assetpack/texture-packer-compress/clouds.png.json": {
+            "isFolder": false,
+            "transformParent": ".assetpack/texture-packer/clouds.json",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true,
+                "tps": true
+            },
+            "transformData": {
+                "page": 0
+            }
+        },
+        ".assetpack/json/clouds.png.json": {
+            "isFolder": false,
+            "transformParent": ".assetpack/texture-packer-compress/clouds.png.json",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true,
+                "tps": true
+            },
+            "transformData": {
+                "page": 0
+            }
+        },
+        ".assetpack/cache-buster/clouds-bohugw.png.json": {
+            "isFolder": false,
+            "transformParent": ".assetpack/json/clouds.png.json",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true,
+                "tps": true
+            },
+            "transformData": {
+                "page": 0
+            }
+        },
+        "J:/code/spacegame/public/assets/clouds-ltBzUw.png.json": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/clouds-bohugw.png.json",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true,
+                "tps": true
+            },
+            "transformData": {
+                "page": 0
+            }
+        },
+        ".assetpack/texture-packer-compress/clouds.webp.json": {
+            "isFolder": false,
+            "transformParent": ".assetpack/texture-packer/clouds.json",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true,
+                "tps": true
+            },
+            "transformData": {
+                "page": 0
+            }
+        },
+        ".assetpack/json/clouds.webp.json": {
+            "isFolder": false,
+            "transformParent": ".assetpack/texture-packer-compress/clouds.webp.json",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true,
+                "tps": true
+            },
+            "transformData": {
+                "page": 0
+            }
+        },
+        ".assetpack/cache-buster/clouds-23sBeQ.webp.json": {
+            "isFolder": false,
+            "transformParent": ".assetpack/json/clouds.webp.json",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true,
+                "tps": true
+            },
+            "transformData": {
+                "page": 0
+            }
+        },
+        "J:/code/spacegame/public/assets/clouds-ktzVcg.webp.json": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/clouds-23sBeQ.webp.json",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true,
+                "tps": true
+            },
+            "transformData": {
+                "page": 0
+            }
+        },
+        "J:/code/spacegame/raw-assets/parts{m}": {
+            "isFolder": true,
+            "parent": "J:/code/spacegame/raw-assets",
+            "metaData": {
+                "m": true
+            },
+            "inheritedMetaData": {},
+            "transformData": {},
+            "stats": {
+                "date": 1750842963178,
+                "duration": 12.183299999999917,
+                "success": true
+            }
+        },
+        "J:/code/spacegame/raw-assets/parts{m}/engines": {
+            "isFolder": true,
+            "parent": "J:/code/spacegame/raw-assets/parts{m}",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {},
+            "stats": {
+                "date": 1750837790745,
+                "duration": 2.872000000000071,
+                "success": true
+            }
+        },
+        "J:/code/spacegame/raw-assets/parts{m}/engines/engines-01.png": {
+            "isFolder": false,
+            "parent": "J:/code/spacegame/raw-assets/parts{m}/engines",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {},
+            "stats": {
+                "date": 1750837790745,
+                "duration": 29.785699999999906,
+                "success": true
+            },
+            "hash": "pYA9Zg"
+        },
+        ".assetpack/mipmap/parts{m}/engines/engines-01.png": {
+            "isFolder": false,
+            "transformParent": "J:/code/spacegame/raw-assets/parts{m}/engines/engines-01.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/compress/parts{m}/engines/engines-01.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/mipmap/parts{m}/engines/engines-01.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/cache-buster/parts{m}/engines/engines-01-mUqUnw.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/compress/parts{m}/engines/engines-01.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/public/assets/parts/engines/engines-01-mUqUnw.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/parts{m}/engines/engines-01-mUqUnw.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/compress/parts{m}/engines/engines-01.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/mipmap/parts{m}/engines/engines-01.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/cache-buster/parts{m}/engines/engines-01-vUtLbw.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/compress/parts{m}/engines/engines-01.webp",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/public/assets/parts/engines/engines-01-vUtLbw.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/parts{m}/engines/engines-01-vUtLbw.webp",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/mipmap/parts{m}/engines/engines-01@0.5x.png": {
+            "isFolder": false,
+            "transformParent": "J:/code/spacegame/raw-assets/parts{m}/engines/engines-01.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/compress/parts{m}/engines/engines-01@0.5x.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/mipmap/parts{m}/engines/engines-01@0.5x.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/cache-buster/parts{m}/engines/engines-01-o5Xgdg@0.5x.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/compress/parts{m}/engines/engines-01@0.5x.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/public/assets/parts/engines/engines-01-o5Xgdg@0.5x.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/parts{m}/engines/engines-01-o5Xgdg@0.5x.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/compress/parts{m}/engines/engines-01@0.5x.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/mipmap/parts{m}/engines/engines-01@0.5x.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/cache-buster/parts{m}/engines/engines-01-_AaJ0g@0.5x.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/compress/parts{m}/engines/engines-01@0.5x.webp",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/public/assets/parts/engines/engines-01-_AaJ0g@0.5x.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/parts{m}/engines/engines-01-_AaJ0g@0.5x.webp",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/raw-assets/parts{m}/engines/engines-02.png": {
+            "isFolder": false,
+            "parent": "J:/code/spacegame/raw-assets/parts{m}/engines",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {},
+            "stats": {
+                "date": 1750837790748,
+                "duration": 33.134399999999914,
+                "success": true
+            },
+            "hash": "kCPCIQ"
+        },
+        ".assetpack/mipmap/parts{m}/engines/engines-02.png": {
+            "isFolder": false,
+            "transformParent": "J:/code/spacegame/raw-assets/parts{m}/engines/engines-02.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/compress/parts{m}/engines/engines-02.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/mipmap/parts{m}/engines/engines-02.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/cache-buster/parts{m}/engines/engines-02-lHsSog.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/compress/parts{m}/engines/engines-02.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/public/assets/parts/engines/engines-02-lHsSog.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/parts{m}/engines/engines-02-lHsSog.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/compress/parts{m}/engines/engines-02.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/mipmap/parts{m}/engines/engines-02.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/cache-buster/parts{m}/engines/engines-02-n_XHsw.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/compress/parts{m}/engines/engines-02.webp",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/public/assets/parts/engines/engines-02-n_XHsw.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/parts{m}/engines/engines-02-n_XHsw.webp",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/mipmap/parts{m}/engines/engines-02@0.5x.png": {
+            "isFolder": false,
+            "transformParent": "J:/code/spacegame/raw-assets/parts{m}/engines/engines-02.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/compress/parts{m}/engines/engines-02@0.5x.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/mipmap/parts{m}/engines/engines-02@0.5x.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/cache-buster/parts{m}/engines/engines-02-oYjZoQ@0.5x.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/compress/parts{m}/engines/engines-02@0.5x.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/public/assets/parts/engines/engines-02-oYjZoQ@0.5x.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/parts{m}/engines/engines-02-oYjZoQ@0.5x.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/compress/parts{m}/engines/engines-02@0.5x.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/mipmap/parts{m}/engines/engines-02@0.5x.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/cache-buster/parts{m}/engines/engines-02-L1EWgw@0.5x.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/compress/parts{m}/engines/engines-02@0.5x.webp",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/public/assets/parts/engines/engines-02-L1EWgw@0.5x.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/parts{m}/engines/engines-02-L1EWgw@0.5x.webp",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/raw-assets/parts{m}/engines/engines-03.png": {
+            "isFolder": false,
+            "parent": "J:/code/spacegame/raw-assets/parts{m}/engines",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {},
+            "stats": {
+                "date": 1750837790748,
+                "duration": 38.970800000000054,
+                "success": true
+            },
+            "hash": "1BQywA"
+        },
+        ".assetpack/mipmap/parts{m}/engines/engines-03.png": {
+            "isFolder": false,
+            "transformParent": "J:/code/spacegame/raw-assets/parts{m}/engines/engines-03.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/compress/parts{m}/engines/engines-03.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/mipmap/parts{m}/engines/engines-03.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/cache-buster/parts{m}/engines/engines-03-U_ZLpw.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/compress/parts{m}/engines/engines-03.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/public/assets/parts/engines/engines-03-U_ZLpw.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/parts{m}/engines/engines-03-U_ZLpw.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/compress/parts{m}/engines/engines-03.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/mipmap/parts{m}/engines/engines-03.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/cache-buster/parts{m}/engines/engines-03-QE2UgQ.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/compress/parts{m}/engines/engines-03.webp",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/public/assets/parts/engines/engines-03-QE2UgQ.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/parts{m}/engines/engines-03-QE2UgQ.webp",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/mipmap/parts{m}/engines/engines-03@0.5x.png": {
+            "isFolder": false,
+            "transformParent": "J:/code/spacegame/raw-assets/parts{m}/engines/engines-03.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/compress/parts{m}/engines/engines-03@0.5x.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/mipmap/parts{m}/engines/engines-03@0.5x.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/cache-buster/parts{m}/engines/engines-03-aOCDPw@0.5x.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/compress/parts{m}/engines/engines-03@0.5x.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/public/assets/parts/engines/engines-03-aOCDPw@0.5x.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/parts{m}/engines/engines-03-aOCDPw@0.5x.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/compress/parts{m}/engines/engines-03@0.5x.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/mipmap/parts{m}/engines/engines-03@0.5x.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/cache-buster/parts{m}/engines/engines-03-NlgJgA@0.5x.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/compress/parts{m}/engines/engines-03@0.5x.webp",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/public/assets/parts/engines/engines-03-NlgJgA@0.5x.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/parts{m}/engines/engines-03-NlgJgA@0.5x.webp",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/raw-assets/parts{m}/engines/engines-04.png": {
+            "isFolder": false,
+            "parent": "J:/code/spacegame/raw-assets/parts{m}/engines",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {},
+            "stats": {
+                "date": 1750837790748,
+                "duration": 44.320199999999886,
+                "success": true
+            },
+            "hash": "cDxM"
+        },
+        ".assetpack/mipmap/parts{m}/engines/engines-04.png": {
+            "isFolder": false,
+            "transformParent": "J:/code/spacegame/raw-assets/parts{m}/engines/engines-04.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/compress/parts{m}/engines/engines-04.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/mipmap/parts{m}/engines/engines-04.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/cache-buster/parts{m}/engines/engines-04-NLSgYg.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/compress/parts{m}/engines/engines-04.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/public/assets/parts/engines/engines-04-NLSgYg.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/parts{m}/engines/engines-04-NLSgYg.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/compress/parts{m}/engines/engines-04.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/mipmap/parts{m}/engines/engines-04.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/cache-buster/parts{m}/engines/engines-04-f8Z7VQ.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/compress/parts{m}/engines/engines-04.webp",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/public/assets/parts/engines/engines-04-f8Z7VQ.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/parts{m}/engines/engines-04-f8Z7VQ.webp",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/mipmap/parts{m}/engines/engines-04@0.5x.png": {
+            "isFolder": false,
+            "transformParent": "J:/code/spacegame/raw-assets/parts{m}/engines/engines-04.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/compress/parts{m}/engines/engines-04@0.5x.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/mipmap/parts{m}/engines/engines-04@0.5x.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/cache-buster/parts{m}/engines/engines-04-0ehaIA@0.5x.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/compress/parts{m}/engines/engines-04@0.5x.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/public/assets/parts/engines/engines-04-0ehaIA@0.5x.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/parts{m}/engines/engines-04-0ehaIA@0.5x.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/compress/parts{m}/engines/engines-04@0.5x.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/mipmap/parts{m}/engines/engines-04@0.5x.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/cache-buster/parts{m}/engines/engines-04-S0sZbw@0.5x.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/compress/parts{m}/engines/engines-04@0.5x.webp",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/public/assets/parts/engines/engines-04-S0sZbw@0.5x.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/parts{m}/engines/engines-04-S0sZbw@0.5x.webp",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/raw-assets/parts{m}/engines/engines-05.png": {
+            "isFolder": false,
+            "parent": "J:/code/spacegame/raw-assets/parts{m}/engines",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {},
+            "stats": {
+                "date": 1750837790775,
+                "duration": 79.79820000000018,
+                "success": true
+            },
+            "hash": "LheJKg"
+        },
+        ".assetpack/mipmap/parts{m}/engines/engines-05.png": {
+            "isFolder": false,
+            "transformParent": "J:/code/spacegame/raw-assets/parts{m}/engines/engines-05.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/compress/parts{m}/engines/engines-05.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/mipmap/parts{m}/engines/engines-05.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/cache-buster/parts{m}/engines/engines-05-jWHC0w.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/compress/parts{m}/engines/engines-05.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/public/assets/parts/engines/engines-05-jWHC0w.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/parts{m}/engines/engines-05-jWHC0w.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/compress/parts{m}/engines/engines-05.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/mipmap/parts{m}/engines/engines-05.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/cache-buster/parts{m}/engines/engines-05-wdKM.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/compress/parts{m}/engines/engines-05.webp",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/public/assets/parts/engines/engines-05-wdKM.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/parts{m}/engines/engines-05-wdKM.webp",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/mipmap/parts{m}/engines/engines-05@0.5x.png": {
+            "isFolder": false,
+            "transformParent": "J:/code/spacegame/raw-assets/parts{m}/engines/engines-05.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/compress/parts{m}/engines/engines-05@0.5x.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/mipmap/parts{m}/engines/engines-05@0.5x.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/cache-buster/parts{m}/engines/engines-05-ilLb@0.5x.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/compress/parts{m}/engines/engines-05@0.5x.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/public/assets/parts/engines/engines-05-ilLb@0.5x.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/parts{m}/engines/engines-05-ilLb@0.5x.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/compress/parts{m}/engines/engines-05@0.5x.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/mipmap/parts{m}/engines/engines-05@0.5x.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/cache-buster/parts{m}/engines/engines-05-5CGtlQ@0.5x.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/compress/parts{m}/engines/engines-05@0.5x.webp",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/public/assets/parts/engines/engines-05-5CGtlQ@0.5x.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/parts{m}/engines/engines-05-5CGtlQ@0.5x.webp",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/raw-assets/parts{m}/fairings": {
+            "isFolder": true,
+            "parent": "J:/code/spacegame/raw-assets/parts{m}",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {},
+            "stats": {
+                "date": 1750842963178,
+                "duration": 12.094800000000077,
+                "success": true
+            }
+        },
+        "J:/code/spacegame/raw-assets/parts{m}/fairings/fairing1.png": {
+            "isFolder": false,
+            "parent": "J:/code/spacegame/raw-assets/parts{m}/fairings",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {},
+            "stats": {
+                "date": 1750842963178,
+                "duration": 239.5009,
+                "success": true
+            },
+            "hash": "HGCpvQ"
+        },
+        ".assetpack/mipmap/parts{m}/fairings/fairing1.png": {
+            "isFolder": false,
+            "transformParent": "J:/code/spacegame/raw-assets/parts{m}/fairings/fairing1.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/compress/parts{m}/fairings/fairing1.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/mipmap/parts{m}/fairings/fairing1.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/cache-buster/parts{m}/fairings/fairing1-rTAu8g.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/compress/parts{m}/fairings/fairing1.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/public/assets/parts/fairings/fairing1-rTAu8g.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/parts{m}/fairings/fairing1-rTAu8g.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/compress/parts{m}/fairings/fairing1.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/mipmap/parts{m}/fairings/fairing1.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/cache-buster/parts{m}/fairings/fairing1-Y1YIQA.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/compress/parts{m}/fairings/fairing1.webp",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/public/assets/parts/fairings/fairing1-Y1YIQA.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/parts{m}/fairings/fairing1-Y1YIQA.webp",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/mipmap/parts{m}/fairings/fairing1@0.5x.png": {
+            "isFolder": false,
+            "transformParent": "J:/code/spacegame/raw-assets/parts{m}/fairings/fairing1.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/compress/parts{m}/fairings/fairing1@0.5x.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/mipmap/parts{m}/fairings/fairing1@0.5x.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/cache-buster/parts{m}/fairings/fairing1-y9meqw@0.5x.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/compress/parts{m}/fairings/fairing1@0.5x.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/public/assets/parts/fairings/fairing1-y9meqw@0.5x.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/parts{m}/fairings/fairing1-y9meqw@0.5x.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/compress/parts{m}/fairings/fairing1@0.5x.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/mipmap/parts{m}/fairings/fairing1@0.5x.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/cache-buster/parts{m}/fairings/fairing1-4UEjOw@0.5x.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/compress/parts{m}/fairings/fairing1@0.5x.webp",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/public/assets/parts/fairings/fairing1-4UEjOw@0.5x.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/parts{m}/fairings/fairing1-4UEjOw@0.5x.webp",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/raw-assets/parts{m}/pods": {
+            "isFolder": true,
+            "parent": "J:/code/spacegame/raw-assets/parts{m}",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {},
+            "stats": {
+                "date": 1750842963189,
+                "duration": 1.2269999999998618,
+                "success": true
+            }
+        },
+        "J:/code/spacegame/raw-assets/parts{m}/pods/pod1.png": {
+            "isFolder": false,
+            "parent": "J:/code/spacegame/raw-assets/parts{m}/pods",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {},
+            "stats": {
+                "date": 1750842963190,
+                "duration": 198.5166999999999,
+                "success": true
+            },
+            "hash": "J0PajQ"
+        },
+        ".assetpack/mipmap/parts{m}/pods/pod1.png": {
+            "isFolder": false,
+            "transformParent": "J:/code/spacegame/raw-assets/parts{m}/pods/pod1.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/compress/parts{m}/pods/pod1.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/mipmap/parts{m}/pods/pod1.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/cache-buster/parts{m}/pods/pod1-p_uMCw.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/compress/parts{m}/pods/pod1.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/public/assets/parts/pods/pod1-p_uMCw.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/parts{m}/pods/pod1-p_uMCw.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/compress/parts{m}/pods/pod1.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/mipmap/parts{m}/pods/pod1.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/cache-buster/parts{m}/pods/pod1-SClVng.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/compress/parts{m}/pods/pod1.webp",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/public/assets/parts/pods/pod1-SClVng.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/parts{m}/pods/pod1-SClVng.webp",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/mipmap/parts{m}/pods/pod1@0.5x.png": {
+            "isFolder": false,
+            "transformParent": "J:/code/spacegame/raw-assets/parts{m}/pods/pod1.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/compress/parts{m}/pods/pod1@0.5x.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/mipmap/parts{m}/pods/pod1@0.5x.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/cache-buster/parts{m}/pods/pod1-gY3GDQ@0.5x.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/compress/parts{m}/pods/pod1@0.5x.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/public/assets/parts/pods/pod1-gY3GDQ@0.5x.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/parts{m}/pods/pod1-gY3GDQ@0.5x.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/compress/parts{m}/pods/pod1@0.5x.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/mipmap/parts{m}/pods/pod1@0.5x.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/cache-buster/parts{m}/pods/pod1-ORIF@0.5x.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/compress/parts{m}/pods/pod1@0.5x.webp",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/public/assets/parts/pods/pod1-ORIF@0.5x.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/parts{m}/pods/pod1-ORIF@0.5x.webp",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/raw-assets/parts{m}/tanks": {
+            "isFolder": true,
+            "parent": "J:/code/spacegame/raw-assets/parts{m}",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {},
+            "stats": {
+                "date": 1750837790781,
+                "duration": 0.04580000000009932,
+                "success": true
+            }
+        },
+        "J:/code/spacegame/raw-assets/parts{m}/tanks/tanks-01.png": {
+            "isFolder": false,
+            "parent": "J:/code/spacegame/raw-assets/parts{m}/tanks",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {},
+            "stats": {
+                "date": 1750837790781,
+                "duration": 96.34789999999998,
+                "success": true
+            },
+            "hash": "oNehvA"
+        },
+        ".assetpack/mipmap/parts{m}/tanks/tanks-01.png": {
+            "isFolder": false,
+            "transformParent": "J:/code/spacegame/raw-assets/parts{m}/tanks/tanks-01.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/compress/parts{m}/tanks/tanks-01.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/mipmap/parts{m}/tanks/tanks-01.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/cache-buster/parts{m}/tanks/tanks-01-9WSbHA.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/compress/parts{m}/tanks/tanks-01.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/public/assets/parts/tanks/tanks-01-9WSbHA.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/parts{m}/tanks/tanks-01-9WSbHA.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/compress/parts{m}/tanks/tanks-01.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/mipmap/parts{m}/tanks/tanks-01.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/cache-buster/parts{m}/tanks/tanks-01-dQ1R8A.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/compress/parts{m}/tanks/tanks-01.webp",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/public/assets/parts/tanks/tanks-01-dQ1R8A.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/parts{m}/tanks/tanks-01-dQ1R8A.webp",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/mipmap/parts{m}/tanks/tanks-01@0.5x.png": {
+            "isFolder": false,
+            "transformParent": "J:/code/spacegame/raw-assets/parts{m}/tanks/tanks-01.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/compress/parts{m}/tanks/tanks-01@0.5x.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/mipmap/parts{m}/tanks/tanks-01@0.5x.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/cache-buster/parts{m}/tanks/tanks-01-iHpMcA@0.5x.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/compress/parts{m}/tanks/tanks-01@0.5x.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/public/assets/parts/tanks/tanks-01-iHpMcA@0.5x.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/parts{m}/tanks/tanks-01-iHpMcA@0.5x.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/compress/parts{m}/tanks/tanks-01@0.5x.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/mipmap/parts{m}/tanks/tanks-01@0.5x.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/cache-buster/parts{m}/tanks/tanks-01-pQRO@0.5x.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/compress/parts{m}/tanks/tanks-01@0.5x.webp",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/public/assets/parts/tanks/tanks-01-pQRO@0.5x.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/parts{m}/tanks/tanks-01-pQRO@0.5x.webp",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/raw-assets/parts{m}/tanks/tanks-02.png": {
+            "isFolder": false,
+            "parent": "J:/code/spacegame/raw-assets/parts{m}/tanks",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {},
+            "stats": {
+                "date": 1750837790787,
+                "duration": 98.42070000000012,
+                "success": true
+            },
+            "hash": "2JSRDA"
+        },
+        ".assetpack/mipmap/parts{m}/tanks/tanks-02.png": {
+            "isFolder": false,
+            "transformParent": "J:/code/spacegame/raw-assets/parts{m}/tanks/tanks-02.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/compress/parts{m}/tanks/tanks-02.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/mipmap/parts{m}/tanks/tanks-02.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/cache-buster/parts{m}/tanks/tanks-02-jql3Bg.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/compress/parts{m}/tanks/tanks-02.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/public/assets/parts/tanks/tanks-02-jql3Bg.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/parts{m}/tanks/tanks-02-jql3Bg.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/compress/parts{m}/tanks/tanks-02.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/mipmap/parts{m}/tanks/tanks-02.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/cache-buster/parts{m}/tanks/tanks-02-82xh2Q.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/compress/parts{m}/tanks/tanks-02.webp",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/public/assets/parts/tanks/tanks-02-82xh2Q.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/parts{m}/tanks/tanks-02-82xh2Q.webp",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/mipmap/parts{m}/tanks/tanks-02@0.5x.png": {
+            "isFolder": false,
+            "transformParent": "J:/code/spacegame/raw-assets/parts{m}/tanks/tanks-02.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/compress/parts{m}/tanks/tanks-02@0.5x.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/mipmap/parts{m}/tanks/tanks-02@0.5x.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/cache-buster/parts{m}/tanks/tanks-02-6e2uBA@0.5x.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/compress/parts{m}/tanks/tanks-02@0.5x.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/public/assets/parts/tanks/tanks-02-6e2uBA@0.5x.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/parts{m}/tanks/tanks-02-6e2uBA@0.5x.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/compress/parts{m}/tanks/tanks-02@0.5x.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/mipmap/parts{m}/tanks/tanks-02@0.5x.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/cache-buster/parts{m}/tanks/tanks-02-OtpdiQ@0.5x.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/compress/parts{m}/tanks/tanks-02@0.5x.webp",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/public/assets/parts/tanks/tanks-02-OtpdiQ@0.5x.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/parts{m}/tanks/tanks-02-OtpdiQ@0.5x.webp",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        }
+    }
+}

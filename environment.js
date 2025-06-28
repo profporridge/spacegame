@@ -315,17 +315,22 @@ export async function drawPlanet(container, deltaTime_s = 0) {
     if (!planetGraphics) {
         planetGraphics = new PIXI.Graphics();
         planetContainer.addChild(planetGraphics);
+       // planetContainer.addChild(new PIXI.Graphics({}))
+       planetGraphics.circle(500,500,500).fill({color:0x00000f});
         planetGraphics.pivot.set(500,500);
         planetGraphics.svg(EARTH_SVG);
+        
         planetGraphics.scale.set(
             planetRadius_px / 500,
             planetRadius_px / 500
         );
+       
        // planetGraphics.pivot.set(0.5);
         planetGraphics.label = "planet";
         
         
         planetGraphics.position.set(0, 0);
+        planetGraphics.angle = 90;
         // planetGraphics.circle(0, 0, planetRadius_px)
         //     .fill(planet.color);
       //  drawContinents(planetGraphics);
@@ -342,11 +347,26 @@ export async function drawPlanet(container, deltaTime_s = 0) {
     if (!planetContainer.getChildByLabel("atmosphere")) {
         // Draw atmosphere
         const atmosphereGraphics = new PIXI.Graphics();
+        let ratio = planetRadius_px/(planetRadius_px + EARTH_MAX_ATMOSPHERE_ALTITUDE);
+        const radialGradient = new PIXI.FillGradient({
+            type: 'radial',
+            center: { x: 0, y: 0 },
+            innerRadius: planetRadius_px-100000,
+            outerCenter: { x: 0, y: 0 },
+            outerRadius: planetRadius_px + EARTH_MAX_ATMOSPHERE_ALTITUDE + 10000,
+            colorStops: [
+              { offset: 0, color: 'rgba(255, 255, 255, 0.69)' },
+              { offset: 1, color:'rgba(37, 37, 37, 0.49)'},
+            ],
+            textureSpace: 'global'
+          });
+          
+          //const obj = new Graphics().rect(0, 0, 100, 100).fill(gradient);
         atmosphereGraphics.beginFill(planet.atmosphereColor);
-        atmosphereGraphics.drawCircle(0, 0, planetRadius_px + EARTH_MAX_ATMOSPHERE_ALTITUDE); // Slightly larger than planet
-        atmosphereGraphics.endFill();
+        atmosphereGraphics.circle(0, 0, planetRadius_px + EARTH_MAX_ATMOSPHERE_ALTITUDE); // Slightly larger than planet
+        atmosphereGraphics.fill(radialGradient);
         atmosphereGraphics.label = "atmosphere";
-        planetContainer.addChild(atmosphereGraphics);
+        planetContainer.addChildAt(atmosphereGraphics,0);
     }
 }
 

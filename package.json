@@ -5,10 +5,13 @@
   "main": "main.js",
   "type": "module",
   "scripts": {
+    "prebuild": "assetpack",
     "start": "node server.js",
     "build": "webpack --mode development",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "webpack-dev-server --hot "
+    "dev": "webpack-dev-server --hot ",
+            "watch:assetpack": "assetpack -w",
+        "watch": "npm run watch:assetpack & dev"
   },
   "keywords": [
     "pixijs",
@@ -23,6 +26,7 @@
     "express": "^5.1.0"
   },
   "devDependencies": {
+    "@assetpack/core": "^1.4.0",
     "@babel/core": "^7.27.4",
     "@babel/preset-env": "^7.27.2",
     "@babel/preset-react": "^7.27.1",

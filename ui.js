@@ -38,12 +38,18 @@ export async function initializeUI(domRefs, shipPartsConfigRefFromMain, designsR
             width: 200,
            height: 350,
             backgroundColor: 0x383838, // Dark gray background like before
-            // resolution: window.devicePixelRatio || 1,
-            // autoDensity: true,
+            resolution: window.devicePixelRatio || 1,
+            autoDensity: true,
         });
         stagingViewportRef = new Viewport({
             passiveWheel: false,
-            events: uiState.stagingApp.renderer.events
+            events: uiState.stagingApp.renderer.events,
+            screenWidth: stagingCanvasElement.width,
+        screenHeight: stagingCanvasElement.height,
+        worldWidth: 200,
+        worldHeight: 350,
+        //center: new PIXI.Point(0, 0),
+      
         });
         stagingViewportRef.drag().pinch().wheel().decelerate();
         uiState.stagingApp.stage.addChild(stagingViewportRef);
@@ -58,8 +64,8 @@ export async function initializeUI(domRefs, shipPartsConfigRefFromMain, designsR
     partCatalogRef = catalog;
     audioModuleRef = audioMod;
 
-    populateDesignSelector();
-    populatePartPalette();
+    await populateDesignSelector();
+    await populatePartPalette();
     setupBuilderActionButtons();
     // Initialize D&D here as it needs access to ui.js's scope and functions
     // Ensure stagingCanvasRef is properly passed or accessed if needed by D&D logic.
@@ -179,7 +185,7 @@ function initializeDragAndDropInternal(stagingCanvasElement, dragImageElementRef
     stagingCanvasElement.addEventListener('dragenter', (event) => { event.preventDefault(); stagingCanvasElement.classList.add('drag-over'); });
     stagingCanvasElement.addEventListener('dragleave', () => { stagingCanvasElement.classList.remove('drag-over'); });
 }
-
+let dragTarget = null;
 
     function onDragStart()
     {
@@ -200,7 +206,7 @@ function initializeDragAndDropInternal(stagingCanvasElement, dragImageElementRef
             dragTarget = null;
         }
     }
-function populateDesignSelector() { 
+async function populateDesignSelector() { 
     if (!domElements.designSelect) return;
     domElements.designSelect.innerHTML = ''; 
     for (const designName in spacecraftDesignsRef) { 
@@ -232,7 +238,7 @@ function populateDesignSelector() {
     // });
 }
 
-function populatePartPalette() {
+async function populatePartPalette() {
     if (!domElements.partPaletteContainer) { 
         const paletteContainer = document.querySelector('#partPalette .part-category');
         if (!paletteContainer) { console.error("Part palette container not found!"); return; }
@@ -242,15 +248,15 @@ function populatePartPalette() {
 
     const paletteParts = [
         { type: 'pod', name: 'Std. Pod', thumbnail: 'pod1.png', defaultConfig: { type: 'pod', name:'Std. Pod', dryMass_kg: 500, width_m: 2, height_m: 1.5, color: 'silver' }},
-        { type: 'tank', name: 'Med. Tank', thumbnail: 'tank1.png', defaultConfig: { type: 'tank', name:'Med. Tank', fuelCapacity_kg: 10000, dryMass_kg: 1500, width_m: 2.5, height_m: 8, color: '#aabbcc' }},
-        { type: 'engine', name: 'Main Engine', thumbnail: 'engine1.png', defaultConfig: { type: 'engine', name:'Main Engine', thrust_N: 250000, fuelConsumptionRate_kg_s: 80, dryMass_kg: 1000, width_m: 2.5, height_m: 2, color: '#505050', isp: 310 }},
+        { type: 'tank', name: 'Med. Tank', thumbnail: 'tanks-01.png', defaultConfig: { type: 'tank', name:'Med. Tank', fuelCapacity_kg: 10000, dryMass_kg: 1500, width_m: 2.5, height_m: 8, color: '#aabbcc' }},
+        { type: 'engine', name: 'Main Engine', thumbnail: 'engines-01.png', defaultConfig: { type: 'engine', name:'Main Engine', thrust_N: 250000, fuelConsumptionRate_kg_s: 80, dryMass_kg: 1000, width_m: 2.5, height_m: 2, color: '#505050', isp: 310 }},
         { type: 'fairing', name: 'Payload Fairing', thumbnail: 'fairing1.png', defaultConfig: { type: 'fairing', name:'Payload Fairing', dryMass_kg: 100, width_m: 2.5, height_m: 3, color: '#f0f0f0' }}
     ];
 
 
     // function createPartButton(partInfo) {
     // }
-    paletteParts.forEach(partInfo => {
+    for (const partInfo of paletteParts) {
         const button = document.createElement('button');
         button.classList.add('part-button');
         button.draggable = true;
@@ -259,7 +265,7 @@ function populatePartPalette() {
         button.dataset.partConfig = JSON.stringify(partInfo.defaultConfig);
 
         const img = document.createElement('img');
-        img.src = `images/${partInfo.thumbnail}`;
+        img.src = `${await PIXI.Assets.load(partInfo.thumbnail)}`;
         img.alt = partInfo.name;
         img.style.width = '40px'; 
         img.style.height = 'auto';
@@ -270,7 +276,7 @@ function populatePartPalette() {
         button.appendChild(img);
         button.appendChild(document.createTextNode(partInfo.name));
         domElements.partPaletteContainer.appendChild(button);
-    });
+    }
 }
 
 
@@ -302,7 +308,7 @@ export function updateStatsDisplay(simState, sfc, apo, peri) {
 
 export function drawHUD(mainCtx, sfc, simState) { 
     if (!sfc || !simState.isLaunched || !mainCtx) return; 
-    mainCtx.save(); 
+   // mainCtx.save(); 
     mainCtx.font = "bold 16px Arial"; 
     mainCtx.fillStyle = "rgba(220, 220, 255, 0.9)"; 
     mainCtx.textAlign = "left";
@@ -331,14 +337,14 @@ export function drawHUD(mainCtx, sfc, simState) {
         mainCtx.lineTo(markerEndX - Math.sin(angleOfVelocity - Math.PI/4) * arrowSize, markerEndY + Math.cos(angleOfVelocity - Math.PI/4) * arrowSize);
         mainCtx.stroke();
     }
-    mainCtx.restore();
+   // mainCtx.restore();
 }
 
 export function drawStagingAreaRocket(currentShipPartsConfig) { 
     if (!uiState.stagingApp || !domElements.stagingCanvas) { 
         console.error("Staging Pixi App or canvas not initialized for drawing"); return; 
     }
-    const stage = uiState.stagingApp.stage;
+    const stage = stagingViewportRef;
    const screenWidth = 200; //uiState.stagingApp.width;
    const screenHeight = 350; //uiState.stagingApp.height;
 
@@ -348,7 +354,7 @@ export function drawStagingAreaRocket(currentShipPartsConfig) {
         console.error("Invalid currentShipPartsConfigRef for staging area rocket drawing");
         return;
     }
-    if (currentShipPartsConfigRef.length === 0) return; 
+    //if (currentShipPartsConfigRef.length === 0) return; 
     
     const tempCraft = new Spacecraft(currentShipPartsConfigRef); 
     
@@ -383,7 +389,12 @@ export function drawStagingAreaRocket(currentShipPartsConfig) {
 
     tempCraft.draw(
         stagingRocketContainer, 
-        true 
+        null,
+        null,
+        stagingSfcScreenX,
+        stagingSfcScreenY, 
+        stagingPPM, 
+        "staging"
     );
     tempCraft.angle_rad = originalAngle; // Restore if needed, though tempCraft is local
     stagingViewportRef.fit(stagingRocketContainer, {

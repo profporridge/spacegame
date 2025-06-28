@@ -68,7 +68,7 @@ export class Spacecraft {
         this.position_y_m = 0;
         this.velocity_x_ms = 0;
         this.velocity_y_ms = 0;
-        this.angle_rad = 0;
+        this.angle_rad = 3 * Math.PI/2;
         this.angularVelocity_rad_s = 0;
         this.totalMass_kg = 0;
         this.currentFuel_kg = 0;
@@ -88,6 +88,8 @@ export class Spacecraft {
         this.isLanded = false;
         this.hasCrashed = false;
         this.comOffset_m = 0;
+        this.mainContainerRef = {};
+        this.viewportRef = {};
 
         if (partsConfigArray && Array.isArray(partsConfigArray)) {
             if (partsConfigArray !== this.partsConfigArray) {
@@ -248,7 +250,7 @@ export class Spacecraft {
         // Calculate delta-v using Tsiolkovsky equation
         const dryMass = this.totalMass_kg - this.currentFuel_kg;
         if (dryMass > 0 && this.specificImpulse_s > 0) {
-            this.deltaV_ms = this.specificImpulse_s * CurrentConstants.GRAVITATIONAL_CONSTANT_G * Math.log(this.totalMass_kg / dryMass);
+            this.deltaV_ms = this.specificImpulse_s * 9.81 * Math.log(this.totalMass_kg / dryMass);
         } else {
             this.deltaV_ms = 0;
         }
@@ -319,12 +321,15 @@ export class Spacecraft {
         if (isNaN(periapsisVar.value)) periapsisVar.value = this.altitudeAGL_m;
     }
 
-    resetToPostionOnSurface(angleInRadians){
-        this.position_x_m =((this.logicalStackHeight_m / 2 )+ CurrentConstants.EARTH_RADIUS_M) * Math.sin(angleInRadians);
-        this.position_y_m = ((-this.logicalStackHeight_m / 2) - CurrentConstants.EARTH_RADIUS_M) * Math.cos(angleInRadians);
-        this.angle_rad = angleInRadians; // Align spacecraft with surface
+      resetToPostionOnSurface(angleInRadians, observer = null){
+       // this.position_x_m =((this.logicalStackHeight_m / 2 )+ CurrentConstants.EARTH_RADIUS_M ) * Math.sin(angleInRadians);
+       // this.position_y_m = ((-this.logicalStackHeight_m / 2) - CurrentConstants.EARTH_RADIUS_M ) * Math.cos(angleInRadians);
+        //this.position_y_m = 25 * Math.sin(angleInRadians) + 54 * Math.cos(angleInRadians);
+        //this.position_x_m = 54 * Math.sin(angleInRadians) + 25 * Math.cos(angleInRadians);
+        
+        this.angle_rad = angleInRadians;// + Math.PI; // Align spacecraft with surface
         this.velocity_x_ms = 0; this.velocity_y_ms = 0;
-        this.altitudeAGL_m = 0;
+        this.altitudeAGL_m = 50;
         this.isLanded = true;
         this.hasCrashed = false;
         this.currentThrust_N = 0;
@@ -332,6 +337,7 @@ export class Spacecraft {
         this.engineGimbalAngle_rad = 0;
         this.refuel();
         this._reassemble();
+        return new PIXI.ObservablePoint(observer, this.position_x_m, this.position_y_m);
     }
 
     refuel(){
@@ -381,24 +387,24 @@ export class Spacecraft {
             const comOffset_m = this.getCoMOffset_m(); // Distance from stack bottom to CoM (Y-up)
 
             this.parts.forEach(part => {
-                const drawWidth_px = part.width_m ;
-                const drawHeight_px = part.height_m ;
+                const drawWidth_px = part.width_m * currentPPM;
+                const drawHeight_px = part.height_m * currentPPM;
 
                 // Calculate part's top-left position relative to CoM (origin of shipGraphicsContainer)
                 // CoM is (0,0) in shipGraphicsContainer.
                 // part.relative_y_m is bottom of part from stack bottom (Y-up model).
                 // part_top_from_com_m is part's top edge distance from CoM (Y-up model).
-                const part_top_from_com_m = (part.relative_y_m + part.height_m) - this.getCoMOffset_m();
+                const part_top_from_com_m = (part.relative_y_m * currentPPM + drawHeight_px) - this.getCoMOffset_m();
 
                 // Convert to Pixi's coordinate system (Y-down) for local positions within shipGraphicsContainer
                 const partTopLeftX_local = -drawWidth_px / 2; // Centered
                 const partTopLeftY_local = -part_top_from_com_m ; // Y positive downwards
 
-                part.draw(shipGraphicsContainer, partTopLeftX_local, partTopLeftY_local, 1, viewType == "staging"); // Show nodes if not inset
+                part.draw(shipGraphicsContainer, partTopLeftX_local, partTopLeftY_local, currentPPM, viewType == "staging"); // Show nodes if not inset
             });
-            shipGraphicsContainer.pivot.set(this.maxWidth_m/2, this.getCoMOffset_m());
+            shipGraphicsContainer.pivot.set(0, (this.logicalStackHeight_m));//- this.getCoMOffset_m())*currentPPM);
         }
-        this.mainContainerRef = shipGraphicsContainer;
+        
         shipGraphicsContainer.getChildByLabel('Flame')?.destroy(); // Remove previous flame graphics if any
         if (this.currentThrust_N > 0 && !isStagingView) {
             this.parts.forEach(p => {
@@ -439,15 +445,25 @@ export class Spacecraft {
                 }
             });
         }
-        if (viewType == "main")
-        spacecraftContainer.position.set(this.position_x_m, this.position_y_m);
+   
+    
+       
+        if (viewType == "main") 
+             {// spacecraftContainer.pivot.set(this.maxWidth_m/2, - this.logicalStackHeight_m);
+       spacecraftContainer.position.set(this.position_x_m/2 ,   this.position_y_m);
+     //  shipGraphicsContainer.rotation = 180;
+            this.mainContainerRef = shipGraphicsContainer;
+            shipGraphicsContainer.setSize(width, height);
+        }
+        if (viewType == "staging") spacecraftContainer.position.set(100,350);
+
         shipGraphicsContainer.rotation = this.angle_rad;
         //   this.cachedGraphics = shipGraphicsContainer.children;
         // passedSpacecraftContainer.addChild(shipGraphicsContainer);
-        //spacecraftContainer.pivot.set(0.5, 0.5);
+     
     }
 
-    updatePhysics(deltaTime_s, masterEngineCommandActive, gimbalLeft, gimbalRight, currentAirDensity, apoapsisRef, periapsisRef, smokeParticlesArray, simStateRef) {
+    updatePhysics(deltaTime_s, masterEngineCommandActive, gimbalLeft, gimbalRight, currentAirDensity, apoapsisRef, periapsisRef, smokeParticlesArray, simStateRef, positionRef) {
         // Declare acceleration variables at the top of the function scope
         let accelerationX_ms2 = 0;
         let accelerationY_ms2 = 0;
@@ -455,13 +471,11 @@ if (!main_simulationState.isLaunched){return;}
         // Sanity checks for NaN values
         if (isNaN(this.position_x_m) || isNaN(this.position_y_m)) {
             throw new Error("Position became NaN, resetting to origin");
-            this.position_x_m = 0;
-            this.position_y_m = CurrentConstants.EARTH_RADIUS_M;
+
         }
         if (isNaN(this.velocity_x_ms) || isNaN(this.velocity_y_ms)) {
            throw new Error("Velocity became NaN, resetting to zero");
-            this.velocity_x_ms = 0;
-            this.velocity_y_ms = 0;
+
         }
         if (isNaN(this.angle_rad)) {
             console.warn("Angle became NaN, resetting to zero");
@@ -546,7 +560,7 @@ if (!main_simulationState.isLaunched){return;}
                     this.currentThrust_N += engineActualThrust;
                     
                     // Calculate fuel consumption based on specific impulse
-                    const massFlowRate = engineActualThrust / (p.isp * CurrentConstants.GRAVITATIONAL_CONSTANT_G);
+                    const massFlowRate = engineActualThrust / (p.isp * 9.81); // Use standard gravitational acceleration (9.81 m/s²) instead of G
                     totalFuelConsumedThisFrame_kg += massFlowRate * p.thrustLimiter * deltaTime_s;
                     activeEnginesThrusting = true;
                 }
@@ -610,14 +624,17 @@ const effectiveThrustAngle_rad = this.angle_rad + this.engineGimbalAngle_rad;
 const thrustForceX_N = this.currentThrust_N * Math.sin(effectiveThrustAngle_rad);
 const thrustForceY_N = -1 * this.currentThrust_N * Math.cos(effectiveThrustAngle_rad);
 
-const distanceToPlanetCenter_m = Math.sqrt(this.position_x_m ** 2 + this.position_y_m ** 2);
+let gp = this.viewportRef.toWorld(this.mainContainerRef.getGlobalPosition());
+const distanceToPlanetCenter_m = Math.sqrt(gp.x ** 2 + gp.y ** 2);
 this.altitudeAGL_m = distanceToPlanetCenter_m - CurrentConstants.EARTH_RADIUS_M;
 let gravityForceX_N = 0, gravityForceY_N = 0;
-if (distanceToPlanetCenter_m > 1 && CurrentConstants.GRAVITATIONAL_CONSTANT_G > 0) {
+if (distanceToPlanetCenter_m > 1 && distanceToPlanetCenter_m < 1e12 && CurrentConstants.GRAVITATIONAL_CONSTANT_G > 0) {
     currentLocalGravityMagnitude_N = (CurrentConstants.GRAVITATIONAL_CONSTANT_G * CurrentConstants.planet.mass_kg * this.totalMass_kg) / (distanceToPlanetCenter_m ** 2);
-    var gravityDirection = Math.atan(this.position_x_m * -1 /this.position_y_m)
+    
+    var gravityDirection = Math.atan2(this.position_y_m, this.position_x_m);
     gravityForceX_N = currentLocalGravityMagnitude_N * Math.sin(gravityDirection);
     gravityForceY_N = currentLocalGravityMagnitude_N *Math.cos(gravityDirection);
+    console.info(`Local gravity is ${currentLocalGravityMagnitude_N}, (${gravityForceX_N}, ${gravityForceY_N})`);
 }
 
 let calculatedAirDensity = 0;
@@ -643,8 +660,8 @@ simStateRef.landed = false; // Reset landing state for this frame
 // simStateRef.crashed = this.hasCrashed; // Reflect current crash state if needed by caller immediately
 
 if (distanceToPlanetCenter_m <= CurrentConstants.EARTH_RADIUS_M + 0.2 && !this.hasCrashed) { // Use CurrentConstants
-    const normX = this.position_x_m / distanceToPlanetCenter_m;
-    const normY = this.position_y_m / distanceToPlanetCenter_m;
+    const normX = gp.x / distanceToPlanetCenter_m;
+    const normY = gp.y / distanceToPlanetCenter_m;
     let v_radial = (this.velocity_x_ms * normX) + (this.velocity_y_ms * normY);
 
     // Crash detection (impact speed too high)
@@ -770,9 +787,11 @@ if (this.hasCrashed) {
 }
 this.velocity_x_ms += accelerationX_ms2 * deltaTime_s;
 this.velocity_y_ms += accelerationY_ms2 * deltaTime_s;
-this.position_x_m += this.velocity_x_ms * deltaTime_s;
-this.position_y_m += this.velocity_y_ms * deltaTime_s;
-
+//this.position_x_m += this.velocity_x_ms * deltaTime_s;
+//this.position_y_m += this.velocity_y_ms * deltaTime_s;
+this.mainContainerRef._position.x += this.velocity_x_ms * deltaTime_s;
+this.mainContainerRef._position.y += this.velocity_y_ms * deltaTime_s;
+this.mainContainerRef.rotation = this.angle_rad;
 this._reassemble(); // Recalculate mass if fuel changed
 this.calculateOrbitalParameters(apoapsisRef, periapsisRef);
 

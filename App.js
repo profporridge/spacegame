@@ -5,8 +5,8 @@ function App() {
     <React.Fragment>
       <div id="dragImage"></div>
       <div id="pageContainer">
-        <h1>2D Spacecraft - Modular (V9.1s)</h1>
-
+        <h1>2D Space Rocket Simulator</h1>
+<h3>by Chris Dryden 2025</h3>
         <div id="gameAndUiContainer">
           <div id="shipBuilderPanel">
             <div id="partPalette">
