@@ -1,6 +1,7 @@
 import { COLOR_NAMES, ISP_VACUUM_DEFAULT } from './constants.js'; // Added import
 
 import {PIXI} from './main.js'; // Import PIXI from main.js, assuming it's globally available
+import { parseRgba } from './utils/colorUtils.js';
 // In parts.js
 
 // Mock PIXI.Graphics for testing environment
@@ -24,27 +25,6 @@ const MockGraphics = function() {
     };
 };
 //const PIXI = { Graphics: MockGraphics }; // Replace actual PIXI.Graphics with the mock
-
-// Helper function to parse rgba string (copied from environment.js)
-function parseRgba(rgbaString) {
-    if (typeof rgbaString === 'number') return { hex: rgbaString, alpha: 1 }; // Already a hex
-    if (typeof COLOR_NAMES[rgbaString.toLowerCase()] != 'undefined')
-    {
-        return parseRgba(COLOR_NAMES[rgbaString.toLowerCase()]);
-    }
-    if (rgbaString.startsWith('#')) {
-        return { hex: parseInt(rgbaString.substring(1), 16), alpha: 1 };
-    }
-    const match = rgbaString.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
-    if (!match) {
-        console.warn('Invalid color string, defaulting to gray:', rgbaString);
-        return { hex: 0x808080, alpha: 1 }; // Default to gray if parsing fails
-    }
-    return {
-        hex: (parseInt(match[1]) << 16) + (parseInt(match[2]) << 8) + parseInt(match[3]),
-        alpha: match[4] !== undefined ? parseFloat(match[4]) : 1
-    };
-}
 
 // Modify base Part constructor for default nodes
 export class Part { 

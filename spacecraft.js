@@ -3,6 +3,7 @@ import * as OriginalConstants from './constants.js'; // Import all for default C
 import { SmokeParticle } from './smoke.js';
 import { CommandPod, FuelTank, Engine, Fairing } from './parts.js'; // To instantiate parts
 import { PIXI } from './main.js';
+import { parseRgba } from './utils/colorUtils.js';
 // Module-level variable to hold the constants object to be used
 let CurrentConstants = OriginalConstants;
 
@@ -27,23 +28,6 @@ export function initializeSpacecraftAndParts(playEngineSoundFunc, playGimbalSoun
     } else {
         CurrentConstants = OriginalConstants;
     }
-}
-
-// Helper function to parse rgba string (copied from environment.js / parts.js)
-function parseRgba(rgbaString) {
-    if (typeof rgbaString === 'number') return { hex: rgbaString, alpha: 1 }; // Already a hex
-    if (rgbaString.startsWith('#')) {
-        return { hex: parseInt(rgbaString.substring(1), 16), alpha: 1 };
-    }
-    const match = rgbaString.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
-    if (!match) {
-        console.warn('Invalid color string, defaulting to gray:', rgbaString);
-        return { hex: 0x808080, alpha: 1 }; // Default to gray if parsing fails
-    }
-    return {
-        hex: (parseInt(match[1]) << 16) + (parseInt(match[2]) << 8) + parseInt(match[3]),
-        alpha: match[4] !== undefined ? parseFloat(match[4]) : 1
-    };
 }
 
 

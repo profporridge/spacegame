@@ -6,6 +6,7 @@ import {
     GRAVITATIONAL_CONSTANT_G, SKY_BLUE_COLOR, SPACE_BLACK_COLOR, EARTH_MAX_ATMOSPHERE_ALTITUDE, CONTINENTS, EARTH_SVG
 } from './constants.js';
 import * as PIXI from 'pixi.js';
+import { parseRgba } from './utils/colorUtils.js';
 import earth_svg from './images/Asset 1.svg';
 // Basic progress logging
 const onProgress = (progress) => {
@@ -210,18 +211,6 @@ export function drawOrbitPath(mainCtx, camX_m, camY_m, ppm, spacecraftRef, apoap
     }
     // No stroke() needed, lineTo builds the path for lineStyle
     mainCtx.addChild(orbitPathGraphic);
-}
-
-// Helper function to parse rgba string
-function parseRgba(rgbaString) {
-    const match = rgbaString.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
-    if (!match) throw new Error('Invalid rgba string: ' + rgbaString); // Added error context
-    return {
-        r: parseInt(match[1]),
-        g: parseInt(match[2]),
-        b: parseInt(match[3]),
-        alpha: match[4] !== undefined ? parseFloat(match[4]) : 1
-    };
 }
 
 function drawContinents(container) {
