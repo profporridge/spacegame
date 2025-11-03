@@ -10,8 +10,8 @@
     "build": "webpack --mode development",
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "webpack-dev-server --hot ",
-            "watch:assetpack": "assetpack -w",
-        "watch": "npm run watch:assetpack & dev"
+    "watch:assetpack": "assetpack -w",
+    "watch": "npm run watch:assetpack & dev"
   },
   "keywords": [
     "pixijs",
@@ -22,12 +22,14 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@pixi/particle-emitter": "^5.0.8",
+    "@babel/polyfill": "^7.12.1",
+    "@barvynkoa/particle-emitter": "^0.0.1",
     "express": "^5.1.0"
   },
   "devDependencies": {
     "@assetpack/core": "^1.4.0",
     "@babel/core": "^7.27.4",
+    "@babel/plugin-proposal-optional-chaining-assign": "^7.27.1",
     "@babel/preset-env": "^7.27.2",
     "@babel/preset-react": "^7.27.1",
     "babel-loader": "^10.0.0",

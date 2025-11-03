@@ -56,6 +56,7 @@ export class Spacecraft {
     #_angle_rad = 0;
     #_angularVelocity_rad_s = 0;
     #_engineGimbalAngle_rad = 0;
+    #_flameGraphics = [];
 
     constructor(partsConfigArray) {
         this.dirty = true;
@@ -184,6 +185,9 @@ export class Spacecraft {
             this.#_engineGimbalAngle_rad = value;
         }
     }
+    
+    get flameGraphics() { return this.#_flameGraphics;}
+    set flameGraphics(value) { this.#_flameGraphics = value;}
 
     // Getter methods based on test expectations
     getTotalMass_kg() {
@@ -375,6 +379,12 @@ export class Spacecraft {
         }
     
         var shipGraphicsContainer = passedSpacecraftContainer.getChildByLabel(CurrentConstants.SPACECRAFT_GRAPHICS_CONTAINER);
+        // For inset view, always recreate to ensure fresh positioning and pivot
+        if (viewType === "inset" && shipGraphicsContainer) {
+            shipGraphicsContainer.removeChildren();
+            shipGraphicsContainer.destroy();
+            shipGraphicsContainer = null;
+        }
         if (shipGraphicsContainer && this.dirty) {shipGraphicsContainer.removeChildren();shipGraphicsContainer.destroy(); }
         if (!shipGraphicsContainer || this.dirty) {
             shipGraphicsContainer = new PIXI.Container();
@@ -402,50 +412,59 @@ export class Spacecraft {
 
                 part.draw(shipGraphicsContainer, partTopLeftX_local, partTopLeftY_local, currentPPM, viewType == "staging"); // Show nodes if not inset
             });
-            shipGraphicsContainer.pivot.set(0, (this.logicalStackHeight_m));//- this.getCoMOffset_m())*currentPPM);
+            // Set pivot at CoM (0,0) for rotation - CoM is the origin of shipGraphicsContainer
+            // For inset view, ensure pivot is at (0,0) for proper centering
+            if (viewType === "inset") {
+                shipGraphicsContainer.pivot.set(0, 0);
+            } else {
+                shipGraphicsContainer.pivot.set(0, (this.logicalStackHeight_m));//- this.getCoMOffset_m())*currentPPM);
+            }
         }
-        
-        shipGraphicsContainer.getChildByLabel('Flame')?.destroy(); // Remove previous flame graphics if any
-        if (this.currentThrust_N > 0 && !isStagingView) {
-            this.parts.forEach(p => {
-                if (p.type === 'engine' && p.isActive) {
+    
+   // set up flames
+   if (viewType === 'main'){
+    let flameGraphics = this.flameGraphics; 
+   this.parts.forEach(p => {
+    if (p.type === 'engine') { 
+        for (let i = 0; i < 3; i++){
+    
+    let flameGraphic = new PIXI.GraphicsContext();
 
-                    const flameGraphics = new PIXI.Graphics();
+    // Engine's nozzle (bottom of engine part) position relative to CoM
+    // p.relative_y_m is bottom of engine from stack bottom (Y-up model)
 
-                    // Engine's nozzle (bottom of engine part) position relative to CoM
-                    // p.relative_y_m is bottom of engine from stack bottom (Y-up model)
-                    const engineNozzle_y_from_com_m = p.relative_y_m - this.getCoMOffset_m;
-                    // Convert to Pixi's Y-down, relative to CoM (shipGraphicsContainer origin)
-                    const engineNozzle_y_local_px = -engineNozzle_y_from_com_m * currentPPM;
 
-                    const flameHeight_px = (10 + Math.random() * 15 + (this.currentThrust_N / (this.maxThrust_N || 1)) * 20) * Math.max(0.1, currentPPM / 0.2);
-                    const flameWidth_px = p.width_m * currentPPM * 0.8;
+    const flameHeight_px = (1 + Math.random() * 5 +  2) * Math.max(0.1, currentPPM / 0.2);
+    const flameWidth_px = p.width_m * currentPPM * 0.8;
 
-                    flameGraphics.position.set(0, engineNozzle_y_local_px); // X is centered at CoM's X, Y is nozzle's Y
-                    flameGraphics.rotation = this.engineGimbalAngle_rad;
+// X is centered at CoM's X, Y is nozzle's Y
+    
 
-                    const orange = parseRgba(OriginalConstants.COLOR_NAMES['orange']);
-                    flameGraphics.beginFill(orange.hex, orange.alpha);
-                    flameGraphics.moveTo(-flameWidth_px / 2, 0); // Relative to flameGraphics origin (nozzle center)
-                    flameGraphics.lineTo(flameWidth_px / 2, 0);
-                    flameGraphics.lineTo(0, flameHeight_px); // Flame points "down" (positive Y in its local rotated frame)
-                    flameGraphics.closePath();
-                    flameGraphics.endFill();
+    const orange = parseRgba(OriginalConstants.COLOR_NAMES['orange']);
+    //flameGraphic.beginFill(orange.hex, orange.alpha);
+    flameGraphic.moveTo(-flameWidth_px / 2, 0); // Relative to flameGraphics origin (nozzle center)
+    flameGraphic.lineTo(flameWidth_px / 2, 0);
+    flameGraphic.lineTo(0, flameHeight_px); // Flame points "down" (positive Y in its local rotated frame)
+    flameGraphic.closePath();
+    flameGraphic.fill({color: orange.hex, alpha: orange.alpha});
 
-                    const yellow = parseRgba(OriginalConstants.COLOR_NAMES['yellow']);
-                    const iFW = flameWidth_px * 0.5, iFH = flameHeight_px * 0.6;
-                    flameGraphics.beginFill(yellow.hex, yellow.alpha);
-                    flameGraphics.moveTo(-iFW / 2, 0);
-                    flameGraphics.lineTo(iFW / 2, 0);
-                    flameGraphics.lineTo(0, iFH);
-                    flameGraphics.closePath();
-                    flameGraphics.endFill();
-                    flameGraphics.label = `Flame`; // Label for debugging
-                    shipGraphicsContainer.addChild(flameGraphics);
-                }
-            });
-        }
-   
+    const yellow = parseRgba(OriginalConstants.COLOR_NAMES['yellow']);
+    const iFW = flameWidth_px * 0.5, iFH = flameHeight_px * 0.6;
+   // flameGraphic.beginFill(yellow.hex, yellow.alpha);
+    flameGraphic.moveTo(-iFW / 2, 0);
+    flameGraphic.lineTo(iFW / 2, 0);
+    flameGraphic.lineTo(0, iFH);
+    flameGraphic.closePath();
+    flameGraphic.fill({color:yellow.hex, alpha:yellow.alpha});
+    flameGraphic.label = `Flame${i}`; // Label for debugging
+    flameGraphics.push(flameGraphic);
+   }
+}
+}
+);
+this.flameGraphics = flameGraphics;
+}
+
     
        
         if (viewType == "main") 
@@ -456,11 +475,43 @@ export class Spacecraft {
             shipGraphicsContainer.setSize(width, height);
         }
         if (viewType == "staging") spacecraftContainer.position.set(100,350);
+        if (viewType == "inset") {
+            // Center the spacecraft in the inset view at the specified screen coordinates
+            if (screenX !== null && screenY !== null) {
+                spacecraftContainer.position.set(screenX, screenY);
+            } else {
+                // Fallback: center in the passed container if screenX/Y not provided
+                spacecraftContainer.position.set(width ? width / 2 : 0, height ? height / 2 : 0);
+            }
+        }
 
         shipGraphicsContainer.rotation = this.angle_rad;
         //   this.cachedGraphics = shipGraphicsContainer.children;
         // passedSpacecraftContainer.addChild(shipGraphicsContainer);
      
+    }
+
+    updateGraphics(shipGraphicsContainer, index)
+    {    
+        let flameGraphics = this.flameGraphics;
+        if (flameGraphics[index]){console.error(`no graphiccontext available for index ${index}. `)}
+        let flameGraphic = shipGraphicsContainer.getChildByLabel('FlameG');
+        if (!flameGraphic)
+        { flameGraphic = new PIXI.Graphics({label: "FlameG"})
+            shipGraphicsContainer.addChild(flameGraphic);
+            this.parts.forEach(p => {
+                if (p.type === 'engine') { 
+                    const engineNozzle_y_from_com_m = p.relative_y_m - this.getCoMOffset_m();
+                    // Convert to Pixi's Y-down, relative to CoM (shipGraphicsContainer origin)
+                    const engineNozzle_y_local_px = -engineNozzle_y_from_com_m;
+                    flameGraphic.position.set(0, engineNozzle_y_local_px); 
+                }});
+}
+        if (this.currentThrust_N > 0) {
+
+            flameGraphic.rotation = this.engineGimbalAngle_rad;
+            flameGraphic.context = flameGraphics[index];
+        }
     }
 
     updatePhysics(deltaTime_s, masterEngineCommandActive, gimbalLeft, gimbalRight, currentAirDensity, apoapsisRef, periapsisRef, smokeParticlesArray, simStateRef, positionRef) {
@@ -573,8 +624,20 @@ if (!main_simulationState.isLaunched){return;}
             if (totalFuelConsumedThisFrame_kg > this.currentFuel_kg) {
                 const fuelFraction = this.currentFuel_kg / totalFuelConsumedThisFrame_kg;
                 this.currentThrust_N *= fuelFraction;
-                totalFuelConsumedThisFrame_kg = this.currentFuel_kg;
-                // this.parts.forEach(p => { if (p.type === 'engine' && p.isActive) p.isActive = (Math.random() < fuelFraction); });
+                totalFuelConsumedThisFrame_kg = this.currentFuel_kg; // Limit to available fuel
+                // Deduct remaining fuel when it runs out
+                let fuelToDeduct = totalFuelConsumedThisFrame_kg;
+                for (let i = this.parts.length - 1; i >= 0; i--) {
+                    const part = this.parts[i];
+                    if (part.type === 'tank' && part.currentFuel > 0) {
+                        const take = Math.min(part.currentFuel, fuelToDeduct);
+                        part.currentFuel -= take;
+                        this.currentFuel_kg -= take;
+                        this.totalMass_kg -= take;
+                        fuelToDeduct -= take;
+                        if (fuelToDeduct <= 0) break;
+                    }
+                }
             } else {
                 let fuelToDeduct = totalFuelConsumedThisFrame_kg;
                 for (let i = this.parts.length - 1; i >= 0; i--) {
@@ -599,13 +662,10 @@ if (!main_simulationState.isLaunched){return;}
 
 if (this.currentFuel_kg <= 0) {
     this.currentFuel_kg = 0;
-    // simStateRef.engineActive is already false if fuel ran out this frame or was already false.
-    // If it became false due to fuel out, ensure all engines are marked inactive.
-    if (activeEnginesThrusting) { // Only if engines were trying to be active
-        this.parts.forEach(p => { if (p.type === 'engine') p.isActive = false; });
-        this.currentThrust_N = 0; // No thrust if no fuel
-        simStateRef.engineActive = false; // Explicitly set again
-    }
+    // Ensure all engines are marked inactive and engineActive is false when fuel runs out
+    this.parts.forEach(p => { if (p.type === 'engine') p.isActive = false; });
+    this.currentThrust_N = 0; // No thrust if no fuel
+    simStateRef.engineActive = false; // Always disable engine when fuel runs out
     main_playEngineSound(false);
 }
 
@@ -634,7 +694,7 @@ if (distanceToPlanetCenter_m > 1 && distanceToPlanetCenter_m < 1e12 && CurrentCo
     var gravityDirection = Math.atan2(this.position_y_m, this.position_x_m);
     gravityForceX_N = currentLocalGravityMagnitude_N * Math.sin(gravityDirection);
     gravityForceY_N = currentLocalGravityMagnitude_N *Math.cos(gravityDirection);
-    console.info(`Local gravity is ${currentLocalGravityMagnitude_N}, (${gravityForceX_N}, ${gravityForceY_N})`);
+    // console.info(`Local gravity is ${currentLocalGravityMagnitude_N}, (${gravityForceX_N}, ${gravityForceY_N})`);
 }
 
 let calculatedAirDensity = 0;

@@ -14,6 +14,7 @@ let stagingViewportRef = null;
 let simulationStateRef; 
 let partCatalogRef = {};
 let audioModuleRef = null;
+let touchDraggedPartElement;
 
 
 // Object to hold UI-specific state, like the staging Pixi app
@@ -52,7 +53,7 @@ export async function initializeUI(domRefs, shipPartsConfigRefFromMain, designsR
       
         });
         stagingViewportRef.drag().pinch().wheel().decelerate();
-        uiState.stagingApp.stage.addChild(stagingViewportRef);
+        uiState.stagingApp?.stage.addChild(stagingViewportRef);
         //stagingCanvasElement.appendChild(uiState.stagingApp.view); // Append the Pixi canvas to the staging area
         stagingAppInstance = uiState.stagingApp; // Keep existing global-like reference if other functions use it
        
@@ -105,7 +106,7 @@ function initializeDragAndDropInternal(stagingCanvasElement, dragImageElementRef
 
         button.addEventListener('touchstart', (event) => {
             event.preventDefault(); 
-            if(!audioModuleRefForDnd.soundInitialized && simulationStateRef) audioModuleRefForDnd.initAudio(simulationStateRef.soundMuted);
+            if(!audioModuleRefForDnd?.soundInitialized && simulationStateRef) audioModuleRefForDnd?.initAudio(simulationStateRef.soundMuted);
             
             try {
                 const partConfigString = event.target.closest('.part-button').dataset.partConfig;
@@ -148,11 +149,11 @@ function initializeDragAndDropInternal(stagingCanvasElement, dragImageElementRef
         updateStagingStats(); 
     }
 
-    uiState.stagingApp.stage.eventMode = 'static';
+    uiState.stagingApp?.stage.eventMode = 'static';
     //uiState.stagingApp.stage.hitArea = uiState.stagingApp.screen;
-    uiState.stagingApp.stage.on('pointerup', onDragEnd);
-    uiState.stagingApp.stage.on('pointerupoutside', onDragEnd);
-    uiState.stagingApp.stage.on('drop', (event) => {
+    uiState.stagingApp?.stage.on('pointerup', onDragEnd);
+    uiState.stagingApp?.stage.on('pointerupoutside', onDragEnd);
+    uiState.stagingApp?.stage.on('drop', (event) => {
 
         event.preventDefault(); stagingCanvasElement.classList.remove('drag-over'); 
         let droppedData; 

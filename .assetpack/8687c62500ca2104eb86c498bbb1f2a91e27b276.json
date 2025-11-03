@@ -6,8 +6,8 @@
             "inheritedMetaData": {},
             "transformData": {},
             "stats": {
-                "date": 1750842963178,
-                "duration": 11.549800000000005,
+                "date": 1751334126726,
+                "duration": 2.6325999999999112,
                 "success": true
             }
         },
@@ -21,8 +21,8 @@
             "inheritedMetaData": {},
             "transformData": {},
             "stats": {
-                "date": 1750837790739,
-                "duration": 309.5627000000002,
+                "date": 1751179352729,
+                "duration": 252.86210000000005,
                 "success": true
             }
         },
@@ -465,8 +465,8 @@
             "inheritedMetaData": {},
             "transformData": {},
             "stats": {
-                "date": 1750842963178,
-                "duration": 12.183299999999917,
+                "date": 1751334126726,
+                "duration": 2.346900000000005,
                 "success": true
             }
         },
@@ -1344,6 +1344,385 @@
             },
             "transformData": {}
         },
+        "J:/code/spacegame/raw-assets/parts{m}/flame1.png": {
+            "isFolder": false,
+            "parent": "J:/code/spacegame/raw-assets/parts{m}",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {},
+            "stats": {
+                "date": 1751249602074,
+                "duration": 175.6132,
+                "success": true
+            },
+            "hash": "pM8SSw"
+        },
+        ".assetpack/mipmap/parts{m}/flame1.png": {
+            "isFolder": false,
+            "transformParent": "J:/code/spacegame/raw-assets/parts{m}/flame1.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/compress/parts{m}/flame1.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/mipmap/parts{m}/flame1.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/cache-buster/parts{m}/flame1-zxstGQ.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/compress/parts{m}/flame1.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/public/assets/parts/flame1-zxstGQ.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/parts{m}/flame1-zxstGQ.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/compress/parts{m}/flame1.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/mipmap/parts{m}/flame1.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/cache-buster/parts{m}/flame1-EEWPxg.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/compress/parts{m}/flame1.webp",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/public/assets/parts/flame1-EEWPxg.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/parts{m}/flame1-EEWPxg.webp",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/mipmap/parts{m}/flame1@0.5x.png": {
+            "isFolder": false,
+            "transformParent": "J:/code/spacegame/raw-assets/parts{m}/flame1.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/compress/parts{m}/flame1@0.5x.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/mipmap/parts{m}/flame1@0.5x.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/cache-buster/parts{m}/flame1-jWVdrA@0.5x.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/compress/parts{m}/flame1@0.5x.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/public/assets/parts/flame1-jWVdrA@0.5x.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/parts{m}/flame1-jWVdrA@0.5x.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/compress/parts{m}/flame1@0.5x.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/mipmap/parts{m}/flame1@0.5x.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/cache-buster/parts{m}/flame1-yWZlPw@0.5x.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/compress/parts{m}/flame1@0.5x.webp",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/public/assets/parts/flame1-yWZlPw@0.5x.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/parts{m}/flame1-yWZlPw@0.5x.webp",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/raw-assets/parts{m}/flame2.png": {
+            "isFolder": false,
+            "parent": "J:/code/spacegame/raw-assets/parts{m}",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {},
+            "stats": {
+                "date": 1751249602077,
+                "duration": 229.86659999999995,
+                "success": true
+            },
+            "hash": "K4z8Kw"
+        },
+        ".assetpack/mipmap/parts{m}/flame2.png": {
+            "isFolder": false,
+            "transformParent": "J:/code/spacegame/raw-assets/parts{m}/flame2.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/compress/parts{m}/flame2.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/mipmap/parts{m}/flame2.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/cache-buster/parts{m}/flame2-JLBThA.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/compress/parts{m}/flame2.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/public/assets/parts/flame2-JLBThA.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/parts{m}/flame2-JLBThA.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/compress/parts{m}/flame2.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/mipmap/parts{m}/flame2.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/cache-buster/parts{m}/flame2-JBb4yw.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/compress/parts{m}/flame2.webp",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/public/assets/parts/flame2-JBb4yw.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/parts{m}/flame2-JBb4yw.webp",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/mipmap/parts{m}/flame2@0.5x.png": {
+            "isFolder": false,
+            "transformParent": "J:/code/spacegame/raw-assets/parts{m}/flame2.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/compress/parts{m}/flame2@0.5x.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/mipmap/parts{m}/flame2@0.5x.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/cache-buster/parts{m}/flame2-EYz2dA@0.5x.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/compress/parts{m}/flame2@0.5x.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/public/assets/parts/flame2-EYz2dA@0.5x.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/parts{m}/flame2-EYz2dA@0.5x.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/compress/parts{m}/flame2@0.5x.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/mipmap/parts{m}/flame2@0.5x.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/cache-buster/parts{m}/flame2-3QkD@0.5x.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/compress/parts{m}/flame2@0.5x.webp",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/public/assets/parts/flame2-3QkD@0.5x.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/parts{m}/flame2-3QkD@0.5x.webp",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/raw-assets/parts{m}/particle{fix}.png": {
+            "isFolder": false,
+            "parent": "J:/code/spacegame/raw-assets/parts{m}",
+            "metaData": {
+                "fix": true
+            },
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {},
+            "stats": {
+                "date": 1751179500188,
+                "duration": 18.76940000000002,
+                "success": true
+            },
+            "hash": "abPQMg"
+        },
+        ".assetpack/mipmap/parts{m}/particle{fix}.png": {
+            "isFolder": false,
+            "transformParent": "J:/code/spacegame/raw-assets/parts{m}/particle{fix}.png",
+            "metaData": {
+                "fix": true
+            },
+            "inheritedMetaData": {
+                "m": true,
+                "fix": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/compress/parts{m}/particle{fix}.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/mipmap/parts{m}/particle{fix}.png",
+            "metaData": {
+                "fix": true
+            },
+            "inheritedMetaData": {
+                "m": true,
+                "fix": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/cache-buster/parts{m}/particle-tjG-Fg{fix}.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/compress/parts{m}/particle{fix}.png",
+            "metaData": {
+                "fix": true
+            },
+            "inheritedMetaData": {
+                "m": true,
+                "fix": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/public/assets/parts/particle-tjG-Fg.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/parts{m}/particle-tjG-Fg{fix}.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true,
+                "fix": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/compress/parts{m}/particle{fix}.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/mipmap/parts{m}/particle{fix}.png",
+            "metaData": {
+                "fix": true
+            },
+            "inheritedMetaData": {
+                "m": true,
+                "fix": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/cache-buster/parts{m}/particle-JPqq5w{fix}.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/compress/parts{m}/particle{fix}.webp",
+            "metaData": {
+                "fix": true
+            },
+            "inheritedMetaData": {
+                "m": true,
+                "fix": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/public/assets/parts/particle-JPqq5w.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/parts{m}/particle-JPqq5w{fix}.webp",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true,
+                "fix": true
+            },
+            "transformData": {}
+        },
         "J:/code/spacegame/raw-assets/parts{m}/pods": {
             "isFolder": true,
             "parent": "J:/code/spacegame/raw-assets/parts{m}",
@@ -1493,6 +1872,288 @@
         "J:/code/spacegame/public/assets/parts/pods/pod1-ORIF@0.5x.webp": {
             "isFolder": false,
             "transformParent": ".assetpack/cache-buster/parts{m}/pods/pod1-ORIF@0.5x.webp",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/raw-assets/parts{m}/smoke.png": {
+            "isFolder": false,
+            "parent": "J:/code/spacegame/raw-assets/parts{m}",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {},
+            "stats": {
+                "date": 1751334126726,
+                "duration": 185.33979999999997,
+                "success": true
+            },
+            "hash": "ZxpLEg"
+        },
+        ".assetpack/mipmap/parts{m}/smoke.png": {
+            "isFolder": false,
+            "transformParent": "J:/code/spacegame/raw-assets/parts{m}/smoke.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/compress/parts{m}/smoke.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/mipmap/parts{m}/smoke.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/cache-buster/parts{m}/smoke-8An43w.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/compress/parts{m}/smoke.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/public/assets/parts/smoke-8An43w.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/parts{m}/smoke-8An43w.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/compress/parts{m}/smoke.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/mipmap/parts{m}/smoke.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/cache-buster/parts{m}/smoke-s_qgdg.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/compress/parts{m}/smoke.webp",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/public/assets/parts/smoke-s_qgdg.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/parts{m}/smoke-s_qgdg.webp",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/mipmap/parts{m}/smoke@0.5x.png": {
+            "isFolder": false,
+            "transformParent": "J:/code/spacegame/raw-assets/parts{m}/smoke.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/compress/parts{m}/smoke@0.5x.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/mipmap/parts{m}/smoke@0.5x.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/cache-buster/parts{m}/smoke-RZ2mXw@0.5x.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/compress/parts{m}/smoke@0.5x.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/public/assets/parts/smoke-RZ2mXw@0.5x.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/parts{m}/smoke-RZ2mXw@0.5x.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/compress/parts{m}/smoke@0.5x.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/mipmap/parts{m}/smoke@0.5x.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/cache-buster/parts{m}/smoke-nBXarw@0.5x.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/compress/parts{m}/smoke@0.5x.webp",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/public/assets/parts/smoke-nBXarw@0.5x.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/parts{m}/smoke-nBXarw@0.5x.webp",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/raw-assets/parts{m}/spark.png": {
+            "isFolder": false,
+            "parent": "J:/code/spacegame/raw-assets/parts{m}",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {},
+            "stats": {
+                "date": 1751248766981,
+                "duration": 255.07999999999993,
+                "success": true
+            },
+            "hash": "oI2l8g"
+        },
+        ".assetpack/mipmap/parts{m}/spark.png": {
+            "isFolder": false,
+            "transformParent": "J:/code/spacegame/raw-assets/parts{m}/spark.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/compress/parts{m}/spark.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/mipmap/parts{m}/spark.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/cache-buster/parts{m}/spark--Qa3OA.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/compress/parts{m}/spark.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/public/assets/parts/spark--Qa3OA.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/parts{m}/spark--Qa3OA.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/compress/parts{m}/spark.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/mipmap/parts{m}/spark.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/cache-buster/parts{m}/spark-lCg93Q.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/compress/parts{m}/spark.webp",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/public/assets/parts/spark-lCg93Q.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/parts{m}/spark-lCg93Q.webp",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/mipmap/parts{m}/spark@0.5x.png": {
+            "isFolder": false,
+            "transformParent": "J:/code/spacegame/raw-assets/parts{m}/spark.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/compress/parts{m}/spark@0.5x.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/mipmap/parts{m}/spark@0.5x.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/cache-buster/parts{m}/spark-23nHYg@0.5x.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/compress/parts{m}/spark@0.5x.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/public/assets/parts/spark-23nHYg@0.5x.png": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/parts{m}/spark-23nHYg@0.5x.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/compress/parts{m}/spark@0.5x.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/mipmap/parts{m}/spark@0.5x.png",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        ".assetpack/cache-buster/parts{m}/spark-26FpmA@0.5x.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/compress/parts{m}/spark@0.5x.webp",
+            "metaData": {},
+            "inheritedMetaData": {
+                "m": true
+            },
+            "transformData": {}
+        },
+        "J:/code/spacegame/public/assets/parts/spark-26FpmA@0.5x.webp": {
+            "isFolder": false,
+            "transformParent": ".assetpack/cache-buster/parts{m}/spark-26FpmA@0.5x.webp",
             "metaData": {},
             "inheritedMetaData": {
                 "m": true

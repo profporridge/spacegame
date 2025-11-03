@@ -14,6 +14,7 @@ import * as PIXI from 'pixi.js';
 import { updateMoonPosition, drawMoon } from './moon.js';
 import { calculateLighting, updateLighting } from './lighting.js';
 import { updatePlanetRotation } from './environment.js';
+import { createFlameParticleSystem, createSmokeParticleSystem } from './particles.js';
 
 //import * as PIXI from "https://esm.sh/pixi.js@8.9.2";
 export { PIXI, parts };
@@ -46,7 +47,7 @@ let smokeLayerContainer = null;
 let spacecraftLayerContainer = null;
 let insetApp = null;
 let insetSpacecraftContainer = null;
-
+let emitter = {};
 // This object will be populated AFTER React renders and completeInitialization is called
 const dom = {};
 let allTextures = null;
@@ -69,6 +70,8 @@ const spacecraftDesigns = {
 const PLANET_CONTAINER = "planetContainer";
 // Object.keys(spacecraftDesigns).forEach(key => spacecraftDesigns[key].reverse());
 
+let flameParticleSystem = null;
+let smokeParticleSystem = null;
 
 async function initSimulation(launchSource = 'template') {
     const urlParams = new URLSearchParams(window.location.search);
@@ -96,7 +99,7 @@ async function initSimulation(launchSource = 'template') {
     // 
     spacecraftInstance.resetToPostionOnSurface(0);
     //resetViewport();
-    viewport.fitHeight( C.EARTH_RADIUS_M, true);
+    viewport.fitHeight(C.EARTH_RADIUS_M, true);
     //spacecraftInstance.angularVelocity_rad_s = 0;
     // viewport.follow(spacecraftLayerContainer);
     //   viewport.onDragStart = () => {viewport.stopFollow();}
@@ -132,36 +135,36 @@ async function initSimulation(launchSource = 'template') {
     if (spacecraftInstance) {
 
         let platformContainer = new PIXI.Container();
-        platformContainer.width=50;
-        platformContainer.height=50;
+        platformContainer.width = 50;
+        platformContainer.height = 50;
         platformContainer.pivot.set(25, 50);
         platformContainer.label = "platform"
         let platform = new PIXI.Graphics();
-        platform.setStrokeStyle({width: 4, color: 'white'})
-        platform.poly([-10,0,-25,50,25,50,10,0])
-        .fill("rgba(120,120,120,1)");
-        
+        platform.setStrokeStyle({ width: 4, color: 'white' })
+        platform.poly([-10, 0, -25, 50, 25, 50, 10, 0])
+            .fill("rgba(120,120,120,1)");
+
         platform.stroke();
         platformContainer.addChild(platform);
         //platformContainer.angle = 180; //(Math.PI/2);
-        
+
         environmentContainer.getChildByLabel(C.PLANET_CONTAINER, true).addChild(platformContainer);
         platformContainer.position.set(0, -1.0 * C.EARTH_RADIUS_M);
         spacecraftInstance.viewportRef = viewport;
         spacecraftInstance.draw(
-           //environmentContainer.getChildByLabel(C.PLANET_CONTAINER, true),
-           platformContainer,
-        25, 50, null, null, 
-        5,//simulationState.currentPixelsPerMeter,
-        "main"
+            //environmentContainer.getChildByLabel(C.PLANET_CONTAINER, true),
+            platformContainer,
+            25, 50, null, null,
+            5,//simulationState.currentPixelsPerMeter,
+            "main"
         );
         console.log("SPACECRAFT_GRAPHICS_CONTAINER", environmentContainer.getChildByLabel(C.SPACECRAFT_GRAPHICS_CONTAINER, true));
 
         let spacecraftContainer = viewport.getChildByLabel(C.SPACECRAFT_GRAPHICS_CONTAINER, true);
         //let engine1 = await PIXI.Assets.load('engines-01.png');
         spacecraftContainer.addChild(new PIXI.Sprite({
-            texture:PIXI.Texture.from('engines-01.png'),
-            label:"shipSprite", 
+            texture: PIXI.Texture.from('engines-01.png'),
+            label: "shipSprite",
             anchor: 0.5,
             //angle:180,
             width: 20,
@@ -175,51 +178,79 @@ async function initSimulation(launchSource = 'template') {
     }
 
     let spacecraftContainer = viewport.getChildByLabel(C.SPACECRAFT_GRAPHICS_CONTAINER, true);
- //viewport.fit(); //viewport.follow(spacecraftContainer, {speed:0, acceleration:null, radius:null});
+    //viewport.fit(); //viewport.follow(spacecraftContainer, {speed:0, acceleration:null, radius:null});
 
- if (insetApp && spacecraftInstance && simulationState.currentPixelsPerMeter < C.INSET_VIEW_PPM_THRESHOLD) {
-    if (dom.insetCanvas) dom.insetCanvas.style.display = 'block'; // Check if dom.insetCanvas exists
-    insetSpacecraftContainer.removeChildren();
-   // environmentContainer.getChildByLabel(C.SPACECRAFT_GRAPHICS_CONTAINER, true)?.scale.set(1000);
-    const largerCraftDim_m = Math.max(spacecraftInstance.logicalStackHeight_m, spacecraftInstance.maxWidth_m, 1);
-    const insetPPM = C.INSET_VIEW_TARGET_SIZE_PX / largerCraftDim_m;
-    const insetSfcScreenX = insetApp.stage.width / 2;
-    const insetSfcScreenY = insetApp.stage.height / 2;
+    if (insetApp && spacecraftInstance && simulationState.currentPixelsPerMeter < C.INSET_VIEW_PPM_THRESHOLD) {
+        if (dom.insetCanvas) dom.insetCanvas.style.display = 'block'; // Check if dom.insetCanvas exists
+        insetSpacecraftContainer.removeChildren();
+        // environmentContainer.getChildByLabel(C.SPACECRAFT_GRAPHICS_CONTAINER, true)?.scale.set(1000);
+        const largerCraftDim_m = Math.max(spacecraftInstance.logicalStackHeight_m, spacecraftInstance.maxWidth_m, 1);
+        const insetPPM = C.INSET_VIEW_TARGET_SIZE_PX / largerCraftDim_m;
+        const insetSfcScreenX = insetApp.stage.width / 2;
+        const insetSfcScreenY = insetApp.stage.height / 2;
 
-    spacecraftInstance.draw(
-        insetSpacecraftContainer,
-        insetApp.screen.width,
-        insetApp.screen.height,
-        insetSfcScreenX,
-        insetSfcScreenY,
-        insetPPM,
-        "inset" // isInsetView = true
-    );
-} else {
-    if (dom.insetCanvas) dom.insetCanvas.style.display = 'none'; // Check if dom.insetCanvas exists
-}
-if (dom.hudCanvas) {
-    const hudCtx = dom.hudCanvas.getContext('2d');
-pixiApp.ticker.add(()=>{
-    pixiApp.renderer.render(pixiApp.stage);
-
-
-// Draw HUD on the overlay canvas
-
-    if (hudCtx) {
-        hudCtx.clearRect(0, 0, dom.hudCanvas.width, dom.hudCanvas.height);
-        UI.drawHUD(hudCtx, spacecraftInstance, simulationState);
+        spacecraftInstance.draw(
+            insetSpacecraftContainer,
+            insetApp.screen.width,
+            insetApp.screen.height,
+            insetSfcScreenX,
+            insetSfcScreenY,
+            insetPPM,
+            "inset" // isInsetView = true
+        );
+    } else {
+        if (dom.insetCanvas) dom.insetCanvas.style.display = 'none'; // Check if dom.insetCanvas exists
     }
-}
-)
-}
+    if (dom.hudCanvas) {
+        const hudCtx = dom.hudCanvas.getContext('2d');
+        pixiApp.ticker.add(() => {
+            pixiApp.renderer.render(pixiApp.stage);
 
 
+            // Draw HUD on the overlay canvas
+
+            if (hudCtx) {
+                hudCtx.clearRect(0, 0, dom.hudCanvas.width, dom.hudCanvas.height);
+                UI.drawHUD(hudCtx, spacecraftInstance, simulationState);
+            }
+        }
+        )
+    }
+
+    // Setup particle systems after containers are ready
+    const flameTexture = PIXI.Texture.from('parts/flame1.png');
+    const smokeTexture = PIXI.Texture.from('parts/smoke.png');
+    if (flameParticleSystem) flameParticleSystem.destroy();
+    if (smokeParticleSystem) smokeParticleSystem.destroy();
+    flameParticleSystem = createFlameParticleSystem(spacecraftContainer, flameTexture);
+    smokeParticleSystem = createSmokeParticleSystem(spacecraftContainer, smokeTexture);
 }
 
 function initParticles() {
-  
-    
+    var emitter = new PIXI.ParticleContainer();
+    emitter.x = 0;
+    emitter.y = 0;
+    emitter.maxSize = 1;
+    emitter.scale = 0.025;
+    emitter.scaleRange = 0.86;
+    emitter.minSize = 0.025;
+    emitter.maxSpeed = 2700;
+    emitter.minSpeed = 0;
+    emitter.alpha = 1;
+    emitter.alphaRange = 0;
+    emitter.color = 0xff0000;
+    emitter.colorRange = 0xffffff;
+    emitter.rotation = 0;
+    emitter.rotationRange = 0;
+    emitter.lifetime = 1200;
+    emitter.lifetimeRange = 13000;
+   // emitter.blendMode = PIXI.BLEND_MODES.NORMAL;
+    emitter.frequency = 0.5;
+    emitter.emitterLifetime = -1;
+    emitter.autoUpdate = true;
+   // emitter.emit = true;
+
+    //pixiApp.stage.addChild(emitter);
 }
 var follow = !1;
 function updateCamera() {
@@ -229,48 +260,49 @@ function updateCamera() {
     //        let spacecraftContainer = viewport.getChildByLabel(C.SPACECRAFT_GRAPHICS_CONTAINER, true);
     //    follow =  viewport.follow(spacecraftContainer, {speed:0, acceleration:null, radius:null});
     // }
-  //  let platformContainter = viewport.getChildByLabel("platform", true);
-   
+    //  let platformContainter = viewport.getChildByLabel("platform", true);
+
     let spacecraftContainer = viewport.getChildByLabel(C.SPACECRAFT_GRAPHICS_CONTAINER, true);
     let planetContainer = viewport.getChildByLabel(C.PLANET_CONTAINER, true);
     //let newPos = new PIXI.Point(spacecraftContainer?._position.x, spacecraftContainer?._position.y);
-   // spacecraftInstance.position = 
-   let pos = viewport.toWorld(spacecraftContainer?.getGlobalPosition({skipUpdate:true}));
- 
-    viewport.moveCenter(pos); 
+    // spacecraftInstance.position = 
+    let pos = viewport.toWorld(spacecraftContainer?.getGlobalPosition({ skipUpdate: true }));
+
+    //  viewport.moveCenter(pos); 
     //console.log("spacecraftInstance.position", spacecraftInstance.position);
     //const comOffset_m = spacecraftInstance.getCoMOffset_m();
     const comX = C.EARTH_RADIUS_M * Math.sin(planetContainer._rotation);
-    const comY = -1*C.EARTH_RADIUS_M * Math.cos(planetContainer._rotation);
- //   platformContainter._rotation = planetContainer._rotation;
-   // platformContainter.position.set(comX,comY);
-    spacecraftInstance.localPosition = viewport.toScreen(comX,comY);//spacecraftContainer.parent._position);
+    const comY = -1 * C.EARTH_RADIUS_M * Math.cos(planetContainer._rotation);
+    //   platformContainter._rotation = planetContainer._rotation;
+    // platformContainter.position.set(comX,comY);
+    spacecraftInstance.localPosition = viewport.toScreen(comX, comY);//spacecraftContainer.parent._position);
+    console.log("spacecraftInstance.localPosition", spacecraftInstance.localPosition);
     //viewport.
     //const comY = spacecraftInstance.position_y_m - comOffset_m * Math.cos(spacecraftInstance.angle_rad);
-  // viewport.moveCenter(comX,comY);
+    // viewport.moveCenter(comX,comY);
 
     // const targetCameraX_m = comX; const targetCameraY_m = comY; 
     // const lerpFactor = 0.1; 
     // simulationState.cameraX_m += (targetCameraX_m - simulationState.cameraX_m) * lerpFactor; 
     // simulationState.cameraY_m += (targetCameraY_m - simulationState.cameraY_m) * lerpFactor; 
-   
+
 }
 
 function resetViewport() {
-    let spacecraftContainer = viewport.getChildByLabel("spacecraftContainer", true);
-   let pos = 
-   viewport.toWorld(
-    spacecraftContainer.getGlobalPosition({})
-)
-;
-   console.info(`moving viewport to ${pos.x}, ${pos.y}`);
-        viewport.animate({
-            position: pos,
-            
-            duration: 1500,
-            //ease: 'power2.inOut',
-            width: 1500
-        });
+    let spacecraftContainer = viewport.getChildByLabel(C.SPACECRAFT_GRAPHICS_CONTAINER, true);
+    let pos =
+        viewport.toWorld(
+            spacecraftContainer.getGlobalPosition({})
+        )
+        ;
+    console.info(`moving viewport to ${pos.x}, ${pos.y}`);
+    viewport.animate({
+        position: pos,
+
+        duration: 1500,
+        //ease: 'power2.inOut',
+        width: 1500
+    });
 }
 let smokeTrailDeltaTime_s = 0; // For smoke trail timing
 let smokeTrailPoints = []; // For smoke trail points
@@ -311,13 +343,13 @@ function gameLoop(ticker) {
             smokeParticles, simulationState
         );
         //spacecraftContainer.position.set(spacecraftInstance.position_x_m, spacecraftInstance.position_y_m);
-        
+
         //  currentAirDensityValue = physicsResult.currentAirDensity;
         // currentDragForceMagnitude = physicsResult.currentDrag;
         // --- Spacecraft Drawing ---
 
     }
-//UI.drawHUD(gameCanvas, spacecraftInstance, simulationState);
+    //UI.drawHUD(gameCanvas, spacecraftInstance, simulationState);
     updateCamera();
 
     // --- Smoke Particle Update, Draw, and Management ---
@@ -406,9 +438,108 @@ function gameLoop(ticker) {
     ENV.drawPlanet(environmentContainer, deltaTime_s);
     UI.updateStatsDisplay(simulationState, spacecraftInstance, apoapsisAGL.value, periapsisAGL.value);
 
-    // Inset view drawing
-    
+    // Inset view drawing - show when spacecraft is too small to see in main view
+    if (insetApp && spacecraftInstance) {
+        // Check if viewport scale is low enough that spacecraft would be too small to see
+        // Use viewport scale directly for more accurate check
+        const viewportScale = viewport.scale.x;
+        const shouldShowInset = viewportScale < C.INSET_VIEW_PPM_THRESHOLD;
+        
+        if (shouldShowInset) {
+            if (dom.insetCanvas) dom.insetCanvas.style.display = 'block';
+            
+            // Clear previous frame
+            insetSpacecraftContainer.removeChildren();
+            
+            // Calculate appropriate scale for inset view
+            const largerCraftDim_m = Math.max(spacecraftInstance.logicalStackHeight_m, spacecraftInstance.maxWidth_m, 1);
+            const insetPPM = C.INSET_VIEW_TARGET_SIZE_PX / largerCraftDim_m;
+            const insetSfcScreenX = insetApp.screen.width / 2;
+            const insetSfcScreenY = insetApp.screen.height / 2;
+            
+            // Draw spacecraft in inset view with current orientation and state
+            spacecraftInstance.draw(
+                insetSpacecraftContainer,
+                insetApp.screen.width,
+                insetApp.screen.height,
+                insetSfcScreenX,
+                insetSfcScreenY,
+                insetPPM,
+                "inset"
+            );
+            
+            // Update inset view graphics (flames, etc.) if engine is active
+            const insetShipContainer = insetSpacecraftContainer.getChildByLabel(C.SPACECRAFT_GRAPHICS_CONTAINER, true);
+            if (insetShipContainer) {
+                let flameGraphic = insetShipContainer.getChildByLabel('InsetFlameG');
+                
+                if (simulationState.engineActive && spacecraftInstance.currentThrust_N > 0) {
+                    // Create or update flame graphics for inset view
+                    if (!flameGraphic) {
+                        flameGraphic = new PIXI.Graphics({label: "InsetFlameG"});
+                        insetShipContainer.addChild(flameGraphic);
+                        
+                        // Position flame at engine nozzle (bottom of spacecraft)
+                        const enginePart = spacecraftInstance.parts.find(p => p.type === 'engine');
+                        if (enginePart) {
+                            const engineNozzle_y_from_com_m = enginePart.relative_y_m - spacecraftInstance.getCoMOffset_m();
+                            const engineNozzle_y_local_px = -engineNozzle_y_from_com_m * insetPPM;
+                            flameGraphic.position.set(0, engineNozzle_y_local_px);
+                        }
+                    }
+                    
+                    // Draw flame
+                    const flameHeight_px = 15 * insetPPM;
+                    const flameWidth_px = 2 * insetPPM;
+                    
+                    flameGraphic.clear();
+                    flameGraphic.rotation = spacecraftInstance.engineGimbalAngle_rad;
+                    
+                    // Orange outer flame
+                    flameGraphic.moveTo(-flameWidth_px / 2, 0);
+                    flameGraphic.lineTo(flameWidth_px / 2, 0);
+                    flameGraphic.lineTo(0, flameHeight_px);
+                    flameGraphic.closePath();
+                    flameGraphic.fill({color: 0xff6600, alpha: 0.9});
+                    
+                    // Yellow inner flame
+                    const iFW = flameWidth_px * 0.5;
+                    const iFH = flameHeight_px * 0.6;
+                    flameGraphic.moveTo(-iFW / 2, 0);
+                    flameGraphic.lineTo(iFW / 2, 0);
+                    flameGraphic.lineTo(0, iFH);
+                    flameGraphic.closePath();
+                    flameGraphic.fill({color: 0xffff00, alpha: 0.9});
+                } else if (flameGraphic) {
+                    // Remove flame when engine is off
+                    flameGraphic.destroy();
+                }
+            }
+            
+            // Render the inset view
+            insetApp.renderer.render(insetApp.stage);
+        } else {
+            if (dom.insetCanvas) dom.insetCanvas.style.display = 'none';
+        }
+    }
+
     //UI.drawHUD(gameCanvas, spacecraftInstance, simulationState);
+   
+    // --- Particle Effects ---
+    if (spacecraftInstance && simulationState.engineActive) {
+        spacecraftInstance.updateGraphics(spacecraftContainer, Math.floor(ticker.lastTime % 3));
+        // Emit flame and smoke at the engine nozzle position
+        // For now, emit at (0,0) in the spacecraftContainer (adjust as needed)
+        //flameParticleSystem.start();
+        smokeParticleSystem.start();
+       // flameParticleSystem.emit(0, 0, spacecraftInstance.angle_rad + spacecraftInstance.engineGimbalAngle_rad);
+        //smokeParticleSystem.emit(0, 10, spacecraftInstance.angle_rad + spacecraftInstance.engineGimbalAngle_rad + Math.PI); // Offset for smoke
+    } else {
+        //if (flameParticleSystem) flameParticleSystem.stop();
+        if (smokeParticleSystem) smokeParticleSystem.stop();
+    }
+   // if (flameParticleSystem) flameParticleSystem.update(deltaTime_s);
+    if (smokeParticleSystem) smokeParticleSystem.update(deltaTime_s);
 }
 
 
@@ -424,6 +555,7 @@ function setupEventListeners() {
             if (spacecraftInstance) {
                 simulationState.isLaunched = true; simulationState.landed = false;
                 simulationState.engineActive = spacecraftInstance.currentFuel_kg > 0;
+                emitter.emit = true;
                 dom.launchButton.textContent = simulationState.engineActive ? "Engine Active (TPL)" : (spacecraftInstance.currentFuel_kg > 0 ? "Engine Off (TPL)" : "Out of Fuel (TPL)");
                 dom.launchButton.disabled = spacecraftInstance.currentFuel_kg <= 0 && !simulationState.engineActive;
                 pixiApp.ticker.start();
@@ -433,18 +565,23 @@ function setupEventListeners() {
 
     if (dom.launchCurrentBuildButton) {
         dom.launchCurrentBuildButton.addEventListener('click', async () => {
-            if (!AUDIO.soundInitialized) AUDIO.initAudio(simulationState.soundMuted);
+           // if (!AUDIO.soundInitialized) AUDIO.initAudio(simulationState.soundMuted);
             //  stopSimulation();
-          //  viewport.fitWidth(4 * C.EARTH_RADIUS_M, true);
+            //  viewport.fitWidth(4 * C.EARTH_RADIUS_M, true);
             if (currentShipPartsConfig.length === 0) { alert("Staging area is empty!"); return; }
             // await initSimulation('staging');
             if (spacecraftInstance) {
                 var planetContainer = environmentContainer?.getChildByLabel(C.PLANET_CONTAINER);
+
+                if (!follow) {
+                    let platformContainer = viewport.getChildByLabel(C.SPACECRAFT_GRAPHICS_CONTAINER, true);
+                    follow = viewport.follow(platformContainer, { speed: 0, acceleration: null, radius: null });
+                }
                 // on Launch we reparent the spacecraft into the parent of the planet container so that it no longer rotates with the planet
-              //  if (planetContainer)
-                 //   environmentContainer?.reparentChildAt(planetContainer?.getChildByLabel(C.SPACECRAFT_GRAPHICS_CONTAINER, true), 0);
+                if (planetContainer &&)
+                    environmentContainer?.reparentChild(planetContainer?.getChildByLabel(C.SPACECRAFT_GRAPHICS_CONTAINER, true));
                 //environmentContainer.getChildByLabel(SPACECRAFT_GRAPHICS_CONTAINER,true).reparentAt( environmentContainer.getChildByLabel("planetContainer",true), 0);
-                //resetViewport();
+                resetViewport();
                 simulationState.isLaunched = true; simulationState.landed = false;
                 simulationState.engineActive = true;
                 spacecraftInstance.refuel();
@@ -454,20 +591,21 @@ function setupEventListeners() {
         });
     }
     let recenterButton = document.getElementById("recenter");
-    if(recenterButton)
-        recenterButton.addEventListener('click', async ()=> {
-            if(!follow)
-                { 
-                       let spacecraftContainer = viewport.getChildByLabel(C.SPACECRAFT_GRAPHICS_CONTAINER, true);
-                      
-                   follow =  viewport.follow(spacecraftContainer.getChildByLabel("shipSprite", false), {speed:0, acceleration:null, radius:null});
-                }
-                else{
+    if (recenterButton)
+        recenterButton.addEventListener('click', async () => {
+            if (!follow) {
+              //  let spacecraftContainer = viewport.getChildByLabel(C.SPACECRAFT_GRAPHICS_CONTAINER, true);
+                let platformContainer = viewport.getChildByLabel(C.SPACECRAFT_GRAPHICS_CONTAINER, true);
+                follow = viewport.follow(platformContainer, { speed: 0, acceleration: null, radius: null });
+
+               // follow = viewport.follow(spacecraftContainer.getChildByLabel("shipSprite", false), { speed: 0, acceleration: null, radius: null, });
+            }
+            else {
                 viewport.plugins.remove('follow');
                 follow = null;
-                }
-//    viewport.moveCenter(0,-C.EARTH_RADIUS_M);
-});
+            }
+            //    viewport.moveCenter(0,-C.EARTH_RADIUS_M);
+        });
     if (dom.resetButton) {
         dom.resetButton.addEventListener('click', async () => {
             //stopSimulation();
@@ -563,6 +701,13 @@ async function completeInitialization() {
     dom.insetCanvas = document.getElementById('insetCanvas');
     dom.stagingCanvas = document.getElementById('stagingCanvas');
     dom.dragImage = document.getElementById('dragImage');
+ 
+    // Check if essential canvas elements exist
+    if (!dom.gameCanvas || !dom.stagingCanvas) {
+     //   console.error("Essential canvas elements (gameCanvas or stagingCanvas) not found in the DOM after React render. Game cannot initialize.");
+        setTimeout(completeInitialization, 1);
+        return;
+    }
 
     dom.time = document.getElementById('time');
     dom.apoapsis = document.getElementById('apoapsis');
@@ -596,19 +741,14 @@ async function completeInitialization() {
     dom.viewportPosition_y = document.getElementById('viewportPosition_y');
     // dom.launchButton = document.getElementById('launchButton'); // Example if it was kept
 
-    // Check if essential canvas elements exist
-    if (!dom.gameCanvas || !dom.stagingCanvas) {
-        console.error("Essential canvas elements (gameCanvas or stagingCanvas) not found in the DOM after React render. Game cannot initialize.");
-        return;
-    }
-
-   // allTextures = await PIXI.Assets.load(['clouds-0.json', 'clouds-0.png']); // Already loaded globally if needed or move here.
+  
+    // allTextures = await PIXI.Assets.load(['clouds-0.json', 'clouds-0.png']); // Already loaded globally if needed or move here.
 
     pixiApp = new PIXI.Application();
     await pixiApp.init({
         backgroundColor: 0x000000,
         resolution: window.devicePixelRatio || 1,
-        resizeTo:  document.getElementById('mainContainer'),
+        resizeTo: document.getElementById('mainContainer'),
         canvas: dom.gameCanvas, // Use the canvas from the React-rendered DOM
         autoStart: false
     });
@@ -636,8 +776,8 @@ async function completeInitialization() {
         events: pixiApp.renderer.events,
         screenWidth: gameCanvas.width,
         screenHeight: gameCanvas.height,
-       // worldWidth: 4 * C.EARTH_RADIUS_M,
-       // worldHeight: 4 * C.EARTH_RADIUS_M,
+        // worldWidth: 4 * C.EARTH_RADIUS_M,
+        // worldHeight: 4 * C.EARTH_RADIUS_M,
         center: new PIXI.Point(0, 0),
         zoom: 1,
         minZoom: 0.1,
@@ -652,9 +792,9 @@ async function completeInitialization() {
         simulationState.viewportPosition_y = event.viewport.center.y;
     });
     // Initialize the asset system
-    await PIXI.Assets.init({manifest:"manifest.json", basePath:'assets/'});
+    await PIXI.Assets.init({ manifest: "manifest.json", basePath: 'assets/' });
     parts = await PIXI.Assets.loadBundle(['parts']);
-     //pixiApp.renderer.view.style.width = window.innerWidth + "px";
+    //pixiApp.renderer.view.style.width = window.innerWidth + "px";
     // pixiApp.renderer.view.style.height = window.innerHeight + "px";
     // pixiApp.renderer.view.style.left = "0px";
     // pixiApp.renderer.view.style.top = "0px";
@@ -664,61 +804,62 @@ async function completeInitialization() {
     smokeLayerContainer = new PIXI.Container();
     spacecraftLayerContainer = new PIXI.Container();
     spacecraftLayerContainer.label = "spacecraftLayerContainer";
-  //  const planetRadius_px = planet.radius_m;
+    //  const planetRadius_px = planet.radius_m;
 
-        var planetContainer = new PIXI.Container();
-        planetContainer.label = "planetContainer";
-        environmentContainer.addChild(planetContainer);
-    planetContainer.addChild(viewport);
+    var planetContainer = new PIXI.Container();
+    planetContainer.label = "planetContainer";
+    environmentContainer.addChild(planetContainer);
+   // planetContainer.addChild(viewport);
     // Add containers to viewport
-   // viewport.addChild(environmentContainer);
-   // viewport.addChild(orbitContainer);
-  //  viewport.addChild(smokeLayerContainer);
+    // viewport.addChild(environmentContainer);
+    // viewport.addChild(orbitContainer);
+    //  viewport.addChild(smokeLayerContainer);
 
     viewport.addChild(environmentContainer);
-// Create a text object
-const text = new PIXI.Text({text:'Hello, PixiJS!', 
-    fontFamily: 'Arial', // Font family
-    fontSize: 36, // Font size
-    fill: 0xffffff, // Text color
-    align: 'center', // Text alignment
-    color: 'white'
-});
-  // Create HUD canvas overlay
-  if (!dom.hudCanvas) {
-    dom.hudCanvas = document.createElement('canvas');
-    dom.hudCanvas.id = 'hudCanvas';
-    dom.hudCanvas.style.position = 'absolute';
-    dom.hudCanvas.style.top = '0';
-    dom.hudCanvas.style.left = '0';
-    dom.hudCanvas.style.pointerEvents = 'none';
-    dom.hudCanvas.style.zIndex = '10';
-    
-    // Set canvas size to match game canvas
-    if (dom.gameCanvas) {
-        dom.hudCanvas.width = dom.gameCanvas.width;
-        dom.hudCanvas.height = dom.gameCanvas.height;
-    }
-    
-    // Insert HUD canvas after game canvas
-    if (dom.gameCanvas && dom.gameCanvas.parentNode) {
-        dom.gameCanvas.parentNode.insertBefore(dom.hudCanvas, dom.gameCanvas.nextSibling);
-    }
-}
+    // Create a text object
+    const text = new PIXI.Text({
+        text: 'Hello, PixiJS!',
+        fontFamily: 'Arial', // Font family
+        fontSize: 36, // Font size
+        fill: 0xffffff, // Text color
+        align: 'center', // Text alignment
+        color: 'white'
+    });
+    // Create HUD canvas overlay
+    if (!dom.hudCanvas) {
+        dom.hudCanvas = document.createElement('canvas');
+        dom.hudCanvas.id = 'hudCanvas';
+        dom.hudCanvas.style.position = 'absolute';
+        dom.hudCanvas.style.top = '0';
+        dom.hudCanvas.style.left = '0';
+        dom.hudCanvas.style.pointerEvents = 'none';
+        dom.hudCanvas.style.zIndex = '10';
 
-// Update HUD canvas size if game canvas size changed
-if (dom.hudCanvas && dom.gameCanvas) {
-    if (dom.hudCanvas.width !== dom.gameCanvas.width || dom.hudCanvas.height !== dom.gameCanvas.height) {
-        dom.hudCanvas.width = dom.gameCanvas.width;
-        dom.hudCanvas.height = dom.gameCanvas.height;
-    }
-}
-// Set the position of the text
-text.x = pixiApp.screen.width / 2 - text.width / 2; // Center horizontally
-text.y = pixiApp.screen.height / 2 - text.height / 2; // Center vertically
+        // Set canvas size to match game canvas
+        if (dom.gameCanvas) {
+            dom.hudCanvas.width = dom.gameCanvas.width;
+            dom.hudCanvas.height = dom.gameCanvas.height;
+        }
 
-// Add the text to the stage
-//pixiApp.stage.addChild(text);
+        // Insert HUD canvas after game canvas
+        if (dom.gameCanvas && dom.gameCanvas.parentNode) {
+            dom.gameCanvas.parentNode.insertBefore(dom.hudCanvas, dom.gameCanvas.nextSibling);
+        }
+    }
+
+    // Update HUD canvas size if game canvas size changed
+    if (dom.hudCanvas && dom.gameCanvas) {
+        if (dom.hudCanvas.width !== dom.gameCanvas.width || dom.hudCanvas.height !== dom.gameCanvas.height) {
+            dom.hudCanvas.width = dom.gameCanvas.width;
+            dom.hudCanvas.height = dom.gameCanvas.height;
+        }
+    }
+    // Set the position of the text
+    text.x = pixiApp.screen.width / 2 - text.width / 2; // Center horizontally
+    text.y = pixiApp.screen.height / 2 - text.height / 2; // Center vertically
+
+    // Add the text to the stage
+    //pixiApp.stage.addChild(text);
     // Create graphics objects once
 
 
@@ -773,16 +914,16 @@ text.y = pixiApp.screen.height / 2 - text.height / 2; // Center vertically
         dom, currentShipPartsConfig, spacecraftDesigns, initSimulation,
         dom.stagingCanvas, simulationState, partCatalog, AUDIO
     );
-   
-  //  pixiApp.stage.addChild(environmentContainer);
-    
+
+    //  pixiApp.stage.addChild(environmentContainer);
+
     pixiApp.stage.addChild(viewport);
     setupEventListeners();
 
     pixiApp.ticker.add(gameLoop); // Start the game loop
     // Add a PIXI ticker listener for smoke trail drawing
     // Initialize Inset View Pixi Application
- 
+
 
     pixiApp.ticker.start();
 }
@@ -800,12 +941,15 @@ if (rootElement) {
     // Ensure the game logic initializes after React has rendered the DOM structure
     // For simple cases, a timeout of 0 can work to push execution to after the current render cycle.
     // A more robust solution might involve a callback from App.js after its first render (e.g., via useEffect).
-    if (document.readyState !== 'loading') { completeInitialization(); }
-    else {
+    // if (document.readyState !== 'loading') {       
+    //     console.error(`Setting timeout for DOMContentLoaded because document.readystate = ${document.readyState}`);
+    //     setTimeout(completeInitialization, 0); }
+    // else {
         // If DOM is not ready, wait for it to load
-        document.addEventListener('DOMContentLoaded', completeInitialization);
-    }
-    // setTimeout(completeInitialization, 0);
+     //   console.error(`Setting listener for DOMContentLoaded because document.readystate = ${document.readyState}`);
+      document.addEventListener('DOMContentLoaded', completeInitialization);
+  //  }
+  //   setTimeout(completeInitialization, 0);
 
 } else {
     console.error("Failed to find the root element for React. App cannot start.");

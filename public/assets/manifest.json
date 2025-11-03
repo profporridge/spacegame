@@ -133,6 +133,56 @@
         },
         {
           "alias": [
+            "parts/flame1.png",
+            "flame1.png"
+          ],
+          "src": [
+            "parts/flame1-zxstGQ.png",
+            "parts/flame1-yWZlPw@0.5x.webp",
+            "parts/flame1-jWVdrA@0.5x.png",
+            "parts/flame1-EEWPxg.webp"
+          ],
+          "data": {
+            "tags": {
+              "m": true
+            }
+          }
+        },
+        {
+          "alias": [
+            "parts/flame2.png",
+            "flame2.png"
+          ],
+          "src": [
+            "parts/flame2-JLBThA.png",
+            "parts/flame2-JBb4yw.webp",
+            "parts/flame2-EYz2dA@0.5x.png",
+            "parts/flame2-3QkD@0.5x.webp"
+          ],
+          "data": {
+            "tags": {
+              "m": true
+            }
+          }
+        },
+        {
+          "alias": [
+            "parts/particle.png",
+            "particle.png"
+          ],
+          "src": [
+            "parts/particle-tjG-Fg.png",
+            "parts/particle-JPqq5w.webp"
+          ],
+          "data": {
+            "tags": {
+              "m": true,
+              "fix": true
+            }
+          }
+        },
+        {
+          "alias": [
             "parts/pods/pod1.png",
             "pod1.png"
           ],
@@ -141,6 +191,40 @@
             "parts/pods/pod1-p_uMCw.png",
             "parts/pods/pod1-ORIF@0.5x.webp",
             "parts/pods/pod1-gY3GDQ@0.5x.png"
+          ],
+          "data": {
+            "tags": {
+              "m": true
+            }
+          }
+        },
+        {
+          "alias": [
+            "parts/smoke.png",
+            "smoke.png"
+          ],
+          "src": [
+            "parts/smoke-s_qgdg.webp",
+            "parts/smoke-RZ2mXw@0.5x.png",
+            "parts/smoke-nBXarw@0.5x.webp",
+            "parts/smoke-8An43w.png"
+          ],
+          "data": {
+            "tags": {
+              "m": true
+            }
+          }
+        },
+        {
+          "alias": [
+            "parts/spark.png",
+            "spark.png"
+          ],
+          "src": [
+            "parts/spark-lCg93Q.webp",
+            "parts/spark-26FpmA@0.5x.webp",
+            "parts/spark-23nHYg@0.5x.png",
+            "parts/spark--Qa3OA.png"
           ],
           "data": {
             "tags": {
