@@ -7,7 +7,7 @@ import { parseRgba } from './utils/colorUtils.js';
 // Module-level variable to hold the constants object to be used
 let CurrentConstants = OriginalConstants;
 
-
+// data source: https://eaglepubs.erau.edu/introductiontoaerospaceflightvehicles/chapter/rocket-performance/
 // These will be set by main.js
 let main_playEngineSound = () => { };
 let main_playGimbalSound = () => { };
@@ -668,24 +668,36 @@ const effectiveThrustAngle_rad = this.angle_rad + this.engineGimbalAngle_rad;
 const thrustForceX_N = this.currentThrust_N * Math.sin(effectiveThrustAngle_rad);
 const thrustForceY_N = -1 * this.currentThrust_N * Math.cos(effectiveThrustAngle_rad);
 
+// Read current world position from graphics container for gravity and altitude calculations
 let gp = this.viewportRef.toWorld(this.mainContainerRef.getGlobalPosition());
 const distanceToPlanetCenter_m = Math.sqrt(gp.x ** 2 + gp.y ** 2);
 this.altitudeAGL_m = distanceToPlanetCenter_m - CurrentConstants.EARTH_RADIUS_M;
+// Sync position properties from graphics container position (they should match)
+// Note: position will be updated at end of function based on velocity
+this.position_x_m = gp.x;
+this.position_y_m = gp.y;
 let gravityForceX_N = 0, gravityForceY_N = 0;
 if (distanceToPlanetCenter_m > 1 && distanceToPlanetCenter_m < 1e12 && CurrentConstants.GRAVITATIONAL_CONSTANT_G > 0) {
     currentLocalGravityMagnitude_N = (CurrentConstants.GRAVITATIONAL_CONSTANT_G * CurrentConstants.planet.mass_kg * this.totalMass_kg) / (distanceToPlanetCenter_m ** 2);
     
-    var gravityDirection = Math.atan2(this.position_y_m, this.position_x_m);
+    // Use gp (world position from graphics container) for gravity direction calculation
+    var gravityDirection = Math.atan2(gp.y, gp.x);
     gravityForceX_N = currentLocalGravityMagnitude_N * Math.sin(gravityDirection);
-    gravityForceY_N = currentLocalGravityMagnitude_N *Math.cos(gravityDirection);
+    gravityForceY_N = currentLocalGravityMagnitude_N * Math.cos(gravityDirection);
     // console.info(`Local gravity is ${currentLocalGravityMagnitude_N}, (${gravityForceX_N}, ${gravityForceY_N})`);
 }
 
 let calculatedAirDensity = 0;
 let currentDragForce = 0;
 let dragForceX_N = 0, dragForceY_N = 0;
-if (this.altitudeAGL_m < CurrentConstants.EARTH_MAX_ATMOSPHERE_ALTITUDE && this.altitudeAGL_m >= 0 && currentAirDensity > 0) {
-    calculatedAirDensity = currentAirDensity;
+if (this.altitudeAGL_m < CurrentConstants.EARTH_MAX_ATMOSPHERE_ALTITUDE && this.altitudeAGL_m >= 0) {
+    // Calculate air density based on altitude using exponential decay (barometric formula)
+    // ρ = ρ₀ * exp(-h / H) where h is altitude and H is scale height
+    const scaleHeight = CurrentConstants.EARTH_ATMOSPHERE_SCALE_HEIGHT || 8500;
+    calculatedAirDensity = CurrentConstants.EARTH_SEA_LEVEL_AIR_DENSITY * Math.exp(-this.altitudeAGL_m / scaleHeight);
+    // Ensure air density doesn't go below a very small threshold
+    calculatedAirDensity = Math.max(calculatedAirDensity, 1e-6);
+    
     const speed_ms = Math.sqrt(this.velocity_x_ms ** 2 + this.velocity_y_ms ** 2);
     if (speed_ms > 0.01) {
         const velocityAngleToY_rad = Math.atan2(this.velocity_x_ms, this.velocity_y_ms);
@@ -694,6 +706,9 @@ if (this.altitudeAGL_m < CurrentConstants.EARTH_MAX_ATMOSPHERE_ALTITUDE && this.
         dragForceX_N = -currentDragForce * (this.velocity_x_ms / speed_ms);
         dragForceY_N = -currentDragForce * (this.velocity_y_ms / speed_ms);
     }
+} else {
+    // Above atmosphere, air density is effectively zero
+    calculatedAirDensity = 0;
 }
 
 let netForceX_N_trans = thrustForceX_N + gravityForceX_N + dragForceX_N;
@@ -831,8 +846,9 @@ if (this.hasCrashed) {
 }
 this.velocity_x_ms += accelerationX_ms2 * deltaTime_s;
 this.velocity_y_ms += accelerationY_ms2 * deltaTime_s;
-//this.position_x_m += this.velocity_x_ms * deltaTime_s;
-//this.position_y_m += this.velocity_y_ms * deltaTime_s;
+// Update both position properties and graphics container position
+this.position_x_m += this.velocity_x_ms * deltaTime_s;
+this.position_y_m += this.velocity_y_ms * deltaTime_s;
 this.mainContainerRef._position.x += this.velocity_x_ms * deltaTime_s;
 this.mainContainerRef._position.y += this.velocity_y_ms * deltaTime_s;
 this.mainContainerRef.rotation = this.angle_rad;

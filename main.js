@@ -294,10 +294,14 @@ async function gameLoop(ticker) {
             simulationState.engineActive,
             simulationState.controlFlags.rotateLeft,
             simulationState.controlFlags.rotateRight,
-            currentAirDensityValue,
+            currentAirDensityValue, // Passed but now calculated internally based on altitude
             apoapsisAGL, periapsisAGL,
             smokeParticles, simulationState
         );
+        // Update air density from physics result (now calculated based on altitude)
+        if (physicsResult && physicsResult.currentAirDensity !== undefined) {
+            currentAirDensityValue = physicsResult.currentAirDensity;
+        }
     }
     updateCamera();
 
